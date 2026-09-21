@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>양도소득세 계산기</title>
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+  <div class="header">
+    <h2>양도소득세 계산기</h2>
+    <!-- 로그인 상태에 따라 버튼 텍스트 변경 -->
+    <div id="authButtons">
+      <button id="loginBtn" class="btn btn-login" onclick="openModal('login')">로그인</button>
+      <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+      <button id="logoutBtn" class="btn btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="calculator-card">
+    <!-- 비회원용 오버레이 -->
+    <div id="lockOverlay" class="lock-overlay">
+      <h3>🔒 로그인 후 이용 가능합니다</h3>
+      <p>회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.</p>
+      <div>
+        <button class="btn btn-login" onclick="openModal('login')">로그인</button>
+        <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+      </div>
+    </div>
+
+    <!-- 계산기 폼 -->
+    <form id="taxForm" onsubmit="calculateTax(event)">
+      <div class="form-group">
+        <label>양도가액 (원)</label>
+        <input type="number" id="salePrice" placeholder="예: 1000000000" required>
+      </div>
+      <div class="form-group">
+        <label>취득가액 (원)</label>
+        <input type="number" id="acqPrice" placeholder="예: 600000000" required>
+      </div>
+      <div class="form-group">
+        <label>필요경비 (원)</label>
+        <input type="number" id="expenses" placeholder="예: 20000000" value="0">
+      </div>
+      <button type="submit" class="btn">세액 계산하기</button>
+    </form>
+
+    <div id="result" class="result-box" style="display: none;"></div>
+  </div>
+
+  <!-- 회원가입/로그인 팝업 모달 -->
+  <div id="authModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      
+      <!-- 회원가입 폼 -->
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <h3>회원가입</h3>
+        <div class="form-group">
+          <label>아이디</label>
+          <input type="text" id="signupId" required>
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login">가입 완료</button>
+      </form>
+
+      <!-- 로그인 폼 -->
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <h3>로그인</h3>
+        <div class="form-group">
+          <label>아이디</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login">로그인</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/login.js"></script>
+</body>
+</html>

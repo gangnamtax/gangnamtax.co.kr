@@ -1,0 +1,10 @@
+#backgroundimage {
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    top: 0;   /* 이미지 최고점으로 정렬 */
+    left: 0;  /* 이미지 좌측으로 정렬 */
+    z-index: -1;  /* 배경화면 뒤로 넘김 */
+   /* visibility: hidden; */ /* 사라짐*/ 
+}
+
