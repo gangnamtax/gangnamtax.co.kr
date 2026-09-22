@@ -1,23 +1,469 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="main_style.css">
-    <title>세무회계강남홈페이지</title>
-    <style>
-        .tab-menu { margin-top: 20px; }
-        .tab-menu a { display: inline-block; padding: 10px 20px; background-color: #004080; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
-        .tab-menu a:hover { background-color: #00264d; }
-    </style>
-</head>
-<body>
-    <h1 id="head1">안녕하세요. <br> 반갑습니다.</h1>
-    <h2>세무회계강남입니다.</h2>
-    <p>전문 세무 서비스와 양도세 계산기를 이용해 보세요.</p>
 
-    <div class="tab-menu">
-        <a href="양도세계산기/main.html">양도세 계산기 바로가기</a>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>세무회계강남 김하원세무사</title>
+
+    <style>
+
+        /* ==========================================
+
+           1. 기본 설정 및 초기화
+
+           ========================================== */
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+       
+
+        body {
+
+            font-family: 'Noto Sans KR', sans-serif;
+
+            background-color: #f8fafc;
+
+            color: #1e293b;
+
+            line-height: 1.5;
+
+            overflow-x: hidden;
+
+        }
+
+
+
+        /* ==========================================
+
+           2. 상단 헤더 (네비게이션 바) 스타일
+
+           ========================================== */
+
+        .header {
+
+            background: #ffffff;
+
+            width: 100%;
+
+            padding: 15px 5%;
+
+            border-bottom: 1px solid #e2e8f0;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+        }
+
+
+
+        /* 로고 스타일 (클릭 시 메인으로 이동) */
+
+        .logo {
+
+            font-size: clamp(16px, 2vw, 20px);
+
+            font-weight: 800;
+
+            color: #1e3a8a;
+
+            text-decoration: none;
+
+        }
+
+
+
+        .logo:hover {
+
+            color: #2563eb;
+
+        }
+
+
+
+        /* 상단 우측 인증 버튼 그룹 (로그인 / 회원가입) */
+
+        .auth-buttons {
+
+            display: flex;
+
+            gap: 8px;
+
+        }
+
+
+
+        .auth-btn {
+
+            padding: clamp(5px, 0.8vw, 8px) clamp(12px, 1.5vw, 16px);
+
+            font-size: clamp(12px, 1.3vw, 14px);
+
+            font-weight: 600;
+
+            border-radius: 6px;
+
+            text-decoration: none;
+
+            cursor: pointer;
+
+            transition: background 0.2s, color 0.2s;
+
+            white-space: nowrap;
+
+        }
+
+
+
+        /* 로그인 버튼 스타일 */
+
+        .btn-login {
+
+            background: transparent;
+
+            color: #2563eb;
+
+            border: 1px solid #2563eb;
+
+        }
+
+
+
+        .btn-login:hover {
+
+            background: #eff6ff;
+
+        }
+
+
+
+        /* 회원가입 버튼 스타일 */
+
+        .btn-signup {
+
+            background: #2563eb;
+
+            color: #ffffff;
+
+            border: 1px solid #2563eb;
+
+        }
+
+
+
+        .btn-signup:hover {
+
+            background: #1d4ed8;
+
+        }
+
+       
+
+        /* ==========================================
+
+           3. 본문 레이아웃 및 타이틀 스타일
+
+           ========================================== */
+
+        .container {
+
+            width: 90%;
+
+            max-width: 1000px;
+
+            margin: 40px auto;
+
+        }
+
+
+
+        /* 페이지 상단 안내 문구 영역 */
+
+        .intro-text {
+
+            text-align: center;
+
+            margin-bottom: 40px;
+
+        }
+
+        .intro-text h1 {
+
+            font-size: clamp(22px, 3.5vw, 36px);
+
+            font-weight: 800;
+
+            margin-bottom: 10px;
+
+            color: #0f172a;
+
+        }
+
+        .intro-text p {
+
+            font-size: clamp(12px, 1.4vw, 16px);
+
+            color: #64748b;
+
+        }
+
+
+
+        /* ==========================================
+
+           4. 서비스 메뉴 카드 그리드 스타일
+
+           ========================================== */
+
+        /* 카드 3개를 가로로 나란히 배치 */
+
+        .card-wrapper {
+
+            display: flex;
+
+            gap: 2%;
+
+            justify-content: space-between;
+
+            width: 100%;
+
+        }
+
+
+
+        /* 개별 카드 디자인 */
+
+        .card {
+
+            flex: 1;                  
+
+            min-width: 0;              
+
+            background: #ffffff;
+
+            padding: clamp(15px, 2.5vw, 28px) clamp(12px, 2vw, 22px);
+
+            border-radius: 16px;
+
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+
+            border: 1px solid #e2e8f0;
+
+            text-decoration: none;
+
+            color: inherit;
+
+            display: flex;
+
+            flex-direction: column;    
+
+            justify-content: space-between;
+
+            height: clamp(180px, 22vw, 220px);
+
+            transition: transform 0.2s, box-shadow 0.2s;
+
+            cursor: pointer;
+
+        }
+
+
+
+        /* 마우스 호버 시 카드 입체 효과 */
+
+        .card:hover {
+
+            transform: translateY(-5px);
+
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+
+            border-color: #cbd5e1;
+
+        }
+
+
+
+        .card h3 {
+
+            font-size: clamp(13px, 1.5vw, 17px);
+
+            font-weight: 700;
+
+            color: #1e3a8a;
+
+            margin-bottom: 6px;
+
+            white-space: nowrap;  
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+        }
+
+
+
+        .card p {
+
+            font-size: clamp(10px, 1.1vw, 13px);
+
+            color: #64748b;
+
+            margin-bottom: 10px;
+
+            line-height: 1.3;
+
+        }
+
+
+
+        .card-link {
+
+            font-size: clamp(11px, 1.2vw, 14px);
+
+            font-weight: 600;
+
+            color: #2563eb;
+
+        }
+
+    </style>
+
+    <!-- 구글 폰트(Noto Sans KR) 불러오기 -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+
+
+    <!-- ==========================================
+
+       [HEADER] 상단 전체 너비 헤더 영역
+
+       ========================================== -->
+
+    <div class="header">
+
+        <!-- 로고 클릭 시 메인 화면(현재 파일)으로 이동 -->
+
+        <a href="#" class="logo">세무회계강남</a>
+
+       
+
+        <!-- 우측 인증 버튼 영역 -->
+
+        <div class="auth-buttons">
+
+            <a href="양도세계산기/main.html" class="auth-btn btn-login">로그인</a>
+
+            <a href="양도세계산기/main.html" class="auth-btn btn-signup">회원가입</a>
+
+        </div>
+
     </div>
+
+
+
+    <!-- ==========================================
+
+       [MAIN] 본문 콘텐츠 영역
+
+       ========================================== -->
+
+    <div class="container">
+
+       
+
+        <!-- 페이지 상단 타이틀 및 부제 -->
+
+        <div class="intro-text">
+
+            <h1>세무회계강남 서비스 포털</h1>
+
+            <p>필요한 전문 서비스를 선택해 주세요.</p>
+
+        </div>
+
+
+
+        <!-- [CARDS] 주요 서비스 바로가기 카드 섹션 -->
+
+        <div class="card-wrapper">
+
+           
+
+            <!-- 카드 1: 양도소득세 계산기 -->
+
+            <a href="양도세계산기/main.html" class="card">
+
+                <div>
+
+                    <h3>📊 양도소득세 계산기</h3>
+
+                    <p>부동산 양도 시 발생하는 예상 세액을 빠르고 정확하게 시뮬레이션해 보세요.</p>
+
+                </div>
+
+                <span class="card-link">이용하기 &rarr;</span>
+
+            </a>
+
+
+
+            <!-- 카드 2: 세무 기장 및 상담 -->
+
+            <a href="양도세계산기/main.html" class="card">
+
+                <div>
+
+                    <h3>🏢 세무 기장 및 상담</h3>
+
+                    <p>법인 및 개인 사업자를 위한 체계적인 세무 기장 및 절세 컨설팅</p>
+
+                </div>
+
+                <span class="card-link">이용하기 &rarr;</span>
+
+            </a>
+
+
+
+            <!-- 카드 3: 상속·증여 컨설팅 -->
+
+            <a href="양도세계산기/main.html" class="card">
+
+                <div>
+
+                    <h3>🤝 상속·증여 컨설팅</h3>
+
+                    <p>사전 증여부터 상속세 신고까지 전문가의 1:1 맞춤형 플랜</p>
+
+                </div>
+
+                <span class="card-link">이용하기 &rarr;</span>
+
+            </a>
+
+
+
+        </div> <!-- // 카드 섹션 끝 -->
+
+
+
+    </div> <!-- // 본문 영역 끝 -->
+
+
+
 </body>
+
 </html>

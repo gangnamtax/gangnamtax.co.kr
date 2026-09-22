@@ -1,88 +1,490 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>양도소득세 계산기</title>
-  <link rel="stylesheet" href="css/login.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>양도소득세 계산기 - 세무회계강남</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background-color: #f8fafc;
+            font-family: 'Noto Sans KR', sans-serif;
+            padding-top: 12vh;
+        }
+
+        .calculator-card {
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .lock-content h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .lock-content p {
+            font-size: 15px;
+            color: #64748b;
+            margin-bottom: 35px;
+            line-height: 1.5;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn-main {
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-main:hover {
+            opacity: 0.9;
+        }
+
+        /* 모달 스타일 */
+        .custom-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .custom-modal-box {
+            background: #ffffff;
+            width: 90%;
+            max-width: 440px;
+            padding: 35px 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 10000;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .custom-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        /* 탭 버튼 스타일 */
+        .modal-tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: #059669;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #059669;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: #059669;
+        }
+
+        .inline-input-btn {
+            display: flex;
+            gap: 8px;
+        }
+
+        .inline-input-btn input {
+            flex: 1;
+        }
+
+        .sub-action-btn {
+            padding: 0 14px;
+            background-color: #e2e8f0;
+            color: #334155;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .sub-action-btn:hover {
+            background-color: #cbd5e1;
+        }
+
+        .social-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            border: none;
+            margin-bottom: 12px;
+            transition: opacity 0.2s;
+        }
+
+        .social-btn:hover {
+            opacity: 0.9;
+        }
+
+        .action-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #059669;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+
+        .action-submit-btn:hover {
+            opacity: 0.9;
+        }
+
+        .error-msg {
+            font-size: 12px;
+            color: #dc2626;
+            margin-top: 4px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
-  <div class="header">
-    <h2>양도소득세 계산기</h2>
-    <!-- 로그인 상태에 따라 버튼 텍스트 변경 -->
-    <div id="authButtons">
-      <button id="loginBtn" class="btn btn-login" onclick="openModal('login')">로그인</button>
-      <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
-      <button id="logoutBtn" class="btn btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
-    </div>
-  </div>
-
-  <div class="calculator-card">
-    <!-- 비회원용 오버레이 -->
-    <div id="lockOverlay" class="lock-overlay">
-      <h3>🔒 로그인 후 이용 가능합니다</h3>
-      <p>회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.</p>
-      <div>
-        <button class="btn btn-login" onclick="openModal('login')">로그인</button>
-        <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
-      </div>
+    <div class="calculator-card">
+        <div class="lock-content">
+            <h3>🔒 로그인 후 이용 가능합니다</h3>
+            <p>회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.</p>
+            <div class="btn-group">
+                <button class="btn-main" onclick="openCustomModal('login')" style="background: #059669; color: #fff;">로그인</button>
+                <button class="btn-main" onclick="openCustomModal('signup')" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">회원가입</button>
+            </div>
+        </div>
     </div>
 
-    <!-- 계산기 폼 -->
-    <form id="taxForm" onsubmit="calculateTax(event)">
-      <div class="form-group">
-        <label>양도가액 (원)</label>
-        <input type="number" id="salePrice" placeholder="예: 1000000000" required>
-      </div>
-      <div class="form-group">
-        <label>취득가액 (원)</label>
-        <input type="number" id="acqPrice" placeholder="예: 600000000" required>
-      </div>
-      <div class="form-group">
-        <label>필요경비 (원)</label>
-        <input type="number" id="expenses" placeholder="예: 20000000" value="0">
-      </div>
-      <button type="submit" class="btn">세액 계산하기</button>
-    </form>
+    <!-- 통합 인증 모달 팝업 -->
+    <div id="customAuthModal" class="custom-modal-overlay">
+        <div class="custom-modal-box">
+            
+            <button class="custom-modal-close" onclick="closeCustomModal()">&times;</button>
+            
+            <!-- 상단 탭 -->
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="switchTab('social')">간편 소셜 로그인</button>
+                <button class="tab-btn" onclick="switchTab('site')" id="siteTabBtn">사이트 회원가입</button>
+            </div>
 
-    <div id="result" class="result-box" style="display: none;"></div>
-  </div>
+            <!-- 1. 소셜 로그인 영역 -->
+            <div id="socialSection" class="form-section active">
+                <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 20px;">소셜 계정으로 3초 만에 시작하세요.</p>
+                
+                <button class="social-btn" onclick="handleSocialLogin('kakao')" style="background-color: #FEE500; color: #3c1e1e;">
+                    <span style="background: #3c1e1e; color: #FEE500; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">💬</span>
+                    카카오로 시작하기
+                </button>
 
-  <!-- 회원가입/로그인 팝업 모달 -->
-  <div id="authModal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <span class="close-btn" onclick="closeModal()">&times;</span>
-      
-      <!-- 회원가입 폼 -->
-      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
-        <h3>회원가입</h3>
-        <div class="form-group">
-          <label>아이디</label>
-          <input type="text" id="signupId" required>
-        </div>
-        <div class="form-group">
-          <label>비밀번호</label>
-          <input type="password" id="signupPw" required>
-        </div>
-        <button type="submit" class="btn btn-login">가입 완료</button>
-      </form>
+                <button class="social-btn" onclick="handleSocialLogin('naver')" style="background-color: #03C75A; color: #ffffff; margin-bottom: 0;">
+                    <span style="background: #ffffff; color: #03C75A; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">N</span>
+                    네이버로 시작하기
+                </button>
+            </div>
 
-      <!-- 로그인 폼 -->
-      <form id="loginForm" onsubmit="handleLogin(event)">
-        <h3>로그인</h3>
-        <div class="form-group">
-          <label>아이디</label>
-          <input type="text" id="loginId" required>
+            <!-- 2. 자체 사이트 계정 영역 -->
+            <div id="siteSection" class="form-section">
+                <form onsubmit="handleSiteAuth(event)">
+                    
+                    <!-- 1단계: 이름 -->
+                    <div class="input-group">
+                        <label>1. 이름 (또는 상호명)</label>
+                        <input type="text" id="userName" placeholder="홍길동" required>
+                    </div>
+
+                    <!-- 2단계: 핸드폰 번호 -->
+                    <div class="input-group">
+                        <label>2. 핸드폰 번호</label>
+                        <input type="tel" id="userPhone" placeholder="010-0000-0000" required>
+                    </div>
+
+                    <!-- 3단계: 이메일 -->
+                    <div class="input-group">
+                        <label>3. 이메일 (아이디)</label>
+                        <div class="inline-input-btn">
+                            <input type="email" id="userEmail" placeholder="example@email.com" required>
+                            <button type="button" class="sub-action-btn" onclick="sendEmailVerification()">인증요청</button>
+                        </div>
+                    </div>
+
+                    <!-- 4단계: 이메일 인증번호 확인 -->
+                    <div class="input-group" id="emailAuthGroup" style="display: none;">
+                        <label>4. 이메일 인증번호 입력</label>
+                        <div class="inline-input-btn">
+                            <input type="text" id="emailCode" placeholder="인증번호 6자리 입력">
+                            <button type="button" class="sub-action-btn" onclick="verifyEmailCode()" style="background-color: #059669; color: white;">확인</button>
+                        </div>
+                    </div>
+
+                    <!-- 비밀번호 설정 -->
+                    <div class="input-group">
+                        <label>비밀번호 설정</label>
+                        <input type="password" id="userPassword" placeholder="영문, 숫자, 특수기호 혼합 8자리 이상" required>
+                    </div>
+
+                    <!-- 비밀번호 확인 -->
+                    <div class="input-group">
+                        <label>비밀번호 확인</label>
+                        <input type="password" id="userPasswordConfirm" placeholder="비밀번호를 다시 입력해주세요" required>
+                        <div id="pwErrorMsg" class="error-msg"></div>
+                    </div>
+
+                    <button type="submit" class="action-submit-btn" id="submitBtnText">회원가입 완료</button>
+                </form>
+            </div>
+
         </div>
-        <div class="form-group">
-          <label>비밀번호</label>
-          <input type="password" id="loginPw" required>
-        </div>
-        <button type="submit" class="btn btn-login">로그인</button>
-      </form>
     </div>
-  </div>
 
-  <script src="js/login.js"></script>
+    <script>
+        let currentMode = 'signup'; 
+
+        function openCustomModal(type) {
+            currentMode = type;
+            const modal = document.getElementById('customAuthModal');
+            const siteTabBtn = document.getElementById('siteTabBtn');
+            const submitBtnText = document.getElementById('submitBtnText');
+
+            if (type === 'login') {
+                siteTabBtn.innerText = '사이트 로그인';
+                submitBtnText.innerText = '로그인하기';
+            } else {
+                siteTabBtn.innerText = '사이트 회원가입';
+                submitBtnText.innerText = '회원가입 완료';
+            }
+
+            switchTab('site'); 
+            modal.style.display = 'flex';
+        }
+
+        function closeCustomModal() {
+            document.getElementById('customAuthModal').style.display = 'none';
+        }
+
+        function switchTab(tabName) {
+            const socialSec = document.getElementById('socialSection');
+            const siteSec = document.getElementById('siteSection');
+            const tabBtns = document.querySelectorAll('.tab-btn');
+
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+
+            if (tabName === 'social') {
+                socialSec.classList.add('active');
+                siteSec.classList.remove('active');
+                tabBtns[0].classList.add('active');
+            } else {
+                socialSec.classList.remove('active');
+                siteSec.classList.add('active');
+                tabBtns[1].classList.add('active');
+            }
+        }
+
+        function handleSocialLogin(provider) {
+            alert(provider + ' 소셜 로그인 연동 영역입니다.');
+        }
+
+        // 실제 백엔드 서버(Node.js / AWS SES)로 메일 발송 요청을 보내는 함수
+        async function sendEmailVerification() {
+            const email = document.getElementById('userEmail').value;
+            
+            if (!email) {
+                alert('이메일을 먼저 입력해 주세요.');
+                document.getElementById('userEmail').focus();
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/send-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('인증번호가 메일로 발송되었습니다! 메일함을 확인해 주세요.');
+                    document.getElementById('emailAuthGroup').style.display = 'block';
+                } else {
+                    alert('발송 실패: ' + result.message);
+                }
+            } catch (error) {
+                console.error('통신 오류:', error);
+                alert('서버와 통신하지 못했습니다. Node.js 백엔드 서버(node server.js)가 실행 중인지 확인해 주세요.');
+            }
+        }
+
+        async function verifyEmailCode() {
+            const email = document.getElementById('userEmail').value;
+            const code = document.getElementById('emailCode').value;
+
+            if (!code) {
+                alert('인증번호를 입력해 주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/verify-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email, code: code })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('이메일 인증이 성공적으로 완료되었습니다.');
+                } else {
+                    alert('인증 실패: ' + result.message);
+                }
+            } catch (error) {
+                console.error('통신 오류:', error);
+                alert('서버 통신 중 오류가 발생했습니다.');
+            }
+        }
+
+        function handleSiteAuth(event) {
+            event.preventDefault();
+            const name = document.getElementById('userName').value;
+            const phone = document.getElementById('userPhone').value;
+            const email = document.getElementById('userEmail').value;
+            const password = document.getElementById('userPassword').value;
+            const passwordConfirm = document.getElementById('userPasswordConfirm').value;
+            const pwErrorMsg = document.getElementById('pwErrorMsg');
+
+            // 로그인 모드가 아닐 때(회원가입일 때만) 비밀번호 유효성 검사 수행
+            if (currentMode === 'signup') {
+                // 영문, 숫자, 특수기호 혼합 8자리 이상 정규식
+                const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!\%*#?&]{8,}$/;
+
+                if (!pwRegex.test(password)) {
+                    pwErrorMsg.textContent = "비밀번호는 영문, 숫자, 특수기호를 조합하여 8자리 이상으로 입력해주세요.";
+                    pwErrorMsg.style.display = 'block';
+                    document.getElementById('userPassword').focus();
+                    return;
+                }
+
+                if (password !== passwordConfirm) {
+                    pwErrorMsg.textContent = "비밀번호가 일치하지 않습니다.";
+                    pwErrorMsg.style.display = 'block';
+                    document.getElementById('userPasswordConfirm').focus();
+                    return;
+                }
+
+                pwErrorMsg.style.display = 'none';
+            }
+
+            if (currentMode === 'login') {
+                alert(`[자체 로그인]\n아이디: ${email}`);
+            } else {
+                alert(`[회원가입 완료]\n이름: ${name}\n연락처: ${phone}\n이메일: ${email}\n성공적으로 가입되었습니다!`);
+                closeCustomModal();
+            }
+        }
+    </script>
 </body>
 </html>
