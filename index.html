@@ -349,15 +349,24 @@
 
         document.getElementById('year').textContent = new Date().getFullYear();
 
-        // 로고 위아래 문구를 '세무회계강남' 글자 폭에 맞춰 글자 간격 조절
+        // 로고 위아래 문구를 '세무회계강남' 글자 폭에 맞춤
+        // 글자 간격을 기본(13px 글씨) 대비 20%만 남기고, 나머지 폭은 글씨 크기를 키워서 채움
+        const LOGO_SPACING_KEEP = 0.2;
         function fitLogoText() {
             const target = document.querySelector('.logo-title').getBoundingClientRect().width;
+            const textWidth = el => {
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                return range.getBoundingClientRect().width;
+            };
             document.querySelectorAll('.fit-logo').forEach(el => {
                 el.style.letterSpacing = '0px';
                 el.style.marginRight = '0px';
-                const range = document.createRange();
-                range.selectNodeContents(el);
-                const natural = range.getBoundingClientRect().width;
+                el.style.fontSize = '13px';
+                const baseWidth = textWidth(el);
+                const wantedWidth = target - (target - baseWidth) * LOGO_SPACING_KEEP;
+                el.style.fontSize = (13 * wantedWidth / baseWidth) + 'px';
+                const natural = textWidth(el);
                 const gaps = el.textContent.length - 1;
                 const spacing = (target - natural) / gaps;
                 el.style.letterSpacing = spacing + 'px';
