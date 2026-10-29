@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 const { calculateTax } = require('./lib/taxCalc');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000; // 호스팅 서비스가 정해주는 포트 사용
 
 // 이용권 설정 (가격/기간은 여기서 변경)
 const PLAN = {
@@ -52,7 +52,8 @@ app.use('/' + encodeURIComponent('양도세계산기'), express.static(path.join
 // ==========================================
 // 간단한 파일 저장소 (data/db.json)
 // ==========================================
-const DATA_DIR = path.join(__dirname, 'data');
+// 회원 정보 저장 위치 (호스팅에서는 재배포해도 지워지지 않는 디스크 경로를 DATA_DIR로 지정)
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
 function loadDb() {
