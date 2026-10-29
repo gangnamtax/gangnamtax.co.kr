@@ -395,7 +395,8 @@
             const frontTop = frontMark.getBoundingClientRect().top - glyph(front, parseFloat(getComputedStyle(front).fontSize), '세무회계').up;
             const bottom = subMark.getBoundingClientRect().top;
             const g100 = glyph(back, 100, '강남');
-            const size = (bottom - frontTop) / ((g100.up + g100.down) / 100);
+            const LOGO_BACK_SCALE = 0.9; // '강남' 크기 비율 (1 = TAX&CONSULTING 밑선까지 꽉 차게)
+            const size = (bottom - frontTop) / ((g100.up + g100.down) / 100) * LOGO_BACK_SCALE;
             if (size > 0) {
                 back.style.fontSize = size + 'px';
                 const backTop = backMark.getBoundingClientRect().top - glyph(back, size, '강남').up;
