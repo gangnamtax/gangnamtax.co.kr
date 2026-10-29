@@ -49,6 +49,7 @@ function showComingSoon() {
   document.getElementById('lockOverlay').style.display = 'flex';
   document.getElementById('lockLogin').style.display = 'none';
   document.getElementById('lockPay').style.display = 'none';
+  document.getElementById('lockWait').style.display = 'none';
   document.getElementById('lockReady').style.display = 'block';
 }
 
@@ -64,7 +65,7 @@ async function refreshUser() {
       updateUi(null);
       return;
     }
-    updateUi(data.user, data.plan);
+    updateUi(data.user, data.plan, data.paymentEnabled, data.bank);
   } catch (error) {
     console.error('통신 에러:', error);
     updateUi(null);
@@ -215,19 +216,40 @@ async function handleLogout() {
 }
 
 // ==========================================
-// 7. 화면 상태 변경 (비회원 / 미결제 회원 / 이용권 회원)
+// 7. 화면 상태 변경 (비회원 / 승인 대기 회원 / 승인된 회원)
 // ==========================================
-function updateUi(user, plan) {
+function updateUi(user, plan, paymentEnabled, bank) {
   const loggedIn = !!user;
   const paid = loggedIn && user.paid;
+  const waiting = loggedIn && !paid;
 
   document.getElementById('loginBtn').style.display = loggedIn ? 'none' : 'inline-block';
   document.getElementById('signupBtn').style.display = loggedIn ? 'none' : 'inline-block';
   document.getElementById('logoutBtn').style.display = loggedIn ? 'inline-block' : 'none';
+  document.getElementById('adminLink').style.display = loggedIn && user.admin ? 'inline' : 'none';
 
   document.getElementById('lockOverlay').style.display = paid ? 'none' : 'flex';
   document.getElementById('lockLogin').style.display = loggedIn ? 'none' : 'block';
-  document.getElementById('lockPay').style.display = loggedIn && !paid ? 'block' : 'none';
+  // 카드결제를 쓰지 않으면 '승인 대기' 안내, 쓰면 결제 안내
+  document.getElementById('lockWait').style.display = waiting && !paymentEnabled ? 'block' : 'none';
+  document.getElementById('lockPay').style.display = waiting && paymentEnabled ? 'block' : 'none';
+  if (waiting && !paymentEnabled) {
+    const applied = !!user.appliedAt;
+    document.getElementById('applyBefore').style.display = applied ? 'none' : 'block';
+    document.getElementById('applyAfter').style.display = applied ? 'block' : 'none';
+    if (user.paidUntil) {
+      document.getElementById('waitInfo').innerText = '이용기간이 만료되었습니다. 다시 인가 신청을 해주세요.';
+    }
+    if (plan) {
+      const price = `${plan.price.toLocaleString('ko-KR')}원`;
+      document.getElementById('applyPlan').innerText = `${plan.name} · ${price}`;
+      document.getElementById('bankAmount').innerText = `${price} (${plan.days}일 이용)`;
+    }
+    if (bank) {
+      document.getElementById('bankLine').innerText = `${bank.bank} ${bank.number}`;
+      document.getElementById('bankHolder').innerText = bank.holder;
+    }
+  }
 
   if (plan) {
     document.getElementById('planInfo').innerText =
@@ -235,7 +257,9 @@ function updateUi(user, plan) {
   }
 
   const status = document.getElementById('planStatus');
-  if (paid) {
+  if (paid && user.admin) {
+    status.innerText = '관리자';
+  } else if (paid) {
     status.innerText = `이용기간: ~${user.paidUntil.slice(0, 10)}`;
   } else if (loggedIn && user.paidUntil) {
     status.innerText = '이용기간 만료';
@@ -244,6 +268,23 @@ function updateUi(user, plan) {
   }
 
   if (!paid) document.getElementById('result').style.display = 'none';
+}
+
+// ==========================================
+// 7-1. 인가 신청 (계좌이체 안내 → 관리자 승인)
+// ==========================================
+async function applyAccess() {
+  try {
+    const { ok, data } = await api('/api/apply', {});
+    if (!ok) {
+      alert(data.message || '인가 신청을 하지 못했습니다.');
+      return;
+    }
+    await refreshUser();
+  } catch (error) {
+    console.error('통신 에러:', error);
+    alert('서버와 통신하지 못했습니다.');
+  }
 }
 
 // ==========================================

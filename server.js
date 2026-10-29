@@ -11,10 +11,26 @@ const port = 3000;
 
 // 이용권 설정 (가격/기간은 여기서 변경)
 const PLAN = {
-    name: '양도세 계산기 30일 이용권',
+    name: '양도세 계산기 1주 이용권',
     price: 99000,
-    days: 30
+    days: 7
 };
+
+// 인가 신청 시 안내할 입금 계좌 (계좌이체 확인 후 관리자가 승인)
+const BANK_ACCOUNT = {
+    bank: '은행명',
+    number: '계좌번호',
+    holder: '예금주'
+};
+
+// 카드결제 사용 여부 (지금은 관리자 승인 방식만 사용)
+const PAYMENT_ENABLED = false;
+
+// 관리자 승인 기간 (일) - 관리자 화면의 승인 버튼
+const APPROVE_DAYS = [7];
+
+// 관리자 이메일 (.env의 ADMIN_EMAIL, 없으면 알림 메일 계정)
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || process.env.NAVER_EMAIL || '').trim().toLowerCase();
 
 // 토스페이먼츠 키 (.env에 TOSS_CLIENT_KEY / TOSS_SECRET_KEY 설정)
 // 설정하지 않으면 토스페이먼츠 공식 문서의 공개 테스트 키를 사용 (실제 결제 안 됨)
@@ -60,8 +76,13 @@ function isPaid(user) {
     return !!user.paidUntil && new Date(user.paidUntil) > new Date();
 }
 
+function isAdmin(user) {
+    return !!ADMIN_EMAIL && user.email === ADMIN_EMAIL;
+}
+
+// paidUntil = 이용 가능 기한 (관리자 승인 또는 결제로 설정)
 function publicUser(user) {
-    return { email: user.email, name: user.name, paidUntil: user.paidUntil || null, paid: isPaid(user) };
+    return { email: user.email, name: user.name, paidUntil: user.paidUntil || null, paid: isPaid(user) || isAdmin(user), admin: isAdmin(user), appliedAt: user.appliedAt || null };
 }
 
 // 로그인 확인 미들웨어 (Authorization: Bearer <토큰>)
@@ -75,6 +96,15 @@ function requireAuth(req, res, next) {
     req.user = user;
     req.token = token;
     next();
+}
+
+function requireAdmin(req, res, next) {
+    requireAuth(req, res, () => {
+        if (!isAdmin(req.user)) {
+            return res.status(403).json({ success: false, message: '관리자만 사용할 수 있습니다.' });
+        }
+        next();
+    });
 }
 
 // ==========================================
@@ -169,7 +199,7 @@ app.post('/api/signup', (req, res) => {
         createdAt: new Date().toISOString()
     };
     saveDb();
-    res.json({ success: true, message: '회원가입이 완료되었습니다! 로그인 해주세요.' });
+    res.json({ success: true, message: '회원가입이 완료되었습니다! 로그인 후 인가 신청을 해주세요.' });
 });
 
 app.post('/api/login', (req, res) => {
@@ -196,7 +226,76 @@ app.post('/api/logout', requireAuth, (req, res) => {
 });
 
 app.get('/api/me', requireAuth, (req, res) => {
-    res.json({ success: true, user: publicUser(req.user), plan: PLAN });
+    res.json({ success: true, user: publicUser(req.user), plan: PLAN, bank: BANK_ACCOUNT, paymentEnabled: PAYMENT_ENABLED });
+});
+
+// 인가 신청: 회원이 신청하면 입금 계좌를 안내하고, 관리자에게 알림 메일
+app.post('/api/apply', requireAuth, (req, res) => {
+    const user = req.user;
+    const first = !user.appliedAt;
+    user.appliedAt = new Date().toISOString();
+    saveDb();
+
+    if (first && ADMIN_EMAIL) {
+        transporter.sendMail({
+            from: process.env.NAVER_EMAIL,
+            to: ADMIN_EMAIL,
+            subject: `[세무회계강남] 양도세 계산기 인가 신청: ${user.name || user.email}`,
+            text: `양도세 계산기 인가 신청이 들어왔습니다.\n\n이름: ${user.name || '-'}\n연락처: ${user.phone || '-'}\n이메일: ${user.email}\n\n입금(${PLAN.price.toLocaleString('ko-KR')}원) 확인 후 관리자 화면에서 승인해 주세요.`
+        }).catch(error => console.error('[인가 신청 알림 메일 실패]', error.message));
+    }
+    console.log(`[인가 신청] ${user.email}`);
+    res.json({ success: true, user: publicUser(user), plan: PLAN, bank: BANK_ACCOUNT });
+});
+
+// ==========================================
+// 2-1. 관리자: 회원 목록 / 기간 승인 / 승인 취소
+// ==========================================
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+    const users = Object.values(db.users)
+        .map(u => ({
+            email: u.email,
+            name: u.name,
+            phone: u.phone,
+            createdAt: u.createdAt,
+            appliedAt: u.appliedAt || null,
+            paidUntil: u.paidUntil || null,
+            active: isPaid(u),
+            admin: isAdmin(u)
+        }))
+        .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    res.json({ success: true, users, approveDays: APPROVE_DAYS });
+});
+
+app.post('/api/admin/approve', requireAdmin, (req, res) => {
+    const user = db.users[String(req.body.email || '').toLowerCase()];
+    const days = Number(req.body.days);
+    if (!user) {
+        return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
+    }
+    if (!APPROVE_DAYS.includes(days)) {
+        return res.status(400).json({ success: false, message: '승인 기간이 올바르지 않습니다.' });
+    }
+    // 승인한 시점부터 기간 시작
+    const until = new Date();
+    until.setDate(until.getDate() + days);
+    user.paidUntil = until.toISOString();
+    user.approvedAt = new Date().toISOString();
+    user.appliedAt = null; // 다음 연장 때 다시 인가 신청
+    saveDb();
+    console.log(`[승인] ${user.email} ${days}일, ~${user.paidUntil}`);
+    res.json({ success: true, user: publicUser(user) });
+});
+
+app.post('/api/admin/revoke', requireAdmin, (req, res) => {
+    const user = db.users[String(req.body.email || '').toLowerCase()];
+    if (!user) {
+        return res.status(404).json({ success: false, message: '회원을 찾을 수 없습니다.' });
+    }
+    user.paidUntil = null;
+    saveDb();
+    console.log(`[승인 취소] ${user.email}`);
+    res.json({ success: true, user: publicUser(user) });
 });
 
 // ==========================================
@@ -205,6 +304,9 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 // 결제 준비: 서버에서 주문번호와 금액을 정해 저장 (금액 위변조 방지)
 app.post('/api/payments/prepare', requireAuth, (req, res) => {
+    if (!PAYMENT_ENABLED) {
+        return res.status(403).json({ success: false, message: '현재 카드결제는 사용하지 않습니다. 관리자 승인 후 이용해 주세요.' });
+    }
     const orderId = `ORD-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
     db.orders[orderId] = {
         email: req.user.email,
@@ -281,8 +383,8 @@ app.post('/api/payments/confirm', requireAuth, async (req, res) => {
 // 4. 세액 계산 (결제한 회원만)
 // ==========================================
 app.post('/api/calculate', requireAuth, (req, res) => {
-    if (!isPaid(req.user)) {
-        return res.status(402).json({ success: false, message: '이용권 결제 후 이용 가능합니다.' });
+    if (!isPaid(req.user) && !isAdmin(req.user)) {
+        return res.status(402).json({ success: false, message: '관리자 승인 후 이용 가능합니다.' });
     }
     const result = calculateTax(req.body);
     if (result.error) {

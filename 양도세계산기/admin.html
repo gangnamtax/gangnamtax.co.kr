@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>회원 승인 관리 - 세무회계강남</title>
+  <style>
+    body { font-family: 'Malgun Gothic', sans-serif; background: #f8fafc; color: #1e293b; margin: 0; padding: 24px 16px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    a.back { font-size: 13px; color: #64748b; text-decoration: none; }
+    h1 { font-size: 22px; margin: 10px 0 4px; }
+    .sub { color: #64748b; font-size: 14px; margin-bottom: 20px; }
+    .notice { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; text-align: center; color: #64748b; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+    th, td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; font-size: 14px; text-align: left; vertical-align: middle; }
+    th { background: #f1f5f9; font-weight: 600; color: #475569; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .on { background: #dcfce7; color: #15803d; }
+    .wait { background: #fef3c7; color: #b45309; }
+    .off { background: #f1f5f9; color: #64748b; }
+    .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    button { border: none; border-radius: 6px; padding: 7px 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .approve { background: #1f2352; color: #fff; }
+    .revoke { background: #fff; color: #dc2626; border: 1px solid #fecaca; }
+    @media (max-width: 700px) {
+      thead { display: none; }
+      tr { display: block; border-bottom: 8px solid #f8fafc; }
+      td { display: block; border: none; padding: 6px 12px; }
+      td::before { content: attr(data-label) ' · '; color: #94a3b8; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="main.html">← 양도세 계산기</a>
+    <h1>회원 승인 관리</h1>
+    <p class="sub">'인가 신청' 회원의 입금을 확인한 뒤 승인해 주세요. 승인한 날부터 기간이 시작됩니다.</p>
+    <div id="content"><div class="notice">불러오는 중...</div></div>
+  </div>
+
+  <script>
+    async function api(path, body) {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('authToken');
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(path, {
+        method: body === undefined ? 'GET' : 'POST',
+        headers,
+        body: body === undefined ? undefined : JSON.stringify(body)
+      });
+      return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
+    }
+
+    const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const day = iso => iso ? iso.slice(0, 10) : '-';
+
+    async function load() {
+      const box = document.getElementById('content');
+      const { ok, status, data } = await api('/api/admin/users');
+      if (!ok) {
+        box.innerHTML = `<div class="notice">${status === 401 || status === 403
+          ? '관리자 계정으로 로그인한 뒤 이용해 주세요. <a href="main.html">계산기 화면에서 로그인</a>'
+          : escapeHtml(data.message || '목록을 불러오지 못했습니다.')}</div>`;
+        return;
+      }
+      if (!data.users.length) {
+        box.innerHTML = '<div class="notice">아직 가입한 회원이 없습니다.</div>';
+        return;
+      }
+      const rows = data.users.map(u => {
+        const state = u.admin ? '<span class="badge on">관리자</span>'
+          : u.active ? `<span class="badge on">이용 중 ~${day(u.paidUntil)}</span>`
+          : u.appliedAt ? `<span class="badge wait">인가 신청 ${day(u.appliedAt)}</span>`
+          : u.paidUntil ? `<span class="badge off">만료 ${day(u.paidUntil)}</span>`
+          : '<span class="badge off">가입만 함</span>';
+        const email = escapeHtml(u.email);
+        const actions = u.admin ? '' : `<div class="btns">
+            ${data.approveDays.map(d => `<button class="approve" onclick="approve('${email}', ${d})">${d}일 승인</button>`).join('')}
+            ${u.active ? `<button class="revoke" onclick="revoke('${email}')">승인 취소</button>` : ''}
+          </div>`;
+        return `<tr>
+          <td data-label="이름">${escapeHtml(u.name) || '-'}</td>
+          <td data-label="이메일">${email}</td>
+          <td data-label="연락처">${escapeHtml(u.phone) || '-'}</td>
+          <td data-label="가입일">${day(u.createdAt)}</td>
+          <td data-label="상태">${state}</td>
+          <td>${actions}</td>
+        </tr>`;
+      }).join('');
+      box.innerHTML = `<table>
+        <thead><tr><th>이름</th><th>이메일</th><th>연락처</th><th>가입일</th><th>상태</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    async function approve(email, days) {
+      if (!confirm(`${email} 님을 오늘부터 ${days}일 동안 승인할까요?`)) return;
+      const { ok, data } = await api('/api/admin/approve', { email, days });
+      if (!ok) alert(data.message || '승인하지 못했습니다.');
+      load();
+    }
+
+    async function revoke(email) {
+      if (!confirm(`${email} 님의 승인을 취소할까요?`)) return;
+      const { ok, data } = await api('/api/admin/revoke', { email });
+      if (!ok) alert(data.message || '취소하지 못했습니다.');
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>

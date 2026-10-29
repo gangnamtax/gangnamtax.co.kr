@@ -250,6 +250,7 @@
         <h2>📊양도소득세 간이 계산기</h2>
         <p>예상세액 시뮬레이션</p>
         <div id="authButtons">
+          <a id="adminLink" href="admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
           <span id="planStatus" style="font-size: 12px; color: #2563eb; font-weight: 600; margin-right: 6px;"></span>
           <button id="loginBtn" class="btn btn-login" onclick="openModal('login')">로그인</button>
           <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
@@ -272,6 +273,26 @@
               <button class="btn btn-login" onclick="openModal('login')">로그인</button>
               <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
             </div>
+          </div>
+          <div id="lockWait" style="display: none;">
+            <!-- 인가 신청 전 -->
+            <div id="applyBefore">
+              <h3>📝 인가 신청 후 이용 가능합니다</h3>
+              <p id="waitInfo" style="color: #666; margin-bottom: 6px;">이용권을 계좌이체로 결제하시면 확인 후 승인해 드립니다.</p>
+              <p id="applyPlan" style="font-weight: 700; margin-bottom: 18px;"></p>
+              <button class="btn btn-login" onclick="applyAccess()" style="padding: 12px 24px;">인가 신청하기</button>
+            </div>
+            <!-- 인가 신청 후: 입금 계좌 안내 -->
+            <div id="applyAfter" style="display: none;">
+              <h3>🏦 아래 계좌로 입금해 주세요</h3>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 12px auto 12px; max-width: 320px; text-align: left; line-height: 1.8;">
+                <div><span style="color: #64748b;">입금 계좌</span> <strong id="bankLine"></strong></div>
+                <div><span style="color: #64748b;">예금주</span> <strong id="bankHolder"></strong></div>
+                <div><span style="color: #64748b;">금액</span> <strong id="bankAmount"></strong></div>
+              </div>
+              <p style="color: #666; font-size: 14px; margin-bottom: 6px;">입금자명은 가입하신 이름과 같게 해주세요.<br>입금 확인 후 승인되면 바로 이용하실 수 있습니다.</p>
+            </div>
+            <p style="color: #666; font-size: 14px;">문의: <a href="tel:010-4454-2429" style="color: #2563eb; font-weight: 600;">010-4454-2429</a></p>
           </div>
           <div id="lockPay" style="display: none;">
             <h3>💳 이용권 결제 후 이용 가능합니다</h3>
