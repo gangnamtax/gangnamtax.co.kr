@@ -72,14 +72,14 @@
         .hero { background: var(--navy); color: #fff; padding: 56px 0 72px; }
         .hero .inner { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 40px; align-items: center; }
         /* 로고: 블로그 로고처럼 '강남'만 크게, 위아래 작은 문구는 '세무회계' 폭에 맞춤 */
-        /* '강남'은 위 문구 윗선부터 '세무회계' 밑선까지 내려오는 높이로 맞춤 (크기는 스크립트가 계산) */
+        /* '세무회계'와 '강남'은 따로: '강남'은 '세무회계'와 윗선을 맞추고 TAX&CONSULTING 밑선까지 내려옴 (크기는 스크립트가 계산) */
         .hero-logo .logo-text { display: inline-block; }
-        .hero-logo .logo-row { display: flex; align-items: last baseline; gap: 4px; }
+        .hero-logo .logo-row { display: flex; align-items: flex-start; gap: 6px; }
         .hero-logo .logo-left { display: flex; flex-direction: column; }
         .hero-logo .logo-tagline { display: block; font-size: 12px; font-weight: 400; letter-spacing: 0; color: #cbd5e1; white-space: nowrap; line-height: 1.2; margin-bottom: 2px; }
         .hero-logo .logo-front { font-size: 44px; font-weight: 700; line-height: 1; }
         .hero-logo .logo-back { font-size: 62px; font-weight: 900; line-height: 1; }
-        .hero-logo .logo-sub { display: block; font-size: 12px; font-weight: 500; color: #cbd5e1; white-space: nowrap; margin-top: 6px; }
+        .hero-logo .logo-sub { display: block; font-size: 12px; font-weight: 500; letter-spacing: 0; color: #cbd5e1; white-space: nowrap; line-height: 1.2; margin-top: 6px; }
         .hero-logo .bl { display: inline-block; width: 0; height: 0; }
         .hero-logo .name { display: flex; align-items: center; gap: 12px; }
         .hero-logo svg { width: 54px; height: 54px; }
@@ -204,10 +204,10 @@
                             <span class="logo-left">
                                 <small class="logo-tagline fit-logo">납세자의 든든한 세무파트너<i class="bl"></i></small>
                                 <span class="logo-front">세무회계<i class="bl"></i></span>
+                                <span class="logo-sub fit-logo">TAX&amp;CONSULTING<i class="bl"></i></span>
                             </span>
-                            <span class="logo-back">강남</span>
+                            <span class="logo-back">강남<i class="bl"></i></span>
                         </h1>
-                        <span class="logo-sub fit-logo">TAX&amp;CONSULTING</span>
                     </div>
                 </div>
                 <p>신뢰는 작은 것에서부터 시작합니다.<br>고객 한 분 한 분 상황에 맞춘 세심한 세무서비스를 제공합니다.</p>
@@ -380,15 +380,27 @@
                 el.style.marginRight = -spacing + 'px'; // 마지막 글자 뒤 간격 제거
             });
 
-            // '강남' 크기: 위 문구 아랫선 ~ '세무회계' 밑선(기준선) 높이에 맞춤
+            // '강남': 윗선은 '세무회계' 글자 윗선, 밑선은 TAX&CONSULTING 글자 밑선에 맞춤
+            const front = document.querySelector('.logo-front');
             const back = document.querySelector('.logo-back');
-            const [tagMark, frontMark] = document.querySelectorAll('.logo-text .bl');
+            const [, frontMark, subMark, backMark] = document.querySelectorAll('.logo-text .bl');
             const ctx = document.createElement('canvas').getContext('2d');
-            const ascent = (font, text) => { ctx.font = font; return ctx.measureText(text).actualBoundingBoxAscent; };
-            const height = frontMark.getBoundingClientRect().top - tagMark.getBoundingClientRect().top;
-            const backStyle = getComputedStyle(back);
-            const ratio = ascent(`${backStyle.fontWeight} 100px ${backStyle.fontFamily}`, '강남') / 100;
-            if (height > 0 && ratio > 0) back.style.fontSize = (height / ratio) + 'px';
+            const glyph = (el, size, text) => {
+                const st = getComputedStyle(el);
+                ctx.font = `${st.fontWeight} ${size}px ${st.fontFamily}`;
+                const m = ctx.measureText(text);
+                return { up: m.actualBoundingBoxAscent, down: m.actualBoundingBoxDescent };
+            };
+            back.style.marginTop = '0px';
+            const frontTop = frontMark.getBoundingClientRect().top - glyph(front, parseFloat(getComputedStyle(front).fontSize), '세무회계').up;
+            const bottom = subMark.getBoundingClientRect().top;
+            const g100 = glyph(back, 100, '강남');
+            const size = (bottom - frontTop) / ((g100.up + g100.down) / 100);
+            if (size > 0) {
+                back.style.fontSize = size + 'px';
+                const backTop = backMark.getBoundingClientRect().top - glyph(back, size, '강남').up;
+                back.style.marginTop = (frontTop - backTop) + 'px';
+            }
         }
         fitLogoText();
         document.fonts.ready.then(fitLogoText);
