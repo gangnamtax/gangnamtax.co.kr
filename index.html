@@ -71,11 +71,13 @@
         /* 대문 */
         .hero { background: var(--navy); color: #fff; padding: 56px 0 72px; }
         .hero .inner { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 40px; align-items: center; }
-        .hero-logo small { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 4px; }
+        .hero-logo small { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 4px; white-space: nowrap; }
+        .hero-logo .logo-text { display: inline-block; }
+        .hero-logo .logo-title { display: inline-block; }
         .hero-logo .name { display: flex; align-items: center; gap: 12px; }
         .hero-logo svg { width: 54px; height: 54px; }
         .hero-logo h1 { font-size: 46px; font-weight: 900; letter-spacing: -1px; line-height: 1.1; }
-        .hero-logo h1 span { font-size: 13px; display: block; letter-spacing: 1px; font-weight: 500; color: #cbd5e1; }
+        .hero-logo h1 span.fit-logo { font-size: 13px; display: block; letter-spacing: 1px; font-weight: 500; color: #cbd5e1; white-space: nowrap; margin-top: 4px; }
         .hero-logo p { margin-top: 26px; font-size: 15px; color: #e2e8f0; }
         .hero-services { list-style: none; font-size: 16px; }
         .hero-services li { padding: 4px 0; }
@@ -188,10 +190,12 @@
     <header class="hero" id="about">
         <div class="inner">
             <div class="hero-logo">
-                <small> 납세자의 든든한 세무파트너</small>
                 <div class="name">
                     <svg><use href="#clover"/></svg>
-                    <h1>세무회계강남<span>TAX &amp; CONSULTING</span></h1>
+                    <div class="logo-text">
+                        <small class="fit-logo">납세자의 든든한 세무파트너</small>
+                        <h1><span class="logo-title">세무회계강남</span><span class="fit-logo">TAX &amp; CONSULTING</span></h1>
+                    </div>
                 </div>
                 <p>신뢰는 작은 것에서부터 시작합니다.<br>고객 한 분 한 분 상황에 맞춘 세심한 세무서비스를 제공합니다.</p>
                 <div class="hero-cta">
@@ -344,6 +348,25 @@
         ).join('');
 
         document.getElementById('year').textContent = new Date().getFullYear();
+
+        // 로고 위아래 문구를 '세무회계강남' 글자 폭에 맞춰 글자 간격 조절
+        function fitLogoText() {
+            const target = document.querySelector('.logo-title').getBoundingClientRect().width;
+            document.querySelectorAll('.fit-logo').forEach(el => {
+                el.style.letterSpacing = '0px';
+                el.style.marginRight = '0px';
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                const natural = range.getBoundingClientRect().width;
+                const gaps = el.textContent.length - 1;
+                const spacing = (target - natural) / gaps;
+                el.style.letterSpacing = spacing + 'px';
+                el.style.marginRight = -spacing + 'px'; // 마지막 글자 뒤 간격 제거
+            });
+        }
+        fitLogoText();
+        document.fonts.ready.then(fitLogoText);
+        window.addEventListener('resize', fitLogoText);
 
         // 양도세 계산기 오픈 전에는 '준비 중'으로 표시 (오픈할 때 true로 변경)
         const CALC_READY = false;
