@@ -132,6 +132,14 @@
 
         footer { background: var(--navy-dark); color: #94a3b8; font-size: 13px; padding: 24px 0; }
 
+        /* 카톡 QR 팝업 (PC에서 표시) */
+        .qr-modal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.6); z-index: 50; align-items: center; justify-content: center; padding: 16px; }
+        .qr-modal.open { display: flex; }
+        .qr-box { background: #fff; border-radius: 14px; padding: 24px; text-align: center; max-width: 340px; width: 100%; position: relative; }
+        .qr-box img { width: 100%; border-radius: 10px; display: block; }
+        .qr-box p { margin-top: 14px; color: var(--muted); font-size: 14px; }
+        .qr-close { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 26px; cursor: pointer; color: #94a3b8; }
+
         @media (max-width: 860px) {
             .nav-links { display: none; }
             .hero .inner { grid-template-columns: 1fr; gap: 28px; }
@@ -272,7 +280,7 @@
                 <div class="contact-item">
                     <h3>💬 세무사 카톡상담</h3>
                     <p>양도 · 상속 · 증여 등 세금 고민을 카톡으로 편하게 물어보세요.</p>
-                    <a href="https://qr.kakao.com/talk/apHWPmXp2XOxAxSWs5ken36AMh0-" target="_blank" rel="noopener" class="btn btn-sky">카톡으로 대화하기</a>
+                    <a href="https://qr.kakao.com/talk/apHWPmXp2XOxAxSWs5ken36AMh0-" target="_blank" rel="noopener" class="btn btn-sky" onclick="return openKakao(event)">카톡으로 대화하기</a>
                 </div>
                 <div class="contact-item">
                     <h3>📒 기장료 상담</h3>
@@ -346,6 +354,26 @@
                 a.style.opacity = '0.6';
                 a.textContent = a.classList.contains('highlight') ? '양도세 계산기 (준비 중)' : '계산기 준비 중';
             });
+        }
+    </script>
+    <!-- 카톡 QR 팝업: PC에서는 휴대폰으로 QR을 찍도록 안내, 휴대폰에서는 카카오톡으로 바로 이동 -->
+    <div class="qr-modal" id="qrModal" onclick="if (event.target === this) closeKakao()">
+        <div class="qr-box">
+            <button class="qr-close" onclick="closeKakao()" aria-label="닫기">&times;</button>
+            <img src="images/kakao-qr.png" alt="세무사 김하원 카카오톡 QR코드">
+            <p>휴대폰 카메라로 QR코드를 찍으면<br>카카오톡 대화로 연결됩니다.</p>
+        </div>
+    </div>
+    <script>
+        const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+        function openKakao(e) {
+            if (isMobile) return true; // 휴대폰: 카카오톡 링크로 이동
+            e.preventDefault();
+            document.getElementById('qrModal').classList.add('open');
+            return false;
+        }
+        function closeKakao() {
+            document.getElementById('qrModal').classList.remove('open');
         }
     </script>
 </body>
