@@ -31,6 +31,8 @@
         "founder": { "@type": "Person", "name": "김하원", "jobTitle": "대표세무사" },
         "areaServed": ["서울특별시 강동구", "천호동", "천호역", "서울특별시 송파구", "서울특별시"],
         "address": { "@type": "PostalAddress", "streetAddress": "천호대로 1024 B동 상가 432호 (성내동, 힐스테이트 천호역 젠트리스)", "addressRegion": "서울특별시", "addressLocality": "강동구", "addressCountry": "KR" },
+        "image": ["https://gangnamtax.co.kr/images/office-entrance.jpg", "https://gangnamtax.co.kr/images/profile.jpg"],
+        "openingHours": "Mo-Fr 09:00-18:00",
         "sameAs": ["https://blog.naver.com/gangnamcta"]
     }
     </script>
@@ -79,8 +81,19 @@
         .hero-services li { padding: 4px 0; }
         .hero-services li::before { content: ''; display: inline-block; width: 10px; height: 10px; background: #fff; margin-right: 10px; }
         .profile { text-align: center; font-size: 14px; color: #e2e8f0; }
-        .profile .photo { width: 110px; height: 130px; border-radius: 8px; background: #2e3470 center/cover; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: var(--sky); overflow: hidden; }
-        .profile .photo img { width: 100%; height: 100%; object-fit: cover; }
+        .profile .photo { width: 170px; height: 200px; border-radius: 10px; background: #2e3470 center/cover; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: var(--sky); overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+        .profile .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+        .profile .direct { display: inline-block; margin-top: 6px; font-size: 12px; color: var(--sky); }
+
+        /* 오시는 길 */
+        .location-grid { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 16px; }
+        .location-grid figure { margin: 0; }
+        .location-grid img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 10px; display: block; }
+        .location-grid figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; }
+        .location-info { background: var(--bg); border-radius: 10px; padding: 28px; display: flex; flex-direction: column; gap: 18px; }
+        .location-info dt { font-size: 13px; color: var(--muted); }
+        .location-info dd { font-size: 16px; font-weight: 500; margin: 2px 0 0; }
+        .location-info .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
         .hero-cta { margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
         .btn { display: inline-block; padding: 12px 22px; border-radius: 8px; font-weight: 700; font-size: 15px; }
         .btn-sky { background: var(--sky); color: var(--navy-dark); }
@@ -130,6 +143,9 @@
             .calc-card { grid-template-columns: 1fr; padding: 24px; }
             .topics { grid-template-columns: repeat(2, 1fr); }
             .contact-grid { grid-template-columns: 1fr; }
+            .profile .photo { width: 96px; height: 116px; }
+            .location-grid { grid-template-columns: 1fr 1fr; }
+            .location-info { grid-column: 1 / -1; }
         }
     </style>
 </head>
@@ -154,6 +170,7 @@
                 <a href="#info">세법정보</a>
                 <a href="양도세계산기/main.html" class="highlight">양도세 계산기</a>
                 <a href="https://blog.naver.com/gangnamcta" target="_blank" rel="noopener">블로그</a>
+                <a href="#location">오시는 길</a>
                 <a href="#contact">상담신청</a>
             </div>
         </div>
@@ -182,7 +199,7 @@
             <div class="profile">
                 <!-- images/profile.jpg 에 사진을 넣으면 자동으로 표시됩니다 -->
                 <div class="photo"><img src="images/profile.jpg" alt="대표세무사 김하원" onerror="this.parentNode.textContent='김'"></div>
-                <div><strong style="color:#fff">대표세무사 김하원</strong><br></div>
+                <div><strong style="color:#fff">대표세무사 김하원</strong><br><span class="direct">대표세무사가 직접 상담해드립니다</span></div>
             </div>
         </div>
     </header>
@@ -218,6 +235,32 @@
             <h2>세무사 칼럼</h2>
             <p class="sub">최근 개정 세법과 자주 묻는 세금 이야기</p>
             <div class="topics" id="topics"></div>
+        </div>
+    </section>
+
+    <section class="section" id="location">
+        <div class="inner">
+            <h2>오시는 길</h2>
+            <p class="sub">천호역 인근 · 힐스테이트 천호역 젠트리스 B동 4층 432호</p>
+            <div class="location-grid">
+                <figure>
+                    <img src="images/office-sign.jpg" alt="세무회계강남 김하원 세무사 건물 외부 간판 (4층)" loading="lazy">
+                    <figcaption>건물 외부 간판 · 4층</figcaption>
+                </figure>
+                <figure>
+                    <img src="images/office-entrance.jpg" alt="세무회계강남 사무실 입구 (4층 432호)" loading="lazy">
+                    <figcaption>사무실 입구 · 432호</figcaption>
+                </figure>
+                <dl class="location-info">
+                    <div><dt>주소</dt><dd>서울특별시 강동구 천호대로 1024<br>B동 상가 432호 (성내동, 힐스테이트 천호역 젠트리스)</dd></div>
+                    <div><dt>상담시간</dt><dd>평일 09:00 ~ 18:00</dd></div>
+                    <div><dt>전화</dt><dd><a href="tel:010-4454-2429">010-4454-2429</a></dd></div>
+                    <div class="btns">
+                        <a href="tel:010-4454-2429" class="btn btn-navy" style="padding:12px 20px; font-size:15px;">☎ 전화하기</a>
+                        <a href="https://map.naver.com/p/search/%EC%B2%9C%ED%98%B8%EB%8C%80%EB%A1%9C%201024" target="_blank" rel="noopener" class="btn" style="border:1px solid #cbd5e1;">네이버 지도</a>
+                    </div>
+                </dl>
+            </div>
         </div>
     </section>
 
