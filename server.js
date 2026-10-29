@@ -17,10 +17,11 @@ const PLAN = {
 };
 
 // 인가 신청 시 안내할 입금 계좌 (계좌이체 확인 후 관리자가 승인)
+// 저장소에 올라가지 않도록 .env의 BANK_NAME / BANK_NUMBER / BANK_HOLDER 에서 읽음
 const BANK_ACCOUNT = {
-    bank: '은행명',
-    number: '계좌번호',
-    holder: '예금주'
+    bank: process.env.BANK_NAME || '은행명',
+    number: process.env.BANK_NUMBER || '계좌번호',
+    holder: process.env.BANK_HOLDER || '예금주'
 };
 
 // 카드결제 사용 여부 (지금은 관리자 승인 방식만 사용)
