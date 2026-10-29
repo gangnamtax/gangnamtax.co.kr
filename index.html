@@ -380,15 +380,12 @@
                 el.style.marginRight = -spacing + 'px'; // 마지막 글자 뒤 간격 제거
             });
 
-            // '강남' 크기: 위 문구 글자 윗선 ~ '세무회계' 밑선(기준선) 높이에 맞춤
+            // '강남' 크기: 위 문구 아랫선 ~ '세무회계' 밑선(기준선) 높이에 맞춤
             const back = document.querySelector('.logo-back');
             const [tagMark, frontMark] = document.querySelectorAll('.logo-text .bl');
             const ctx = document.createElement('canvas').getContext('2d');
             const ascent = (font, text) => { ctx.font = font; return ctx.measureText(text).actualBoundingBoxAscent; };
-            const tagStyle = getComputedStyle(document.querySelector('.logo-tagline'));
-            const tagTop = tagMark.getBoundingClientRect().top
-                - ascent(`${tagStyle.fontWeight} ${tagStyle.fontSize} ${tagStyle.fontFamily}`, '납세자의 든든한 세무파트너');
-            const height = frontMark.getBoundingClientRect().top - tagTop;
+            const height = frontMark.getBoundingClientRect().top - tagMark.getBoundingClientRect().top;
             const backStyle = getComputedStyle(back);
             const ratio = ascent(`${backStyle.fontWeight} 100px ${backStyle.fontFamily}`, '강남') / 100;
             if (height > 0 && ratio > 0) back.style.fontSize = (height / ratio) + 'px';
