@@ -1,490 +1,651 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>양도소득세 계산기 - 세무회계강남</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <title>양도소득세 계산기 - 세무회계강남</title>
+  <link rel="stylesheet" href="css/login.css">
+  <style>
+    * {
+        box-sizing: border-box;
+    }
+    body { 
+        background-color: #f8fafc;
+        font-family: 'Malgun Gothic', sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;            
+        justify-content: center;   
+        align-items: flex-start;  
+        padding: 40px 20px;   
+    }
 
-        body {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            background-color: #f8fafc;
-            font-family: 'Noto Sans KR', sans-serif;
-            padding-top: 12vh;
-        }
+    .wrapper {
+        width: 100%;
+        max-width: 600px; 
+        
+        display: flex;
+        flex-direction: column;
+        
+    }
 
-        .calculator-card {
-            width: 100%;
-            max-width: 480px;
-            background: #ffffff;
-            padding: 50px 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-            text-align: center;
-        }
+    .header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        width: 100%; 
+        margin-bottom: 20px; 
+        background: white; 
+        padding: 20px 30px; 
+        border-radius: 12px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+    }
+    
+    .calculator-card { 
+        width: 100%; 
+        background: white; 
+        padding: 40px; 
+        border-radius: 12px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        position: relative; 
+    }
+    
+    /* 비회원 잠금 오버레이 스타일 */
+    .lock-overlay {
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background: rgba(255,255,255,0.95); 
+        border-radius: 12px; 
+        z-index: 10;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; }
+    .tab-btn.active { color: #2563eb; border-bottom: 2px solid #2563eb; margin-bottom: -2px; }
+    
+    .btn-login { background-color: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-login:hover { background-color: #1d4ed8; }
 
-        .lock-content h3 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+    .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-outline:hover { background-color: #f1f5f9; }
 
-        .lock-content p {
-            font-size: 15px;
-            color: #64748b;
-            margin-bottom: 35px;
-            line-height: 1.5;
-        }
+    .btn-logout {
+      background-color: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-logout:hover {
+      background-color: #dc2626;
+    }
 
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
-        .btn-main {
-            padding: 14px 28px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            border: none;
-            transition: opacity 0.2s;
-        }
-
-        .btn-main:hover {
-            opacity: 0.9;
-        }
-
-        /* 모달 스타일 */
-        .custom-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .custom-modal-box {
-            background: #ffffff;
-            width: 90%;
-            max-width: 440px;
-            padding: 35px 30px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            position: relative;
-            z-index: 10000;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .custom-modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #64748b;
-        }
-
-        /* 탭 버튼 스타일 */
-        .modal-tabs {
-            display: flex;
-            border-bottom: 2px solid #e2e8f0;
-            margin-bottom: 24px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            background: none;
-            border: none;
-            font-size: 15px;
-            font-weight: 600;
-            color: #64748b;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .tab-btn.active {
-            color: #059669;
-        }
-
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: #059669;
-        }
-
-        .form-section {
-            display: none;
-        }
-
-        .form-section.active {
-            display: block;
-        }
-
-        .input-group {
-            margin-bottom: 14px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 6px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 11px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .input-group input:focus {
-            border-color: #059669;
-        }
-
-        .inline-input-btn {
-            display: flex;
-            gap: 8px;
-        }
-
-        .inline-input-btn input {
-            flex: 1;
-        }
-
-        .sub-action-btn {
-            padding: 0 14px;
-            background-color: #e2e8f0;
-            color: #334155;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .sub-action-btn:hover {
-            background-color: #cbd5e1;
-        }
-
-        .social-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            border: none;
-            margin-bottom: 12px;
-            transition: opacity 0.2s;
-        }
-
-        .social-btn:hover {
-            opacity: 0.9;
-        }
-
-        .action-submit-btn {
-            width: 100%;
-            padding: 14px;
-            background-color: #059669;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            margin-top: 6px;
-        }
-
-        .action-submit-btn:hover {
-            opacity: 0.9;
-        }
-
-        .error-msg {
-            font-size: 12px;
-            color: #dc2626;
-            margin-top: 4px;
-            display: none;
-        }
-    </style>
+    .form-group {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 6px;
+    }
+    input, select {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+        background-color: #fff;
+    }
+    input:focus, select:focus {
+        border-color: #2563eb;
+    }
+    .date-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .date-col {
+        flex: 1;
+        min-width: 140px;
+    }
+    .date-input-wrapper {
+        position: relative;
+    }
+    .date-input-wrapper input[type="text"] {
+        padding-right: 40px;
+    }
+    .cal-btn {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        padding: 6px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .cal-btn:hover {
+        background-color: #f1f5f9;
+    }
+    /* 달력 팝업용 숨김 date 입력 (버튼 위치에서 열리도록 버튼 아래에 배치) */
+    .date-picker-hidden {
+        position: absolute;
+        right: 6px;
+        bottom: 0;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        border: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .live-period-msg {
+        font-size: 12px;
+        color: #2563eb;
+        font-weight: 600;
+        margin-top: 6px;
+        display: none;
+    }
+    .calc-action-btn {
+        width: 100%;
+        padding: 16px;
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background 0.2s;
+    }
+    .calc-action-btn:hover {
+        background-color: #1d4ed8;
+    }
+    
+    .result-box {
+        margin-top: 25px;
+        padding: 20px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        border-left: 6px solid #2563eb;
+    }
+    .result-box h3 {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-top: 0;
+        margin-bottom: 14px;
+        border-bottom: 1px solid #cbd5e1;
+        padding-bottom: 8px;
+    }
+    .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        font-size: 14px;
+        gap: 15px;
+    }
+    .result-row span:first-child {
+        flex: 1;
+        font-size: 13px; 
+        color: #334155;
+        word-break: keep-all;
+        line-height: 1.4;
+    }
+    .result-row span:last-child {
+        font-weight: 700;
+        color: #1e3a8a;
+        white-space: nowrap; 
+        flex-shrink: 0;
+        font-size: 14px;
+    }
+    .total-tax {
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 2px dashed #cbd5e1;
+        font-size: 15px;
+    }
+    .total-tax span:first-child {
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .total-tax span:last-child {
+        color: #dc2626;
+        font-size: 18px;
+    }
+    .notice-text {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 12px;
+        line-height: 1.5;
+        text-align: right;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 8px;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="calculator-card">
-        <div class="lock-content">
+  <div class="wrapper">
+      <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
+      <div class="header">
+        <h2>📊양도소득세 간이 계산기</h2>
+        <p>예상세액 시뮬레이션</p>
+        <div id="authButtons">
+          <span id="planStatus" style="font-size: 12px; color: #2563eb; font-weight: 600; margin-right: 6px;"></span>
+          <button id="loginBtn" class="btn btn-login" onclick="openModal('login')">로그인</button>
+          <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+          <button id="logoutBtn" class="btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="calculator-card">
+        <!-- 비회원용 오버레이 (잠금 화면) -->
+        <div id="lockOverlay" class="lock-overlay">
+          <div id="lockReady" style="display: none;">
+            <h3>🚧 양도세 계산기 서비스 준비 중</h3>
+            <p style="color: #666; margin-bottom: 20px;">더 정확한 계산 서비스로 곧 찾아뵙겠습니다.</p>
+            <a href="/" class="btn btn-outline" style="text-decoration: none;">홈으로 가기</a>
+          </div>
+          <div id="lockLogin">
             <h3>🔒 로그인 후 이용 가능합니다</h3>
-            <p>회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.</p>
-            <div class="btn-group">
-                <button class="btn-main" onclick="openCustomModal('login')" style="background: #059669; color: #fff;">로그인</button>
-                <button class="btn-main" onclick="openCustomModal('signup')" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">회원가입</button>
+            <p style="color: #666; margin-bottom: 20px;">회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button class="btn btn-login" onclick="openModal('login')">로그인</button>
+              <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
             </div>
+          </div>
+          <div id="lockPay" style="display: none;">
+            <h3>💳 이용권 결제 후 이용 가능합니다</h3>
+            <p id="planInfo" style="color: #666; margin-bottom: 20px;">양도세 계산기 30일 이용권</p>
+            <button class="btn btn-login" onclick="startPayment()" style="padding: 12px 24px;">카드로 결제하기</button>
+          </div>
         </div>
-    </div>
 
-    <!-- 통합 인증 모달 팝업 -->
-    <div id="customAuthModal" class="custom-modal-overlay">
-        <div class="custom-modal-box">
-            
-            <button class="custom-modal-close" onclick="closeCustomModal()">&times;</button>
-            
-            <!-- 상단 탭 -->
-            <div class="modal-tabs">
-                <button class="tab-btn active" onclick="switchTab('social')">간편 소셜 로그인</button>
-                <button class="tab-btn" onclick="switchTab('site')" id="siteTabBtn">사이트 회원가입</button>
+        <!-- 계산기 폼 -->
+        <form id="taxForm" onsubmit="calculateTax(event)">
+            <div class="form-group">
+                <label>1. 과세 유형 선택</label>
+                <select id="taxExempt" onchange="toggleTaxConditions()">
+                    <option value="single_house" selected>1세대 1주택 (비과세 또는 12억 초과분 과세)</option>
+                    <option value="general">그 외 (일반 과세 대상 / 다주택 등)</option>
+                </select>
             </div>
 
-            <!-- 1. 소셜 로그인 영역 -->
-            <div id="socialSection" class="form-section active">
-                <p style="font-size: 13px; color: #64748b; text-align: center; margin-bottom: 20px;">소셜 계정으로 3초 만에 시작하세요.</p>
-                
-                <button class="social-btn" onclick="handleSocialLogin('kakao')" style="background-color: #FEE500; color: #3c1e1e;">
-                    <span style="background: #3c1e1e; color: #FEE500; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">💬</span>
-                    카카오로 시작하기
-                </button>
-
-                <button class="social-btn" onclick="handleSocialLogin('naver')" style="background-color: #03C75A; color: #ffffff; margin-bottom: 0;">
-                    <span style="background: #ffffff; color: #03C75A; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;">N</span>
-                    네이버로 시작하기
-                </button>
-            </div>
-
-            <!-- 2. 자체 사이트 계정 영역 -->
-            <div id="siteSection" class="form-section">
-                <form onsubmit="handleSiteAuth(event)">
-                    
-                    <!-- 1단계: 이름 -->
-                    <div class="input-group">
-                        <label>1. 이름 (또는 상호명)</label>
-                        <input type="text" id="userName" placeholder="홍길동" required>
-                    </div>
-
-                    <!-- 2단계: 핸드폰 번호 -->
-                    <div class="input-group">
-                        <label>2. 핸드폰 번호</label>
-                        <input type="tel" id="userPhone" placeholder="010-0000-0000" required>
-                    </div>
-
-                    <!-- 3단계: 이메일 -->
-                    <div class="input-group">
-                        <label>3. 이메일 (아이디)</label>
-                        <div class="inline-input-btn">
-                            <input type="email" id="userEmail" placeholder="example@email.com" required>
-                            <button type="button" class="sub-action-btn" onclick="sendEmailVerification()">인증요청</button>
+            <div class="form-group">
+                <label>2. 보유 기간 (취득일 및 양도일)</label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label style="font-size: 12px; color: #64748b; margin-bottom: 4px;">취득일</label>
+                        <div class="date-input-wrapper">
+                            <input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateLivePeriod()" required>
                         </div>
                     </div>
-
-                    <!-- 4단계: 이메일 인증번호 확인 -->
-                    <div class="input-group" id="emailAuthGroup" style="display: none;">
-                        <label>4. 이메일 인증번호 입력</label>
-                        <div class="inline-input-btn">
-                            <input type="text" id="emailCode" placeholder="인증번호 6자리 입력">
-                            <button type="button" class="sub-action-btn" onclick="verifyEmailCode()" style="background-color: #059669; color: white;">확인</button>
+                    <div class="date-col">
+                        <label style="font-size: 12px; color: #64748b; margin-bottom: 4px;">양도일</label>
+                        <div class="date-input-wrapper">
+                            <input type="text" id="transferDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateLivePeriod()" required>
                         </div>
                     </div>
-
-                    <!-- 비밀번호 설정 -->
-                    <div class="input-group">
-                        <label>비밀번호 설정</label>
-                        <input type="password" id="userPassword" placeholder="영문, 숫자, 특수기호 혼합 8자리 이상" required>
-                    </div>
-
-                    <!-- 비밀번호 확인 -->
-                    <div class="input-group">
-                        <label>비밀번호 확인</label>
-                        <input type="password" id="userPasswordConfirm" placeholder="비밀번호를 다시 입력해주세요" required>
-                        <div id="pwErrorMsg" class="error-msg"></div>
-                    </div>
-
-                    <button type="submit" class="action-submit-btn" id="submitBtnText">회원가입 완료</button>
-                </form>
+                </div>
+                <div id="livePeriodMsg" class="live-period-msg"></div>
             </div>
 
+            <div id="residencePeriodBox" class="form-group">
+                <label id="residenceLabel">3. 실제 거주 기간 (전입일 및 전출일) <span style="font-size: 12px; color: #2563eb; font-weight: normal;">[1세대 1주택 전용]</span></label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label style="font-size: 12px; color: #64748b; margin-bottom: 4px;">실거주 시작일 (전입일 등)</label>
+                        <div class="date-input-wrapper">
+                            <input type="text" id="residenceStartDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateResidencePeriod()">
+                        </div>
+                    </div>
+                    <div class="date-col">
+                        <label style="font-size: 12px; color: #64748b; margin-bottom: 4px;">실거주 종료일 (양도일 등)</label>
+                        <div class="date-input-wrapper">
+                            <input type="text" id="residenceEndDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateResidencePeriod()">
+                        </div>
+                    </div>
+                </div>
+                <div id="residencePeriodMsg" class="live-period-msg"></div>
+            </div>
+
+            <div class="form-group">
+                <label id="transferPriceLabel">4. 양도가액 (실거래가)</label>
+                <input type="text" id="transferPrice" placeholder="예: 1,500,000,000" oninput="formatCurrency(this)" required>
+            </div>
+
+            <div class="form-group">
+                <label id="acquisitionPriceLabel">5. 취득가액 (매입가)</label>
+                <input type="text" id="acquisitionPrice" placeholder="예: 900,000,000" oninput="formatCurrency(this)" required>
+            </div>
+
+            <div class="form-group">
+                <label>6. 필요경비 (자본지출비용 등)</label>
+                <input type="text" id="expenses" placeholder="예: 20,000,000" value="0" oninput="formatCurrency(this)">
+            </div>
+
+            <button type="submit" class="calc-action-btn">예상 양도세 계산하기</button>
+        </form>
+
+        <div id="result" class="result-box" style="display: none;">
+            <h3>📌 양도소득세 계산 결과 요약</h3>
+            <div class="result-row">
+                <span id="resProfitLabel">양도차익 (12억 초과 과세분)</span>
+                <span id="resProfit">0 원</span>
+            </div>
+            <div class="result-row">
+                <span id="resLongTermLabel">장기보유특별공제</span>
+                <span id="resLongTermDeduction">0 원</span>
+            </div>
+            <div class="result-row">
+                <span>양도소득 기본공제</span>
+                <span>2,500,000 원</span>
+            </div>
+            <div class="result-row">
+                <span>과세표준</span>
+                <span id="resTaxBase">0 원</span>
+            </div>
+            <div class="result-row">
+                <span id="resTaxRateLabel">양도소득세</span>
+                <span id="resCalculatedTax">0 원</span>
+            </div>
+            <div class="result-row">
+                <span>지방소득세 (10%)</span>
+                <span id="resLocalTax">0 원</span>
+            </div>
+            <div class="result-row total-tax">
+                <span>최종 납부할 총 예상 세액</span>
+                <span id="resTotalTax">0 원</span>
+            </div>
+            <div class="notice-text">
+                ※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.<br>
+                ※ 예상세액 결과는 단순 참고용이며, 정확한 세액은 세무 전문가의 검토가 필요합니다.
+            </div>
         </div>
+      </div>
+  </div>
+
+  <!-- 회원가입/로그인 팝업 모달 -->
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display:block; font-size:14px; font-weight:bold; margin-bottom:5px;">아이디 (이메일)</label>
+          <input type="text" id="loginId" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display:block; font-size:14px; font-weight:bold; margin-bottom:5px;">비밀번호</label>
+          <input type="password" id="loginPw" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">로그인</button>
+      </form>
+
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1; padding: 9px; border:1px solid #ddd; border-radius:6px;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px; cursor:pointer;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1; padding: 9px; border:1px solid #ddd; border-radius:6px;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px; cursor:pointer;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">비밀번호</label>
+          <input type="password" id="signupPw" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">가입 완료</button>
+      </form>
     </div>
+  </div>
 
-    <script>
-        let currentMode = 'signup'; 
+  <!-- 이용권 결제 팝업 모달 (토스페이먼츠 결제위젯) -->
+  <div id="payModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px 20px; border-radius: 12px; width: 520px; max-width: 95vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closePayModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <h3 id="payTitle" style="margin: 0 10px 10px;">이용권 결제</h3>
+      <div id="payment-method"></div>
+      <div id="agreement"></div>
+      <button type="button" id="payButton" class="btn btn-login" onclick="requestWidgetPayment()" style="width: calc(100% - 20px); margin: 10px; padding: 14px; font-size: 15px;">결제하기</button>
+    </div>
+  </div>
 
-        function openCustomModal(type) {
-            currentMode = type;
-            const modal = document.getElementById('customAuthModal');
-            const siteTabBtn = document.getElementById('siteTabBtn');
-            const submitBtnText = document.getElementById('submitBtnText');
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <script src="js/login.js"></script>
+  <script>
+    // 📅 버튼을 누르면 달력이 열리고, 고른 날짜가 텍스트 칸에 들어감 (직접 입력도 그대로 가능)
+    function setupDatePickers() {
+        document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
+            const textInput = wrapper.querySelector('input[type="text"]');
 
-            if (type === 'login') {
-                siteTabBtn.innerText = '사이트 로그인';
-                submitBtnText.innerText = '로그인하기';
-            } else {
-                siteTabBtn.innerText = '사이트 회원가입';
-                submitBtnText.innerText = '회원가입 완료';
-            }
+            const picker = document.createElement('input');
+            picker.type = 'date';
+            picker.className = 'date-picker-hidden';
+            picker.tabIndex = -1;
 
-            switchTab('site'); 
-            modal.style.display = 'flex';
-        }
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cal-btn';
+            btn.textContent = '📅';
+            btn.setAttribute('aria-label', '달력에서 날짜 선택');
 
-        function closeCustomModal() {
-            document.getElementById('customAuthModal').style.display = 'none';
-        }
-
-        function switchTab(tabName) {
-            const socialSec = document.getElementById('socialSection');
-            const siteSec = document.getElementById('siteSection');
-            const tabBtns = document.querySelectorAll('.tab-btn');
-
-            tabBtns.forEach(btn => btn.classList.remove('active'));
-
-            if (tabName === 'social') {
-                socialSec.classList.add('active');
-                siteSec.classList.remove('active');
-                tabBtns[0].classList.add('active');
-            } else {
-                socialSec.classList.remove('active');
-                siteSec.classList.add('active');
-                tabBtns[1].classList.add('active');
-            }
-        }
-
-        function handleSocialLogin(provider) {
-            alert(provider + ' 소셜 로그인 연동 영역입니다.');
-        }
-
-        // 실제 백엔드 서버(Node.js / AWS SES)로 메일 발송 요청을 보내는 함수
-        async function sendEmailVerification() {
-            const email = document.getElementById('userEmail').value;
-            
-            if (!email) {
-                alert('이메일을 먼저 입력해 주세요.');
-                document.getElementById('userEmail').focus();
-                return;
-            }
-
-            try {
-                const response = await fetch('http://localhost:3000/api/send-verification', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert('인증번호가 메일로 발송되었습니다! 메일함을 확인해 주세요.');
-                    document.getElementById('emailAuthGroup').style.display = 'block';
+            btn.addEventListener('click', () => {
+                if (textInput.value.length === 10) picker.value = textInput.value;
+                if (picker.showPicker) {
+                    picker.showPicker();
                 } else {
-                    alert('발송 실패: ' + result.message);
+                    picker.click();
                 }
-            } catch (error) {
-                console.error('통신 오류:', error);
-                alert('서버와 통신하지 못했습니다. Node.js 백엔드 서버(node server.js)가 실행 중인지 확인해 주세요.');
-            }
+            });
+
+            picker.addEventListener('change', () => {
+                textInput.value = picker.value;
+                textInput.dispatchEvent(new Event('change'));
+            });
+
+            wrapper.append(picker, btn);
+        });
+    }
+    setupDatePickers();
+
+    function formatDateInput(input) {
+        let val = input.value.replace(/\D/g, '');
+        if (val.length > 4 && val.length <= 6) {
+            val = val.slice(0, 4) + '-' + val.slice(4);
+        } else if (val.length > 6) {
+            val = val.slice(0, 4) + '-' + val.slice(4, 6) + '-' + val.slice(6, 8);
+        }
+        input.value = val;
+    }
+
+    function formatCurrency(input) {
+        let val = input.value.replace(/[^0-9]/g, '');
+        if (val) {
+            input.value = Number(val).toLocaleString('ko-KR');
+        } else {
+            input.value = '';
+        }
+    }
+
+    function parseNum(id) {
+        const val = document.getElementById(id).value.replace(/[^0-9]/g, '');
+        return val ? parseFloat(val) : 0;
+    }
+
+    function toggleTaxConditions() {
+        const type = document.getElementById('taxExempt').value;
+        const resBox = document.getElementById('residencePeriodBox');
+        if (type === 'single_house') {
+            resBox.style.display = 'block';
+            document.getElementById('resProfitLabel').innerText = '양도차익 (12억 초과 과세분)';
+        } else {
+            resBox.style.display = 'none';
+            document.getElementById('resProfitLabel').innerText = '양도차익';
+        }
+    }
+
+    function getYearMonthString(startDateStr, endDateStr) {
+        const start = new Date(startDateStr);
+        const end = new Date(endDateStr);
+        
+        let diffDays = (end - start) / (1000 * 60 * 60 * 24);
+        if (diffDays < 0) return null;
+
+        let years = end.getFullYear() - start.getFullYear();
+        let months = end.getMonth() - start.getMonth();
+        let days = end.getDate() - start.getDate();
+
+        if (days < 0) {
+            months -= 1;
+            const prevMonthLastDay = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+            days += prevMonthLastDay;
         }
 
-        async function verifyEmailCode() {
-            const email = document.getElementById('userEmail').value;
-            const code = document.getElementById('emailCode').value;
-
-            if (!code) {
-                alert('인증번호를 입력해 주세요.');
-                return;
-            }
-
-            try {
-                const response = await fetch('http://localhost:3000/api/verify-code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, code: code })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert('이메일 인증이 성공적으로 완료되었습니다.');
-                } else {
-                    alert('인증 실패: ' + result.message);
-                }
-            } catch (error) {
-                console.error('통신 오류:', error);
-                alert('서버 통신 중 오류가 발생했습니다.');
-            }
+        if (months < 0) {
+            years -= 1;
+            months += 12;
         }
 
-        function handleSiteAuth(event) {
-            event.preventDefault();
-            const name = document.getElementById('userName').value;
-            const phone = document.getElementById('userPhone').value;
-            const email = document.getElementById('userEmail').value;
-            const password = document.getElementById('userPassword').value;
-            const passwordConfirm = document.getElementById('userPasswordConfirm').value;
-            const pwErrorMsg = document.getElementById('pwErrorMsg');
+        let resultStr = "";
+        if (years > 0) resultStr += `${years}년 `;
+        if (months > 0 || years === 0) resultStr += `${months}개월`;
 
-            // 로그인 모드가 아닐 때(회원가입일 때만) 비밀번호 유효성 검사 수행
-            if (currentMode === 'signup') {
-                // 영문, 숫자, 특수기호 혼합 8자리 이상 정규식
-                const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!\%*#?&]{8,}$/;
+        return {
+            text: resultStr.trim(),
+            totalDays: Math.floor(diffDays),
+            fullYears: years // 달력 기준 만 연수 (기념일 당일 양도 시 1년 인정)
+        };
+    }
 
-                if (!pwRegex.test(password)) {
-                    pwErrorMsg.textContent = "비밀번호는 영문, 숫자, 특수기호를 조합하여 8자리 이상으로 입력해주세요.";
-                    pwErrorMsg.style.display = 'block';
-                    document.getElementById('userPassword').focus();
-                    return;
-                }
+    function calculateLivePeriod() {
+        const acq = document.getElementById('acquisitionDate').value;
+        const trf = document.getElementById('transferDate').value;
+        const msg = document.getElementById('livePeriodMsg');
 
-                if (password !== passwordConfirm) {
-                    pwErrorMsg.textContent = "비밀번호가 일치하지 않습니다.";
-                    pwErrorMsg.style.display = 'block';
-                    document.getElementById('userPasswordConfirm').focus();
-                    return;
-                }
-
-                pwErrorMsg.style.display = 'none';
-            }
-
-            if (currentMode === 'login') {
-                alert(`[자체 로그인]\n아이디: ${email}`);
+        if(acq.length === 10 && trf.length === 10) {
+            const periodData = getYearMonthString(acq, trf);
+            if(periodData) {
+                msg.style.display = 'block';
+                msg.innerText = `💡 총 보유 기간: 약 ${periodData.text} (${periodData.totalDays}일)`;
             } else {
-                alert(`[회원가입 완료]\n이름: ${name}\n연락처: ${phone}\n이메일: ${email}\n성공적으로 가입되었습니다!`);
-                closeCustomModal();
+                msg.style.display = 'block';
+                msg.innerText = `⚠️ 양도일이 취득일보다 빠를 수 없습니다.`;
             }
+        } else {
+            msg.style.display = 'none';
         }
-    </script>
+    }
+
+    function calculateResidencePeriod() {
+        const start = document.getElementById('residenceStartDate').value;
+        const end = document.getElementById('residenceEndDate').value;
+        const msg = document.getElementById('residencePeriodMsg');
+
+        if(start.length === 10 && end.length === 10) {
+            const periodData = getYearMonthString(start, end);
+            if(periodData) {
+                msg.style.display = 'block';
+                msg.innerText = `💡 총 거주 기간: 약 ${periodData.text} (${periodData.totalDays}일)`;
+            } else {
+                msg.style.display = 'block';
+                msg.innerText = `⚠️ 종료일이 시작일보다 빠를 수 없습니다.`;
+            }
+        } else {
+            msg.style.display = 'none';
+        }
+    }
+
+    // 계산은 서버에서 수행 (이용권 결제 회원만 가능)
+    async function calculateTax(event) {
+        event.preventDefault();
+
+        const holdingPeriodData = getYearMonthString(
+            document.getElementById('acquisitionDate').value,
+            document.getElementById('transferDate').value
+        );
+        if (!holdingPeriodData) {
+            alert("보유 기간 날짜를 올바르게 입력해주세요.");
+            return;
+        }
+
+        let res;
+        try {
+            res = await api('/api/calculate', {
+                taxType: document.getElementById('taxExempt').value,
+                acquisitionDate: document.getElementById('acquisitionDate').value,
+                transferDate: document.getElementById('transferDate').value,
+                residenceStartDate: document.getElementById('residenceStartDate').value,
+                residenceEndDate: document.getElementById('residenceEndDate').value,
+                transferPrice: parseNum('transferPrice'),
+                acquisitionPrice: parseNum('acquisitionPrice'),
+                expenses: parseNum('expenses')
+            });
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다.');
+            return;
+        }
+
+        if (!res.ok) {
+            alert(res.data.message || '계산에 실패했습니다.');
+            if (res.status === 401 || res.status === 402) refreshUser();
+            return;
+        }
+
+        const r = res.data.result;
+        const won = n => n.toLocaleString('ko-KR') + ' 원';
+
+        document.getElementById('resProfitLabel').innerText = r.profitLabel;
+        document.getElementById('resProfit').innerText = won(r.profit);
+        document.getElementById('resLongTermLabel').innerText = r.longTermLabel;
+        document.getElementById('resLongTermDeduction').innerText = won(r.longTermDeduction);
+        document.getElementById('resTaxBase').innerText = won(r.taxBase);
+        document.getElementById('resTaxRateLabel').innerText = r.rateLabel;
+        document.getElementById('resCalculatedTax').innerText = won(r.tax);
+        document.getElementById('resLocalTax').innerText = won(r.localTax);
+        document.getElementById('resTotalTax').innerText = won(r.total);
+
+        document.getElementById('result').style.display = 'block';
+    }
+  </script>
 </body>
 </html>
