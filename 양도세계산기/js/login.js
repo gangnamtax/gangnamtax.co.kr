@@ -245,7 +245,8 @@ function updateUi(user, plan, paymentEnabled, bank) {
   document.getElementById('loginBtn').style.display = loggedIn ? 'none' : 'inline-block';
   document.getElementById('signupBtn').style.display = loggedIn ? 'none' : 'inline-block';
   document.getElementById('logoutBtn').style.display = loggedIn ? 'inline-block' : 'none';
-  document.getElementById('adminLink').style.display = loggedIn && user.admin ? 'inline' : 'none';
+  // 관리자 화면(admin.html)은 Node 서버용. 구글 Apps Script로 운영할 때는 구글 시트가 관리 화면
+  document.getElementById('adminLink').style.display = loggedIn && user.admin && !APPS_SCRIPT_URL ? 'inline' : 'none';
 
   document.getElementById('lockOverlay').style.display = paid ? 'none' : 'flex';
   document.getElementById('lockLogin').style.display = loggedIn ? 'none' : 'block';
