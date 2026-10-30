@@ -1,11 +1,17 @@
 // ==========================================
 // 0. 서버 통신 도우미 (로그인 토큰 자동 첨부)
 // ==========================================
+// 구글 Apps Script 웹 앱 주소 (배포 후 받은 주소를 넣으면 깃허브 홈페이지에서도 동작)
+// 비워 두면 같은 주소의 Node 서버(/api/...)를 사용
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyL-g8WPHabkFEKsiAut9mdJXYU4zNLJ6eDfiS0no6YC21JBb0_mSFdyCL5963W3BgWcQ/exec';
+
 function getToken() {
   return localStorage.getItem('authToken');
 }
 
 async function api(path, body) {
+  if (APPS_SCRIPT_URL) return appsScriptApi(path, body);
+
   const headers = { 'Content-Type': 'application/json' };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -17,6 +23,19 @@ async function api(path, body) {
   });
   const data = await response.json().catch(() => ({}));
   return { ok: response.ok, status: response.status, data };
+}
+
+// Apps Script는 주소 하나로 받으므로 '/api/send-code' → action 'sendCode' 로 바꿔 보냄
+// (Content-Type을 text/plain으로 보내야 구글 쪽에서 브라우저 요청을 막지 않음)
+async function appsScriptApi(path, body) {
+  const action = path.replace(/^\/api\//, '').replace(/[-/](\w)/g, (m, c) => c.toUpperCase());
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ ...(body || {}), action, token: getToken() })
+  });
+  const data = await response.json().catch(() => ({}));
+  return { ok: !!data.success, status: data.status || (data.success ? 200 : 500), data };
 }
 
 // ==========================================

@@ -408,7 +408,7 @@
         window.addEventListener('resize', fitLogoText);
 
         // 양도세 계산기 오픈 전에는 '준비 중'으로 표시 (오픈할 때 true로 변경)
-        const CALC_READY = false;
+        const CALC_READY = true;
         if (!CALC_READY) {
             document.querySelectorAll('a[href="양도세계산기/main.html"]').forEach(a => {
                 a.removeAttribute('href');
