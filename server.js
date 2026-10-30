@@ -9,6 +9,9 @@ const { calculateTax } = require('./lib/taxCalc');
 const app = express();
 const port = process.env.PORT || 3000; // 호스팅 서비스가 정해주는 포트 사용
 
+// 메일 속 승인 링크에 쓰는 사이트 주소 (호스팅 후 .env에 PUBLIC_URL=https://calc.gangnamtax.co.kr)
+const PUBLIC_URL = (process.env.PUBLIC_URL || `http://localhost:${port}`).replace(/\/$/, '');
+
 // 이용권 설정 (가격/기간은 여기서 변경)
 const PLAN = {
     name: '양도세 계산기 1주 이용권',
@@ -40,6 +43,7 @@ const TOSS_SECRET_KEY = process.env.TOSS_SECRET_KEY || 'test_gsk_docs_OaPz8L5Kdm
 
 // 미들웨어 설정
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // 메일 승인 화면의 [승인] 버튼
 // 공개 파일만 노출 (.env, data/ 등은 노출하지 않음)
 // 홈페이지(대문) = /, 양도세 계산기 = /양도세계산기/main.html
 for (const file of ['index.html', 'robots.txt', 'sitemap.xml']) {
@@ -238,12 +242,34 @@ app.post('/api/apply', requireAuth, (req, res) => {
     user.appliedAt = new Date().toISOString();
     saveDb();
 
+    if (first) {
+        // 메일의 [승인하기] 링크용 일회용 토큰
+        user.approveToken = crypto.randomBytes(24).toString('hex');
+        saveDb();
+    }
+
     if (first && ADMIN_EMAIL) {
+        const link = `${PUBLIC_URL}/approve?email=${encodeURIComponent(user.email)}&token=${user.approveToken}`;
+        const info = [
+            ['이름', user.name || '-'],
+            ['연락처', user.phone || '-'],
+            ['이메일', user.email],
+            ['입금 금액', `${PLAN.price.toLocaleString('ko-KR')}원 (${PLAN.days}일 이용)`]
+        ];
         transporter.sendMail({
             from: process.env.NAVER_EMAIL,
             to: ADMIN_EMAIL,
             subject: `[세무회계강남] 양도세 계산기 인가 신청: ${user.name || user.email}`,
-            text: `양도세 계산기 인가 신청이 들어왔습니다.\n\n이름: ${user.name || '-'}\n연락처: ${user.phone || '-'}\n이메일: ${user.email}\n\n입금(${PLAN.price.toLocaleString('ko-KR')}원) 확인 후 관리자 화면에서 승인해 주세요.`
+            text: `양도세 계산기 인가 신청이 들어왔습니다.\n\n${info.map(([k, v]) => `${k}: ${v}`).join('\n')}\n\n입금을 확인한 뒤 아래 링크에서 승인해 주세요.\n${link}`,
+            html: `<div style="font-family: sans-serif; font-size: 15px; color: #1e293b;">
+                <p>양도세 계산기 인가 신청이 들어왔습니다.</p>
+                <table style="border-collapse: collapse; margin: 12px 0;">
+                    ${info.map(([k, v]) => `<tr><td style="padding: 4px 12px 4px 0; color: #64748b;">${k}</td><td style="padding: 4px 0;"><b>${escapeHtml(v)}</b></td></tr>`).join('')}
+                </table>
+                <p>입금을 확인한 뒤 아래 버튼을 눌러 승인해 주세요.</p>
+                <p><a href="${link}" style="display: inline-block; background: #1f2352; color: #fff; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: bold;">${PLAN.days}일 승인하기</a></p>
+                <p style="color: #94a3b8; font-size: 13px;">버튼을 누르면 확인 화면이 열리고, 한 번 더 [승인]을 눌러야 승인됩니다.</p>
+            </div>`
         }).catch(error => console.error('[인가 신청 알림 메일 실패]', error.message));
     }
     console.log(`[인가 신청] ${user.email}`);
@@ -278,15 +304,75 @@ app.post('/api/admin/approve', requireAdmin, (req, res) => {
     if (!APPROVE_DAYS.includes(days)) {
         return res.status(400).json({ success: false, message: '승인 기간이 올바르지 않습니다.' });
     }
-    // 승인한 시점부터 기간 시작
+    approveUser(user, days);
+    res.json({ success: true, user: publicUser(user) });
+});
+
+// 승인 처리 (관리자 화면, 메일 승인 링크 공통): 승인한 시점부터 기간 시작
+function approveUser(user, days) {
     const until = new Date();
     until.setDate(until.getDate() + days);
     user.paidUntil = until.toISOString();
     user.approvedAt = new Date().toISOString();
     user.appliedAt = null; // 다음 연장 때 다시 인가 신청
+    user.approveToken = null; // 메일 승인 링크는 한 번만 사용
     saveDb();
     console.log(`[승인] ${user.email} ${days}일, ~${user.paidUntil}`);
-    res.json({ success: true, user: publicUser(user) });
+}
+
+function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// ==========================================
+// 2-2. 메일 승인 링크: 링크(GET)는 확인 화면만, [승인] 버튼(POST)을 눌러야 승인
+// (메일 프로그램이 링크를 미리 열어봐도 자동 승인되지 않도록)
+// ==========================================
+function approvePage(title, body) {
+    return `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow"><title>${title} - 세무회계강남</title>
+<style>body{font-family:'Malgun Gothic',sans-serif;background:#f8fafc;color:#1e293b;display:flex;justify-content:center;padding:40px 16px;margin:0}
+.box{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:28px;max-width:380px;width:100%}
+h1{font-size:20px;margin:0 0 16px}td{padding:4px 12px 4px 0}td:first-child{color:#64748b}
+button{margin-top:18px;width:100%;background:#1f2352;color:#fff;border:none;border-radius:8px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer}
+p{color:#475569;line-height:1.6}</style></head><body><div class="box"><h1>${title}</h1>${body}</div></body></html>`;
+}
+
+const BAD_LINK_PAGE = approvePage('승인할 수 없는 링크', '<p>이미 승인했거나 잘못된 링크입니다.<br>관리자 화면에서 확인해 주세요.</p>');
+
+function findApproveRequest(email, token) {
+    const user = db.users[String(email || '').toLowerCase()];
+    token = String(token || '');
+    if (!user || !user.approveToken || token.length !== user.approveToken.length ||
+        !crypto.timingSafeEqual(Buffer.from(token), Buffer.from(user.approveToken))) {
+        return null;
+    }
+    return user;
+}
+
+app.get('/approve', (req, res) => {
+    const user = findApproveRequest(req.query.email, req.query.token);
+    if (!user) return res.status(404).send(BAD_LINK_PAGE);
+    res.send(approvePage('양도세 계산기 인가 승인', `
+        <table>
+            <tr><td>이름</td><td><b>${escapeHtml(user.name || '-')}</b></td></tr>
+            <tr><td>연락처</td><td>${escapeHtml(user.phone || '-')}</td></tr>
+            <tr><td>이메일</td><td>${escapeHtml(user.email)}</td></tr>
+            <tr><td>신청일</td><td>${escapeHtml((user.appliedAt || '').slice(0, 10))}</td></tr>
+        </table>
+        <p>입금(${PLAN.price.toLocaleString('ko-KR')}원)을 확인하셨으면 승인해 주세요.<br>오늘부터 ${PLAN.days}일 동안 계산기를 쓸 수 있습니다.</p>
+        <form method="POST" action="/approve">
+            <input type="hidden" name="email" value="${escapeHtml(user.email)}">
+            <input type="hidden" name="token" value="${escapeHtml(req.query.token)}">
+            <button type="submit">${PLAN.days}일 승인</button>
+        </form>`));
+});
+
+app.post('/approve', (req, res) => {
+    const user = findApproveRequest(req.body.email, req.body.token);
+    if (!user) return res.status(404).send(BAD_LINK_PAGE);
+    approveUser(user, PLAN.days);
+    res.send(approvePage('승인 완료 ✅', `<p><b>${escapeHtml(user.name || user.email)}</b> 님은 <b>${user.paidUntil.slice(0, 10)}</b>까지 양도세 계산기를 사용할 수 있습니다.</p>`));
 });
 
 app.post('/api/admin/revoke', requireAdmin, (req, res) => {
