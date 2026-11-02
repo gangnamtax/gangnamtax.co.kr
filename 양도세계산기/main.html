@@ -251,7 +251,9 @@
     .add-house-btn { background: #fff; border: 1px dashed #94a3b8; color: #475569; border-radius: 8px; padding: 9px; width: 100%; font-size: 13px; cursor: pointer; }
     .add-house-btn:hover { border-color: #2563eb; color: #2563eb; }
     .house-row input[type="checkbox"], .house-row input[type="radio"], .check-line input { width: auto !important; margin: 0; padding: 0; }
-    .check-line { display: flex !important; align-items: center; gap: 6px; font-size: 13px !important; font-weight: normal !important; color: #334155; margin-top: 8px; cursor: pointer; }
+    .house-row .search { background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px 10px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .house-row .search:hover { border-color: #2563eb; color: #2563eb; }
+    .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px !important; font-weight: normal !important; color: #334155; margin-top: 8px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -321,9 +323,9 @@
                 <button type="button" class="add-house-btn" onclick="addHouse()">+ 주택 추가 (주소 검색)</button>
                 <div id="houseSummary" class="live-period-msg" style="display: block;"></div>
 
-                <label id="specialBox" class="check-line" style="display: none;">
-                    <input type="checkbox" id="singleSpecial" onchange="updateHouseSummary()">
-                    1세대 1주택 비과세 특례 적용 (일시적 2주택·상속주택 등)
+                <label id="specialBox" class="check-line">
+                    <input type="checkbox" id="singleExempt" checked onchange="updateHouseSummary()">
+                    <span id="singleExemptText">1세대 1주택 비과세 적용</span>
                 </label>
                 <label id="heavyExemptBox" class="check-line" style="display: none;">
                     <input type="checkbox" id="heavyExempt" onchange="updateHouseSummary()">
@@ -585,13 +587,24 @@
 
     let houseSeq = 0;
 
-    // 주소 검색 창을 열고, 고른 주소로 주택 줄 추가 (검색이 안 되면 직접 입력 줄 추가)
-    function addHouse() {
+    // 카카오 주소 검색 창 열기 (검색 스크립트가 없으면 직접 입력)
+    function openPostcode(onSelect) {
         if (window.daum && daum.Postcode) {
-            new daum.Postcode({ oncomplete: data => addHouseRow(data.address) }).open();
-        } else {
-            addHouseRow('');
+            new daum.Postcode({ oncomplete: data => onSelect(data.address) }).open();
+            return true;
         }
+        return false;
+    }
+
+    // [+ 주택 추가]: 주소 검색 후 그 주소로 줄 추가
+    function addHouse() {
+        if (!openPostcode(addHouseRow)) addHouseRow('');
+    }
+
+    // 각 줄의 [🔍 검색] 또는 빈 주소 칸 클릭: 그 줄 주소를 검색으로 채움
+    function searchAddress(el) {
+        const addr = el.closest('.house-row').querySelector('.addr');
+        openPostcode(address => { addr.value = address; autoRegion(addr); });
     }
 
     function addHouseRow(address) {
@@ -602,7 +615,8 @@
         row.dataset.id = id;
         row.innerHTML = `
             <label class="sell"><input type="radio" name="sellHouse" value="${id}" onchange="updateHouseSummary()"> 양도</label>
-            <input type="text" class="addr" placeholder="예: 서울 강남구 테헤란로 123" oninput="autoRegion(this)">
+            <input type="text" class="addr" placeholder="주소 검색 또는 직접 입력 (예: 서울 강남구 테헤란로 123)" oninput="autoRegion(this)" onchange="autoRegion(this)" onclick="if (!this.value) searchAddress(this)">
+            <button type="button" class="search" onclick="searchAddress(this)">🔍 검색</button>
             <label class="tag"><input type="checkbox" class="regulated" onchange="this.dataset.manual = '1'; updateHouseSummary()"> 조정대상지역</label>
             <label class="tag" title="지방 저가주택 등 주택 수에서 빼는 경우"><input type="checkbox" class="excluded" onchange="updateHouseSummary()"> 주택 수 제외</label>
             <button type="button" class="del" onclick="removeHouse(this)" aria-label="삭제">×</button>`;
@@ -638,20 +652,30 @@
         const count = rows.filter(r => !r.querySelector('.excluded').checked).length || 1;
         const sellRow = rows.find(r => r.querySelector('input[name="sellHouse"]').checked);
         const sellRegulated = !!sellRow && sellRow.querySelector('.regulated').checked;
-        const special = count >= 2 && document.getElementById('singleSpecial').checked;
         const exempt = document.getElementById('heavyExempt').checked;
-        const taxType = count === 1 || special ? 'single_house' : 'general';
+        const taxType = document.getElementById('singleExempt').checked ? 'single_house' : 'general';
         const heavy = taxType === 'general' && sellRegulated && !exempt ? (count >= 3 ? 30 : 20) : 0;
         return { count, sellRow, sellRegulated, taxType, heavy };
     }
+
+    // 주택 수가 바뀌면 비과세 체크 자동 설정: 1채 → 체크, 2채 이상 → 해제 (그 뒤 직접 바꿀 수 있음)
+    let lastHouseCount = null;
 
     function updateHouseSummary() {
         document.querySelectorAll('.house-row').forEach(r => {
             r.classList.toggle('selling', r.querySelector('input[name="sellHouse"]').checked);
             r.querySelector('.regulated').parentElement.classList.toggle('on', r.querySelector('.regulated').checked);
         });
+        const rowCount = [...document.querySelectorAll('.house-row')].filter(r => !r.querySelector('.excluded').checked).length || 1;
+        if (rowCount !== lastHouseCount) {
+            document.getElementById('singleExempt').checked = rowCount === 1;
+            lastHouseCount = rowCount;
+        }
+        document.getElementById('singleExemptText').innerText = rowCount === 1
+            ? '1세대 1주택 비과세 적용'
+            : '1세대 1주택 비과세 특례 적용 (일시적 2주택·상속주택 등)';
+
         const s = getHouseStatus();
-        document.getElementById('specialBox').style.display = s.count >= 2 ? 'flex' : 'none';
         document.getElementById('heavyExemptBox').style.display = s.count >= 2 && s.sellRegulated && s.taxType === 'general' ? 'flex' : 'none';
 
         let text = `🏠 보유 주택 ${s.count}채`;
