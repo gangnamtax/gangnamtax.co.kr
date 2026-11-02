@@ -564,10 +564,23 @@
         '화성시 동탄구', '용인시 기흥구', '구리시'
     ];
 
+    // 시·도를 빼고 써도 알아볼 수 있는 서울 자치구 (부산에도 있는 중구·강서구는 제외)
+    const SEOUL_GU = ['강남구', '강동구', '강북구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구',
+        '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중랑구'];
+
+    // 띄어쓰기를 무시하고 비교 ("서울특별시", "성남시분당구", "분당구 판교역로" 모두 인식)
     function isRegulated(address) {
-        const a = address.replace(/\s+/g, ' ').trim();
+        const a = address.replace(/\s+/g, '');
+        if (!a) return false;
         if (/^서울/.test(a)) return true;
-        return REGULATED_AREAS.some(area => area !== '서울' && a.includes(area));
+        if (/^(부산|대구|인천|광주|대전|울산|세종|강원|충북|충남|충청|전북|전남|전라|경북|경남|경상|제주)/.test(a)) return false;
+        if (SEOUL_GU.some(gu => a.startsWith(gu))) return true;
+        return REGULATED_AREAS.some(area => {
+            if (area === '서울') return false;
+            const full = area.replace(/\s+/g, '');      // 예: 성남시분당구
+            const gu = area.split(' ')[1];              // 예: 분당구 (시 이름 없이 쓴 경우)
+            return a.includes(full) || (gu && a.startsWith(gu));
+        });
     }
 
     let houseSeq = 0;
@@ -602,10 +615,11 @@
         updateHouseSummary();
     }
 
-    // 주소로 조정대상지역 자동 표시 (사용자가 직접 바꾼 뒤에는 그대로 둠)
+    // 주소가 바뀔 때마다 조정대상지역 자동 체크 (그 뒤 직접 체크를 바꾸면 그대로 둠)
     function autoRegion(addrInput) {
         const box = addrInput.closest('.house-row').querySelector('.regulated');
-        if (!box.dataset.manual) box.checked = isRegulated(addrInput.value);
+        box.checked = isRegulated(addrInput.value);
+        delete box.dataset.manual;
         updateHouseSummary();
     }
 
