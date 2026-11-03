@@ -46,7 +46,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false })); // 메일 승인 화면의 [승인] 버튼
 // 공개 파일만 노출 (.env, data/ 등은 노출하지 않음)
 // 홈페이지(대문) = /, 양도세 계산기 = /양도세계산기/main.html
-for (const file of ['index.html', 'robots.txt', 'sitemap.xml']) {
+for (const file of ['index.html', 'robots.txt', 'sitemap.xml', 'favicon.ico']) {
     app.get('/' + (file === 'index.html' ? '' : file), (req, res) => res.sendFile(path.join(__dirname, file)));
 }
 app.use('/images', express.static(path.join(__dirname, 'images')));
