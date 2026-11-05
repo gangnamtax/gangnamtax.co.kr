@@ -41,23 +41,29 @@ async function appsScriptApi(path, body) {
 // ==========================================
 // 1. 페이지 로드 시 결제 결과 처리 + 로그인 상태 체크
 // ==========================================
+// 확인이 끝나기 전에는 로그인 버튼을 숨겨 두어, 저장된 로그인이 있는데 로그인 창이 열리는 일을 막음
 document.addEventListener('DOMContentLoaded', async () => {
-  if (!(await isServerReady())) {
+  const me = await checkServer();
+  if (!me) {
     showComingSoon();
     return;
   }
-  await handlePaymentRedirect();
-  await refreshUser();
+  if (new URLSearchParams(window.location.search).get('payment')) {
+    await handlePaymentRedirect();
+    await refreshUser();
+  } else {
+    await refreshUser(me);
+  }
 });
 
 // 계산 서버가 없는 곳(예: 깃허브 페이지)에서는 '준비 중' 안내만 표시
-// 서버가 있으면 /api/me 가 200(로그인) 또는 401(비로그인)을 돌려줌
-async function isServerReady() {
+// 서버가 있으면 /api/me 가 200(로그인) 또는 401(비로그인)을 돌려줌 → 그 응답을 그대로 로그인 상태 확인에 사용
+async function checkServer() {
   try {
-    const { status } = await api('/api/me');
-    return status === 200 || status === 401;
+    const me = await api('/api/me');
+    return me.status === 200 || me.status === 401 ? me : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -65,6 +71,7 @@ function showComingSoon() {
   ['loginBtn', 'signupBtn', 'logoutBtn'].forEach(id => {
     document.getElementById(id).style.display = 'none';
   });
+  document.getElementById('lockChecking').style.display = 'none';
   document.getElementById('lockOverlay').style.display = 'flex';
   document.getElementById('lockLogin').style.display = 'none';
   document.getElementById('lockPay').style.display = 'none';
@@ -72,13 +79,13 @@ function showComingSoon() {
   document.getElementById('lockReady').style.display = 'block';
 }
 
-async function refreshUser() {
+async function refreshUser(prefetched) {
   if (!getToken()) {
     updateUi(null);
     return;
   }
   try {
-    const { ok, data } = await api('/api/me');
+    const { ok, data } = prefetched || await api('/api/me');
     if (!ok) {
       localStorage.removeItem('authToken');
       updateUi(null);
@@ -242,6 +249,8 @@ function updateUi(user, plan, paymentEnabled, bank) {
   const paid = loggedIn && user.paid;
   const waiting = loggedIn && !paid;
 
+  document.getElementById('lockChecking').style.display = 'none';
+  if (loggedIn) closeModal();
   document.getElementById('loginBtn').style.display = loggedIn ? 'none' : 'inline-block';
   document.getElementById('signupBtn').style.display = loggedIn ? 'none' : 'inline-block';
   document.getElementById('logoutBtn').style.display = loggedIn ? 'inline-block' : 'none';
