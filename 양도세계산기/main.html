@@ -398,6 +398,7 @@
             </div>
 
             <button type="submit" class="calc-action-btn">예상 양도세 계산하기</button>
+            <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0; text-align: center;">입력하신 내용과 계산 결과는 세무 상담을 위해 세무회계강남에 저장됩니다.</p>
         </form>
 
         <div id="result" class="result-box" style="display: none;">
@@ -803,6 +804,12 @@
             res = await api('/api/calculate', {
                 taxType: house.taxType,
                 heavy: house.heavy,
+                houses: [...document.querySelectorAll('.house-row')].map(r => ({
+                    addr: r.querySelector('.addr').value.trim(),
+                    regulated: r.querySelector('.regulated').checked,
+                    excluded: r.querySelector('.excluded').checked,
+                    selling: r.querySelector('input[name="sellHouse"]').checked
+                })),
                 acquisitionDate: document.getElementById('acquisitionDate').value,
                 transferDate: document.getElementById('transferDate').value,
                 residenceStartDate: document.getElementById('residenceStartDate').value,
