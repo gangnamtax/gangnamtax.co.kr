@@ -5,8 +5,11 @@
 // 비워 두면 같은 주소의 Node 서버(/api/...)를 사용
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyL-g8WPHabkFEKsiAut9mdJXYU4zNLJ6eDfiS0no6YC21JBb0_mSFdyCL5963W3BgWcQ/exec';
 
+// 로그인은 창(탭)을 닫으면 풀리도록 sessionStorage에 보관. 예전 방식(30일 유지)으로 남아 있던 로그인은 지움
+localStorage.removeItem('authToken');
+
 function getToken() {
-  return localStorage.getItem('authToken');
+  return sessionStorage.getItem('authToken');
 }
 
 async function api(path, body) {
@@ -87,7 +90,7 @@ async function refreshUser(prefetched) {
   try {
     const { ok, data } = prefetched || await api('/api/me');
     if (!ok) {
-      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
       updateUi(null);
       return;
     }
@@ -217,7 +220,7 @@ async function handleLogin(e) {
       alert(data.message || '아이디 또는 비밀번호가 일치하지 않습니다.');
       return;
     }
-    localStorage.setItem('authToken', data.token);
+    sessionStorage.setItem('authToken', data.token);
     closeModal();
     await refreshUser();
   } catch (error) {
@@ -235,7 +238,7 @@ async function handleLogout() {
   } catch (error) {
     console.error('통신 에러:', error);
   }
-  localStorage.removeItem('authToken');
+  sessionStorage.removeItem('authToken');
   updateUi(null);
   alert('로그아웃 되었습니다.');
   openModal('login');

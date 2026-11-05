@@ -42,7 +42,7 @@
   <script>
     async function api(path, body) {
       const headers = { 'Content-Type': 'application/json' };
-      const token = localStorage.getItem('authToken');
+      const token = sessionStorage.getItem('authToken');
       if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(path, {
         method: body === undefined ? 'GET' : 'POST',
