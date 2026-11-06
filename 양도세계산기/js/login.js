@@ -35,7 +35,8 @@ async function appsScriptApi(path, body) {
   const response = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ ...(body || {}), action, token: getToken() })
+    // product: 계산기 구분 (기장의무 판정 계산기는 'gijang', 양도세 계산기는 보내지 않음)
+    body: JSON.stringify({ product: window.CALC_PRODUCT, ...(body || {}), action, token: getToken() })
   });
   const data = await response.json().catch(() => ({}));
   return { ok: !!data.success, status: data.status || (data.success ? 200 : 500), data };
@@ -275,7 +276,7 @@ function updateUi(user, plan, paymentEnabled, bank) {
     if (plan) {
       const price = `${plan.price.toLocaleString('ko-KR')}원`;
       document.getElementById('applyPlan').innerText = `${plan.name} · ${price}`;
-      document.getElementById('bankAmount').innerText = `${price} (${plan.days}일 이용)`;
+      document.getElementById('bankAmount').innerText = `${price} (${plan.period || plan.days + '일'} 이용)`;
     }
     if (bank) {
       document.getElementById('bankLine').innerText = `${bank.bank} ${bank.number}`;
@@ -291,6 +292,9 @@ function updateUi(user, plan, paymentEnabled, bank) {
   const status = document.getElementById('planStatus');
   if (paid && user.admin) {
     status.innerText = '관리자';
+  } else if (paid && plan && plan.hours) {
+    // 시간 단위 이용권은 끝나는 시각까지 표시
+    status.innerText = `이용기간: ~${new Date(user.paidUntil).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
   } else if (paid) {
     status.innerText = `이용기간: ~${user.paidUntil.slice(0, 10)}`;
   } else if (loggedIn && user.paidUntil) {

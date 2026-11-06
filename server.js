@@ -52,6 +52,7 @@ for (const file of ['index.html', 'robots.txt', 'sitemap.xml', 'favicon.ico']) {
 app.use('/images', express.static(path.join(__dirname, 'images')));
 // 브라우저는 한글 경로를 %EC%96... 형태로 보내므로 인코딩된 경로로 연결
 app.use('/' + encodeURIComponent('양도세계산기'), express.static(path.join(__dirname, '양도세계산기')));
+app.use('/' + encodeURIComponent('기장료계산기'), express.static(path.join(__dirname, '기장료계산기')));
 
 // ==========================================
 // 간단한 파일 저장소 (data/db.json)
