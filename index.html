@@ -139,9 +139,17 @@
 
         /* 양도세 계산기 배너 */
         .calc { background: var(--bg); }
-        .calc-card { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 32px; }
-        .calc-card ul { list-style: none; margin-top: 12px; color: var(--muted); font-size: 15px; }
+        .calc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .calc-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e2e8f0; border-top: 4px solid var(--navy); border-radius: 14px; padding: 28px 24px 24px; box-shadow: 0 2px 8px rgba(15,23,42,.05); transition: transform .15s, box-shadow .15s; }
+        .calc-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15,23,42,.12); }
+        .calc-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--sky-light); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; }
+        .calc-card h3 { font-size: 20px; font-weight: 700; color: var(--navy); }
+        .calc-desc { color: var(--muted); font-size: 14px; margin-top: 4px; }
+        .calc-card ul { list-style: none; margin: 16px 0 22px; padding-top: 14px; border-top: 1px dashed #e2e8f0; color: var(--text); font-size: 14px; }
+        .calc-card li { padding: 3px 0; }
         .calc-card li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+        .calc-go { margin-top: auto; display: block; text-align: center; background: var(--navy); color: #fff; font-weight: 700; padding: 13px; border-radius: 8px; transition: background .15s; }
+        .calc-card:hover .calc-go { background: #2e3470; }
         .btn-navy { background: var(--navy); color: #fff; padding: 16px 28px; font-size: 16px; }
 
         /* 핵심 칼럼 */
@@ -178,7 +186,7 @@
             .profile .photo { margin: 0; width: 80px; height: 96px; }
             .cat-row { grid-template-columns: repeat(2, 1fr); }
             .cat-label { grid-column: 1 / -1; padding: 6px; }
-            .calc-card { grid-template-columns: 1fr; padding: 24px; }
+            .calc-grid { grid-template-columns: 1fr; }
             .topics { grid-template-columns: repeat(2, 1fr); }
             .contact-grid { grid-template-columns: 1fr; }
             .profile .photo { width: 96px; height: 116px; }
@@ -234,7 +242,7 @@
                 <p>신뢰는 작은 것에서부터 시작합니다.<br>고객 한 분 한 분 상황에 맞춘 세심한 세무서비스를 제공합니다.</p>
                 <div class="hero-cta">
                     <a href="#contact" class="btn btn-sky">상담 신청하기</a>
-                    <a href="양도세계산기/main.html" class="btn btn-line">양도세 계산해보기 →</a>
+                    <a href="양도세계산기/main.html" class="btn btn-line">양도세 계산기 →</a>
                 </div>
             </div>
             <ul class="hero-services">
@@ -262,29 +270,42 @@
 
     <section class="section calc">
         <div class="inner">
-            <div class="calc-card">
-                <div>
-                    <h2>📊 부동산 양도소득세 계산기</h2>
-                    <p class="sub" style="margin-bottom:0">집을 팔기 전에 예상 세액을 미리 확인하세요.</p>
+            <h2>세금 계산기</h2>
+            <p class="sub">세무사가 직접 만든 계산기로 미리 확인해 보세요.</p>
+            <div class="calc-grid">
+                <a href="양도세계산기/main.html" class="calc-card">
+                    <span class="calc-icon">🏠</span>
+                    <h3>양도세 계산기</h3>
+                    <p class="calc-desc">집을 팔기 전에 예상 세액을 미리 확인하세요.</p>
                     <ul>
-                        <li>1세대 1주택 비과세 · 12억 초과분 과세 자동 계산</li>
+                        <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
                         <li>장기보유특별공제 (표1 · 표2) 자동 적용</li>
-                        <li>보유기간에 따른 단기세율 자동 적용</li>
+                        <li>다주택 중과 · 단기세율 자동 적용</li>
                     </ul>
-                </div>
-                <a href="양도세계산기/main.html" class="btn btn-navy">계산기 바로가기 →</a>
-            </div>
-            <div class="calc-card" style="margin-top: 16px;">
-                <div>
-                    <h2>📒 개인사업자 기장의무 · 경비율 판정</h2>
-                    <p class="sub" style="margin-bottom:0">장부를 써야 할지, 추계로 신고할지 세금과 기장료까지 비교해 보세요.</p>
+                    <span class="calc-go">계산해보기 →</span>
+                </a>
+                <a href="기장료계산기/main.html" class="calc-card">
+                    <span class="calc-icon">📒</span>
+                    <h3>기장의무 · 경비율 판정</h3>
+                    <p class="calc-desc">장부를 써야 할지, 추계로 신고해도 될지 알려드려요.</p>
                     <ul>
-                        <li>복식부기 · 간편장부 · 외부조정 · 성실신고확인 대상 판정</li>
-                        <li>국세청 업종별 단순 · 기준경비율 자동 적용 (겸업 환산)</li>
-                        <li>창업중소기업 세액감면 · 추계 vs 장부 소득세 · 기장료 비교</li>
+                        <li>복식부기 · 간편장부 대상 판정</li>
+                        <li>외부조정 · 성실신고확인 대상 판정</li>
+                        <li>업종별 단순 · 기준경비율 자동 적용</li>
                     </ul>
-                </div>
-                <a href="기장료계산기/main.html" class="btn btn-navy">판정해보기 →</a>
+                    <span class="calc-go">계산해보기 →</span>
+                </a>
+                <a href="기장료계산기/main.html" class="calc-card">
+                    <span class="calc-icon">💰</span>
+                    <h3>나의 기장료는?</h3>
+                    <p class="calc-desc">수입금액과 직원 수로 기장료를 바로 알아보세요.</p>
+                    <ul>
+                        <li>월 기장료 · 조정료 · 성실신고 수수료 산정</li>
+                        <li>추계 vs 장부 신고 시 소득세 비교</li>
+                        <li>창업중소기업 세액감면 반영</li>
+                    </ul>
+                    <span class="calc-go">계산해보기 →</span>
+                </a>
             </div>
         </div>
     </section>
