@@ -24,7 +24,7 @@
 
     .wrapper {
         width: 100%;
-        max-width: 600px; 
+        max-width: 1100px; 
         
         display: flex;
         flex-direction: column;
@@ -248,6 +248,17 @@
         padding-left: 1.2em;
         text-indent: -1.2em;
     }
+    /* 입력은 왼쪽, 결과는 오른쪽 */
+    .calc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
+    .result-col { position: sticky; top: 20px; }
+    .result-col .result-box { margin-top: 0; }
+    .result-col .empty { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 48px 20px; text-align: center; color: #64748b; font-size: 14px; line-height: 1.8; }
+    #result:not([style*="none"]) ~ .empty { display: none; }
+    @media (max-width: 860px) {
+        .calc-layout { grid-template-columns: 1fr; }
+        .result-col { position: static; }
+        .calculator-card { padding: 24px 18px; }
+    }
     /* 보유 주택 목록 */
     .house-row { display: flex; align-items: center; gap: 8px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; flex-wrap: wrap; }
     .house-row.selling { border-color: #2563eb; background: #eff6ff; }
@@ -326,7 +337,8 @@
           </div>
         </div>
 
-        <!-- 계산기 폼 -->
+        <div class="calc-layout">
+        <!-- 계산기 폼 (왼쪽) -->
         <form id="taxForm" onsubmit="calculateTax(event)">
             <div class="form-group">
                 <label>1. 보유 주택 <span style="font-size: 12px; color: #64748b; font-weight: normal;">(양도일 현재 1세대가 보유한 주택 전부, 양도할 주택 포함)</span></label>
@@ -398,8 +410,10 @@
             </div>
 
             <button type="submit" class="calc-action-btn">예상 양도세 계산하기</button>
-            <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0; text-align: center;">입력하신 내용과 계산 결과는 세무 상담을 위해 세무회계강남에 저장됩니다.</p>
         </form>
+
+        <!-- 계산 결과 (오른쪽) -->
+        <div class="result-col">
 
         <div id="result" class="result-box" style="display: none;">
             <h3>📌 양도소득세 계산 결과 요약</h3>
@@ -436,6 +450,9 @@
                 <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
                 <p>※ 양도소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
             </div>
+        </div>
+        <div class="empty">왼쪽에 <b>주택</b>과 <b>날짜 · 금액</b>을 넣고<br><b>[예상 양도세 계산하기]</b>를 누르면<br>계산 결과가 여기에 나옵니다.</div>
+        </div>
         </div>
       </div>
   </div>
@@ -844,6 +861,10 @@
         document.getElementById('resTotalTax').innerText = won(r.total);
 
         document.getElementById('result').style.display = 'block';
+        // 휴대폰처럼 결과가 입력란 아래에 있을 때는 결과 위치로 이동
+        if (window.matchMedia('(max-width: 860px)').matches) {
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
   </script>
 </body>
