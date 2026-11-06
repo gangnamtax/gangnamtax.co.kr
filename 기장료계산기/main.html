@@ -12,28 +12,21 @@
   <style>
     * { box-sizing: border-box; }
     body {
-        background-color: #f8fafc;
-        font-family: 'Malgun Gothic', sans-serif;
-        margin: 0;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        padding: 40px 20px;
+        background-color: #f8fafc; font-family: 'Malgun Gothic', sans-serif; margin: 0; min-height: 100vh;
+        display: flex; justify-content: center; align-items: flex-start; padding: 32px 20px;
     }
-    .wrapper { width: 100%; max-width: 760px; display: flex; flex-direction: column; }
+    .wrapper { width: 100%; max-width: 1180px; display: flex; flex-direction: column; }
     .header {
         display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-        width: 100%; margin-bottom: 20px; background: white; padding: 20px 30px;
+        width: 100%; margin-bottom: 16px; background: white; padding: 18px 28px;
         border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
     .header h2 { margin: 0; }
     .header p { margin: 0; color: #64748b; font-size: 14px; }
     .calculator-card {
-        width: 100%; background: white; padding: 40px; border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; border: none;
+        width: 100%; background: white; padding: 28px; border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; border: none; min-height: 480px;
     }
-    /* 잠금 화면: 긴 계산기라 안내문이 화면 위쪽에 보이도록 위쪽 정렬 */
     .lock-overlay {
         display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -49,60 +42,103 @@
     .btn-logout { background-color: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .btn-logout:hover { background-color: #dc2626; }
 
-    .section-title { font-size: 15px; font-weight: 700; color: #0f172a; margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; }
-    .section-title:first-of-type { margin-top: 0; }
-    .form-group { margin-bottom: 16px; }
-    label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    /* 왼쪽 입력 · 오른쪽 결과 */
+    .layout { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 28px; align-items: start; }
+    .result-col { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+
+    /* 입력: 한 줄에 한 칸씩, 위에서 아래로 */
+    .sec { font-size: 13px; font-weight: 700; color: #1e3a8a; margin: 22px 0 8px; padding: 6px 10px; background: #eff6ff; border-radius: 6px; }
+    .sec:first-child { margin-top: 0; }
+    .sec .hint { color: #64748b; }
+    .f { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 8px; }
+    .f > label { font-size: 13px; font-weight: 600; color: #334155; margin: 0; line-height: 1.3; }
+    .f > label small { display: block; font-weight: normal; color: #94a3b8; font-size: 11px; }
     .hint { font-size: 12px; color: #64748b; font-weight: normal; }
     input, select {
-        width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;
-        outline: none; transition: border-color 0.2s; background-color: #fff; font-family: inherit;
+        width: 100%; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 7px; font-size: 14px;
+        outline: none; background-color: #fff; font-family: inherit;
     }
-    input:focus, select:focus { border-color: #2563eb; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .col { flex: 1; min-width: 160px; }
-    .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: normal; color: #334155; cursor: pointer; margin: 0; }
-    .check-line input { width: auto; margin: 0; padding: 0; }
-    .biz-box { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
-    .biz-box h4 { margin: 0 0 10px; font-size: 14px; color: #1e3a8a; display: flex; justify-content: space-between; align-items: center; }
-    .biz-box .del { background: none; border: none; color: #94a3b8; font-size: 13px; cursor: pointer; }
-    .biz-info { font-size: 12px; color: #2563eb; font-weight: 600; margin-top: 6px; line-height: 1.5; min-height: 18px; }
+    input.num { text-align: right; }
+    input:focus, select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #334155; cursor: pointer; margin: 0 0 8px; }
+    .check-line input { width: auto; margin: 0; padding: 0; box-shadow: none; }
+    .biz-box { border-left: 3px solid #bfdbfe; padding: 4px 0 2px 10px; margin-bottom: 10px; }
+    .biz-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    .biz-head button { background: none; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; }
+    .biz-info { font-size: 12px; color: #2563eb; line-height: 1.5; margin: -2px 0 8px 142px; }
     .biz-info.warn { color: #b91c1c; }
-    .add-btn { background: #fff; border: 1px dashed #94a3b8; color: #475569; border-radius: 8px; padding: 9px; width: 100%; font-size: 13px; cursor: pointer; }
+    .add-btn { background: #fff; border: 1px dashed #94a3b8; color: #475569; border-radius: 7px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; }
     .add-btn:hover { border-color: #2563eb; color: #2563eb; }
-    .calc-action-btn {
-        width: 100%; padding: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px;
-        font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: background 0.2s;
-    }
-    .calc-action-btn:hover { background-color: #1d4ed8; }
+    .save-note { font-size: 11px; color: #94a3b8; margin: 14px 0 0; }
 
-    .result-box { margin-top: 25px; padding: 20px; background: #f1f5f9; border-radius: 10px; border-left: 6px solid #2563eb; }
-    .result-box h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 22px 0 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; }
-    .result-box h3:first-child { margin-top: 0; }
+    /* 업종 검색 목록 */
+    .ac { position: relative; }
+    .ac input { padding-right: 30px; }
+    .ac .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; display: none; }
+    .ac.has .clear { display: block; }
+    .ac-list {
+        display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; background: #fff;
+        border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 24px rgba(15,23,42,.15); max-height: 320px; overflow-y: auto;
+    }
+    .ac.open .ac-list { display: block; }
+    .ac-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 13px; line-height: 1.35; }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item b { color: #1e3a8a; }
+    .ac-item small { display: block; color: #64748b; font-size: 11px; }
+    .ac-item.on, .ac-item:hover { background: #eff6ff; }
+    .ac-item mark { background: #fef08a; color: inherit; padding: 0; }
+    .ac-more { padding: 7px 10px; font-size: 11px; color: #64748b; background: #f8fafc; }
+
+    /* 결과 */
+    .result-col h3 { font-size: 15px; margin: 18px 0 8px; color: #0f172a; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .result-col h3:first-child { margin-top: 0; }
+    .result-col h3 small { font-size: 11px; color: #64748b; font-weight: normal; }
+    .empty { padding: 40px 20px; text-align: center; color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; font-size: 14px; line-height: 1.7; }
+    .main-biz { font-size: 12px; color: #475569; background: #f8fafc; border-radius: 8px; padding: 8px 10px; line-height: 1.6; }
+    .jgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .jcard { border: 1px solid #e2e8f0; border-radius: 9px; padding: 9px 11px; background: #fff; }
+    .jcard .t { font-size: 12px; color: #64748b; }
+    .jcard .v { font-size: 15px; font-weight: 700; margin: 2px 0; color: #0f172a; }
+    .jcard .v.on { color: #b91c1c; }
+    .jcard .v.ok { color: #166534; }
+    .jcard .d { font-size: 11px; color: #94a3b8; line-height: 1.4; }
     .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table.rt { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border-radius: 8px; overflow: hidden; }
-    table.rt th, table.rt td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; word-break: keep-all; }
-    table.rt th { background: #e2e8f0; color: #334155; font-weight: 700; white-space: nowrap; }
-    table.rt td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    table.rt { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    table.rt th, table.rt td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; word-break: keep-all; }
+    table.rt th { background: #f1f5f9; color: #334155; font-weight: 700; white-space: nowrap; font-size: 12px; }
+    table.rt th.n, table.rt td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
     table.rt td.k { color: #475569; white-space: nowrap; }
     table.rt tr.em td { font-weight: 700; color: #1e3a8a; background: #eff6ff; }
     table.rt tr.total td { font-weight: 700; color: #dc2626; background: #fef2f2; }
-    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-    .tag.on { background: #fee2e2; color: #b91c1c; }
-    .tag.off { background: #e2e8f0; color: #475569; }
-    .tag.ok { background: #dcfce7; color: #166534; }
-    .best { margin-top: 10px; padding: 12px 14px; background: #fff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 14px; font-weight: 700; color: #1e3a8a; }
-    .calc-note { font-size: 12px; color: #64748b; margin: 6px 0 0; line-height: 1.6; }
-    .notice-text { font-size: 11px; color: #64748b; margin-top: 16px; line-height: 1.5; text-align: left; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    table.rt td.bestcol, table.rt th.bestcol { box-shadow: inset 0 0 0 9999px rgba(250, 204, 21, .12); }
+    .best { margin-top: 8px; padding: 9px 12px; background: #fff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 700; color: #1e3a8a; }
+    .relief { border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 12px; font-size: 13px; }
+    .relief .rate { font-size: 18px; font-weight: 800; color: #166534; }
+    .relief .rate.zero { color: #64748b; }
+    details { margin-top: 6px; }
+    details summary { cursor: pointer; font-size: 12px; color: #2563eb; padding: 4px 0; }
+    .calc-note { font-size: 11.5px; color: #64748b; margin: 6px 0 0; line-height: 1.6; }
+    .notice-text { font-size: 11px; color: #64748b; margin-top: 16px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 8px; }
     .notice-text p { margin: 0; padding-left: 1.2em; text-indent: -1.2em; }
-    .warn-box { margin-top: 10px; padding: 10px 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; font-size: 12px; color: #9a3412; line-height: 1.6; }
+    .warn-box { margin-top: 10px; padding: 9px 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; font-size: 12px; color: #9a3412; line-height: 1.6; }
+    .to-result { display: none; }
 
-    @media (max-width: 600px) {
-        body { padding: 20px 12px; }
-        .header { padding: 16px 18px; }
-        .calculator-card { padding: 22px 16px; }
-        .result-box { padding: 14px 10px; }
-        table.rt th, table.rt td { padding: 7px 6px; font-size: 12px; }
+    @media (max-width: 900px) {
+        body { padding: 16px 10px; }
+        .header { padding: 14px 16px; }
+        .calculator-card { padding: 18px 14px; }
+        .layout { grid-template-columns: 1fr; }
+        .result-col { position: static; max-height: none; overflow: visible; border-top: 2px solid #e2e8f0; padding-top: 18px; }
+        .to-result {
+            display: block; position: fixed; right: 14px; bottom: 16px; z-index: 20; background: #2563eb; color: #fff;
+            border: none; border-radius: 999px; padding: 11px 18px; font-size: 14px; font-weight: 700; box-shadow: 0 6px 16px rgba(37,99,235,.35);
+        }
+    }
+    @media (max-width: 420px) {
+        .f { grid-template-columns: 1fr; gap: 4px; }
+        .biz-info { margin-left: 0; }
+        .jgrid { grid-template-columns: 1fr; }
+        table.rt th, table.rt td { padding: 6px 5px; font-size: 12px; }
     }
   </style>
 </head>
@@ -168,117 +204,54 @@
           </div>
         </div>
 
-        <!-- 계산기 폼 -->
-        <form id="taxForm" onsubmit="runCalc(event)" autocomplete="off">
-          <div class="section-title">1. 기본 정보</div>
-          <div class="row">
-            <div class="col form-group">
-              <label>상호 <span class="hint">(선택)</span></label>
-              <input type="text" id="bizName" maxlength="50" placeholder="예: 세무회계강남">
-            </div>
-            <div class="col form-group">
-              <label>귀속연도 (해당연도)</label>
-              <input type="text" id="year" inputmode="numeric" maxlength="4" value="2026">
-            </div>
-          </div>
-          <div class="row form-group">
+        <div class="layout">
+          <!-- 왼쪽: 입력 (위에서 아래로) -->
+          <form id="taxForm" autocomplete="off" onsubmit="event.preventDefault()">
+            <div class="sec">1. 기본 정보</div>
+            <div class="f"><label for="bizName">상호 <small>선택</small></label><input type="text" id="bizName" maxlength="50" placeholder="예: 세무회계강남"></div>
+            <div class="f"><label for="year">귀속연도</label><input type="text" id="year" class="num" inputmode="numeric" maxlength="4" value="2026"></div>
             <label class="check-line"><input type="checkbox" id="isNew"> 해당연도에 새로 개업한 신규 사업자</label>
-            <label class="check-line"><input type="checkbox" id="isPro"> 전문직사업자 (의사·변호사·세무사 등, 시행령 제145조 제3항)</label>
-          </div>
+            <label class="check-line"><input type="checkbox" id="isPro"> 전문직사업자 (의사·변호사·세무사 등)</label>
 
-          <div class="section-title">2. 업종 · 수입금액</div>
-          <div id="bizList"></div>
-          <button type="button" class="add-btn" id="addBizBtn" onclick="addBiz()">+ 업종 추가 (겸업, 최대 3개)</button>
+            <div class="sec">2. 업종 · 수입금액</div>
+            <div id="bizList"></div>
+            <button type="button" class="add-btn" id="addBizBtn" onclick="addBiz(true)">+ 업종 추가 (겸업, 최대 3개)</button>
 
-          <div class="section-title">3. 필요경비 · 소득공제</div>
-          <div class="row">
-            <div class="col form-group">
-              <label>주요경비 - 매입비용 <span class="hint">(증빙 있는 매입)</span></label>
-              <input type="text" id="purchase" inputmode="numeric" value="0" oninput="formatCurrency(this)">
-            </div>
-            <div class="col form-group">
-              <label>주요경비 - 임차료</label>
-              <input type="text" id="rent" inputmode="numeric" value="0" oninput="formatCurrency(this)">
-            </div>
-            <div class="col form-group">
-              <label>주요경비 - 인건비 <span class="hint">(지급명세서)</span></label>
-              <input type="text" id="labor" inputmode="numeric" value="0" oninput="formatCurrency(this)">
-            </div>
-          </div>
-          <div class="row">
-            <div class="col form-group">
-              <label>장부상 실제 필요경비 합계 <span class="hint">(이자·감가상각비 등 전체)</span></label>
-              <input type="text" id="bookExpense" inputmode="numeric" value="0" oninput="formatCurrency(this)">
-            </div>
-            <div class="col form-group">
-              <label>종합소득공제 합계 <span class="hint">(본인 기본공제 150만 원 포함)</span></label>
-              <input type="text" id="deduction" inputmode="numeric" value="1,500,000" oninput="formatCurrency(this)">
-            </div>
-          </div>
+            <div class="sec">3. 필요경비 · 소득공제</div>
+            <div class="f"><label for="bookExpense">장부상 필요경비 <small>이자·감가상각 등 전체</small></label><input type="text" id="bookExpense" class="num money" inputmode="numeric" value="0"></div>
+            <div class="f"><label for="purchase">주요경비: 매입비용 <small>기준경비율 계산용</small></label><input type="text" id="purchase" class="num money" inputmode="numeric" value="0"></div>
+            <div class="f"><label for="rent">주요경비: 임차료</label><input type="text" id="rent" class="num money" inputmode="numeric" value="0"></div>
+            <div class="f"><label for="labor">주요경비: 인건비</label><input type="text" id="labor" class="num money" inputmode="numeric" value="0"></div>
+            <div class="f"><label for="deduction">종합소득공제 <small>본인 150만 원 포함</small></label><input type="text" id="deduction" class="num money" inputmode="numeric" value="1,500,000"></div>
 
-          <div class="section-title">4. 창업중소기업 세액감면 <span class="hint">(조특법 제6조, 해당 없으면 비워두세요)</span></div>
-          <div class="form-group">
-            <label>감면 판단 업종 (표준산업분류) <span class="hint">비워두면 해당연도 주업종으로 자동 판단</span></label>
-            <div class="row">
-              <div class="col"><select id="ksicBig" onchange="filterKsic()"><option value="">대분류 전체</option></select></div>
-              <div class="col"><input type="text" id="ksicSearch" placeholder="검색 (예: 전자상거래, 47912)" oninput="filterKsic()"></div>
+            <div class="sec">4. 창업감면 <span class="hint">해당 없으면 비워두세요</span></div>
+            <div class="f"><label for="startDate">창업일</label><input type="text" id="startDate" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="birth">대표자 생년월일</label><input type="text" id="birth" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="enlist">입대일 <small>병역 없으면 빈칸</small></label><input type="text" id="enlist" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="discharge">전역일</label><input type="text" id="discharge" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="region">창업 당시 소재지 <small>서울 전역은 과밀억제권역</small></label><select id="region"></select></div>
+            <div class="f"><label for="firstIncomeYear">최초 소득 연도 <small>감면 5년의 시작</small></label><input type="text" id="firstIncomeYear" class="num" inputmode="numeric" maxlength="4" placeholder="예: 2024"></div>
+            <div class="f"><label for="ksicInput">감면 판단 업종 <small>비우면 주업종 기준</small></label>
+              <div class="ac" id="ksicAc"><input type="text" id="ksicInput" placeholder="표준산업분류 검색 (선택)"><button type="button" class="clear" aria-label="지우기">×</button><div class="ac-list"></div></div>
             </div>
-            <select id="ksic" style="margin-top: 8px;" onchange="showKsicInfo()"></select>
             <div id="ksicInfo" class="biz-info"></div>
-          </div>
-          <div class="row">
-            <div class="col form-group">
-              <label>대표자 생년월일</label>
-              <input type="text" id="birth" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)">
-            </div>
-            <div class="col form-group">
-              <label>창업일 (개업일)</label>
-              <input type="text" id="startDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)">
-            </div>
-          </div>
-          <div class="row">
-            <div class="col form-group">
-              <label>입대일 <span class="hint">(병역 미이행 시 빈칸)</span></label>
-              <input type="text" id="enlist" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)">
-            </div>
-            <div class="col form-group">
-              <label>전역일</label>
-              <input type="text" id="discharge" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)">
-            </div>
-          </div>
-          <div class="row">
-            <div class="col form-group">
-              <label>창업 당시 사업장 소재지 <span class="hint">(서울 전역은 과밀억제권역)</span></label>
-              <select id="region"></select>
-            </div>
-            <div class="col form-group">
-              <label>최초 소득 발생 연도 <span class="hint">(감면 5년의 시작)</span></label>
-              <input type="text" id="firstIncomeYear" inputmode="numeric" maxlength="4" placeholder="예: 2024">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="check-line"><input type="checkbox" id="realStartup" checked> 실질 창업 (사업 승계·양수, 법인전환, 같은 업종 재개업, 업종 추가가 아님)</label>
-          </div>
+            <label class="check-line"><input type="checkbox" id="realStartup" checked> 실질 창업 (승계·법인전환·재개업·업종 추가 아님)</label>
 
-          <div class="section-title">5. 기장료 산정</div>
-          <div class="row">
-            <div class="col form-group">
-              <label>직원 수 <span class="hint">(원천세 신고 인원)</span></label>
-              <input type="text" id="employees" inputmode="numeric" value="0" oninput="formatCurrency(this)">
-            </div>
-            <div class="col form-group">
-              <label>보수 할인율 (%) <span class="hint">(없으면 0)</span></label>
-              <input type="text" id="discount" inputmode="numeric" value="0" maxlength="3">
-            </div>
+            <div class="sec">5. 기장료 산정</div>
+            <div class="f"><label for="employees">직원 수 <small>원천세 신고 인원</small></label><input type="text" id="employees" class="num money" inputmode="numeric" value="0"></div>
+            <div class="f"><label for="discount">보수 할인율 (%)</label><input type="text" id="discount" class="num" inputmode="numeric" value="0" maxlength="3"></div>
+            <p class="save-note">입력하는 대로 오른쪽 결과가 바로 바뀝니다. 입력하신 내용과 계산 결과는 세무 상담을 위해 세무회계강남에 저장됩니다.</p>
+          </form>
+
+          <!-- 오른쪽: 결과 (입력하면 바로 계산) -->
+          <div class="result-col" id="resultPanel">
+            <div class="empty">왼쪽에 <b>업종</b>과 <b>수입금액</b>을 넣으면<br>판정 결과와 세금 · 기장료 비교가 여기에 바로 나옵니다.</div>
           </div>
-
-          <button type="submit" class="calc-action-btn">판정 및 세금 · 기장료 비교하기</button>
-          <p style="font-size: 11px; color: #94a3b8; margin: 8px 0 0; text-align: center;">입력하신 내용과 계산 결과는 세무 상담을 위해 세무회계강남에 저장됩니다.</p>
-        </form>
-
-        <div id="result" class="result-box" style="display: none;"></div>
+        </div>
+        <div id="result" style="display: none;"></div>
       </div>
   </div>
+  <button type="button" class="to-result" id="toResult" onclick="document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' })">결과 보기 ↓</button>
 
   <!-- 회원가입/로그인 팝업 모달 -->
   <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
@@ -290,40 +263,40 @@
       </div>
       <form id="loginForm" onsubmit="handleLogin(event)">
         <div class="form-group" style="margin-bottom: 15px;">
-          <label style="font-size:14px; font-weight:bold;">아이디 (이메일)</label>
+          <label style="font-size:14px; font-weight:bold; display:block; margin-bottom:5px;">아이디 (이메일)</label>
           <input type="text" id="loginId" required>
         </div>
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="font-size:14px; font-weight:bold;">비밀번호</label>
+          <label style="font-size:14px; font-weight:bold; display:block; margin-bottom:5px;">비밀번호</label>
           <input type="password" id="loginPw" required>
         </div>
         <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
       </form>
       <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
         <div class="form-group" style="margin-bottom: 12px;">
-          <label style="font-size:13px; font-weight:bold;">이름</label>
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">이름</label>
           <input type="text" id="signupName" placeholder="홍길동" required>
         </div>
         <div class="form-group" style="margin-bottom: 12px;">
-          <label style="font-size:13px; font-weight:bold;">연락처 (휴대폰 번호)</label>
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">연락처 (휴대폰 번호)</label>
           <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
         </div>
         <div class="form-group" style="margin-bottom: 12px;">
-          <label style="font-size:13px; font-weight:bold;">아이디 (이메일)</label>
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">아이디 (이메일)</label>
           <div style="display: flex; gap: 5px;">
             <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
             <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
           </div>
         </div>
         <div class="form-group" style="margin-bottom: 12px;">
-          <label style="font-size:13px; font-weight:bold;">인증번호 입력</label>
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">인증번호 입력</label>
           <div style="display: flex; gap: 5px;">
             <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
             <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
           </div>
         </div>
         <div class="form-group" style="margin-bottom: 20px;">
-          <label style="font-size:13px; font-weight:bold;">비밀번호</label>
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">비밀번호</label>
           <input type="password" id="signupPw" required>
         </div>
         <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
@@ -349,56 +322,126 @@
   <script>
     const DATA = window.GIJANG_DATA;
     const IND = DATA.industries.map(r => ({ code: r[0], group: r[1], uptae: r[2], sebun: r[3], name: r[4], simple: r[5], over: r[6], standard: r[7], startup: r[8], note: r[9], desc: r[10], ksic: r[11] }));
-    IND.forEach(x => { x.label = `${x.code} [${x.group}] ${x.name}`; x.key = `${x.group} | ${x.uptae}`; x.text = `${x.label} ${x.sebun} ${x.uptae} ${x.desc}`.toLowerCase(); });
+    IND.forEach(x => { x.label = `${x.code} ${x.name}`; x.hay = `${x.code} ${x.name} ${x.sebun} ${x.uptae} ${x.group} ${x.desc}`.toLowerCase(); x.nameHay = `${x.name} ${x.sebun}`.toLowerCase(); });
     const IND_MAP = new Map(IND.map(x => [x.code, x]));
     const KSIC = DATA.ksic.map(r => ({ code: r[0], name: r[1], sebun: r[2], jungbun: r[3], startup: r[4], note: r[5], taxCode: r[6], big: r[7] }));
-    KSIC.forEach(x => { x.label = `${x.code} ${x.name} [${x.startup}]`; x.text = `${x.label} ${x.sebun} ${x.jungbun} ${x.big}`.toLowerCase(); });
-    const MAX_OPTIONS = 300;
+    KSIC.forEach(x => { x.label = `${x.code} ${x.name}`; x.hay = `${x.code} ${x.name} ${x.sebun} ${x.jungbun} ${x.big}`.toLowerCase(); x.nameHay = `${x.name} ${x.sebun}`.toLowerCase(); });
+    const KSIC_MAP = new Map(KSIC.map(x => [x.code, x]));
     const pctText = r => (Math.round(r * 1000) / 10).toFixed(1) + '%';
+    const pct0 = r => (Math.round(r * 1000) / 10).toString() + '%';
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const won = n => Math.round(n).toLocaleString('ko-KR');
+    const eok = n => n >= 100000000 ? (Math.round(n / 1000000) / 100).toLocaleString('ko-KR') + '억' : n >= 10000 ? Math.round(n / 10000).toLocaleString('ko-KR') + '만' : won(n);
 
-    function formatCurrency(input) {
-        const val = input.value.replace(/[^0-9]/g, '');
-        input.value = val ? Number(val).toLocaleString('ko-KR') : '';
+    // ===== 업종 검색 목록 (입력하면 바로 아래에 후보 표시, 클릭·엔터로 선택) =====
+    // 띄어 쓴 단어가 모두 들어 있는 업종만, 코드·이름이 맞는 것부터 보여 줌
+    function search(list, q, limit) {
+        const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+        if (!words.length) return { items: list.slice(0, limit), total: list.length };
+        const scored = [];
+        for (const x of list) {
+            if (!words.every(w => x.hay.includes(w))) continue;
+            let s = 0;
+            for (const w of words) {
+                if (x.code.startsWith(w)) s += 100;
+                else if (x.name.toLowerCase().startsWith(w)) s += 60;
+                else if (x.nameHay.includes(w)) s += 40;
+            }
+            scored.push([s, x]);
+        }
+        scored.sort((a, b) => b[0] - a[0]);
+        return { items: scored.slice(0, limit).map(p => p[1]), total: scored.length };
     }
-    function formatDateInput(input) {
-        let val = input.value.replace(/\D/g, '');
-        if (val.length > 4 && val.length <= 6) val = val.slice(0, 4) + '-' + val.slice(4);
-        else if (val.length > 6) val = val.slice(0, 4) + '-' + val.slice(4, 6) + '-' + val.slice(6, 8);
-        input.value = val;
+    const mark = (text, q) => {
+        let h = esc(text);
+        q.split(/\s+/).filter(Boolean).forEach(w => { h = h.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`); });
+        return h;
+    };
+
+    function makeAc(box, { list, map, sub, onPick }) {
+        const input = box.querySelector('input'), listEl = box.querySelector('.ac-list'), clear = box.querySelector('.clear');
+        let items = [], on = -1;
+        box.code = '';
+        const close = () => { box.classList.remove('open'); on = -1; };
+        const render = () => {
+            const q = input.value.trim();
+            const r = search(list, box.code && input.value === map.get(box.code).label ? '' : q, 60);
+            items = r.items;
+            listEl.innerHTML = items.length
+                ? items.map((x, i) => `<div class="ac-item${i === on ? ' on' : ''}" data-i="${i}"><b>${mark(x.code, q)}</b> ${mark(x.name, q)}<small>${esc(sub(x))}</small></div>`).join('') +
+                  (r.total > items.length ? `<div class="ac-more">${r.total.toLocaleString()}개 중 ${items.length}개 표시 · 단어를 더 넣으면 좁혀집니다 (예: "제조 식품")</div>` : `<div class="ac-more">${r.total}개</div>`)
+                : '<div class="ac-more">검색 결과가 없습니다. 다른 단어로 찾아보세요.</div>';
+            box.classList.add('open');
+        };
+        const pick = x => {
+            box.code = x ? x.code : '';
+            input.value = x ? x.label : '';
+            box.classList.toggle('has', !!x);
+            close();
+            onPick(x);
+        };
+        box.setCode = code => pick(map.get(code) || null);
+        input.addEventListener('focus', () => { input.select(); render(); });
+        input.addEventListener('input', () => {
+            if (box.code) { box.code = ''; box.classList.remove('has'); onPick(null); }
+            on = -1; render();
+        });
+        input.addEventListener('keydown', e => {
+            if (!box.classList.contains('open')) return;
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                on = Math.max(0, Math.min(items.length - 1, on + (e.key === 'ArrowDown' ? 1 : -1)));
+                render();
+                const el = listEl.querySelector('.ac-item.on'); if (el) el.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                if (items.length) { e.preventDefault(); e.stopPropagation(); pick(items[on >= 0 ? on : 0]); focusNext(input); }
+            } else if (e.key === 'Escape') close();
+        });
+        // mousedown: 입력칸 focus가 풀리기 전에 선택
+        listEl.addEventListener('mousedown', e => {
+            const it = e.target.closest('.ac-item'); if (!it) return;
+            e.preventDefault(); pick(items[+it.dataset.i]); focusNext(input);
+        });
+        // 이미 고른 업종 칸을 다시 누르면 글자 전체 선택 → 바로 새로 검색
+        input.addEventListener('click', () => { if (box.code) { input.select(); render(); } });
+        input.addEventListener('blur', () => setTimeout(() => {
+            close();
+            // 고르지 않고 나가면: 결과가 하나뿐이면 그것으로, 아니면 원래 선택 유지 안 함
+            if (!box.code && input.value.trim()) { const r = search(list, input.value.trim(), 2); if (r.total === 1) pick(r.items[0]); }
+        }, 120));
+        clear.addEventListener('click', () => { pick(null); input.focus(); });
     }
-    const numOf = el => Number(String(el.value).replace(/[^0-9]/g, '')) || 0;
-    const val = id => document.getElementById(id).value.trim();
-    const amt = id => numOf(document.getElementById(id));
 
     // ===== 업종 (최대 3개) =====
-    let bizCount = 0;
-    function addBiz() {
+    function bizSub(x) {
+        return `${x.group} · ${x.uptae} · 단순 ${pctText(x.simple)} · 기준 ${pctText(x.standard)} · 창업감면 ${x.startup}`;
+    }
+    function addBiz(focus) {
         if (document.querySelectorAll('.biz-box').length >= 3) return;
-        const n = ++bizCount;
         const box = document.createElement('div');
         box.className = 'biz-box';
         box.innerHTML = `
-            <h4><span class="biz-title"></span><button type="button" class="del" onclick="removeBiz(this)">삭제 ×</button></h4>
-            <div class="row">
-              <div class="col"><select class="biz-key" onchange="filterBiz(this)"><option value="">그룹·업태 전체</option>${DATA.groupKeys.map(k => `<option>${esc(k)}</option>`).join('')}</select></div>
-              <div class="col"><input type="text" class="biz-search" placeholder="검색 (예: 커피, 임대, 701201)" oninput="filterBiz(this)"></div>
+            <div class="biz-head"><span class="biz-title"></span><button type="button" class="del">삭제 ×</button></div>
+            <div class="f"><label>업종 <small>이름·코드로 검색</small></label>
+              <div class="ac"><input type="text" placeholder="예: 제조, 커피, 임대, 552101"><button type="button" class="clear" aria-label="지우기">×</button><div class="ac-list"></div></div>
             </div>
-            <select class="biz-code" style="margin-top: 8px;" onchange="showBizInfo(this)"></select>
             <div class="biz-info"></div>
-            <div class="row" style="margin-top: 10px;">
-              <div class="col"><label>직전연도 수입금액 <span class="hint">(기장의무·경비율 판단)</span></label><input type="text" class="biz-prev" inputmode="numeric" placeholder="0" oninput="formatCurrency(this)"></div>
-              <div class="col"><label>해당연도 수입금액 <span class="hint">(성실신고·세액 계산)</span></label><input type="text" class="biz-cur" inputmode="numeric" placeholder="0" oninput="formatCurrency(this)"></div>
-            </div>`;
+            <div class="f"><label>직전연도 수입 <small>기장의무·경비율 판단</small></label><input type="text" class="num money biz-prev" inputmode="numeric" placeholder="0"></div>
+            <div class="f"><label>해당연도 수입 <small>성실신고·세액 계산</small></label><input type="text" class="num money biz-cur" inputmode="numeric" placeholder="0"></div>`;
         document.getElementById('bizList').appendChild(box);
-        filterBiz(box.querySelector('.biz-search'));
+        const ac = box.querySelector('.ac');
+        makeAc(ac, {
+            list: IND, map: IND_MAP, sub: bizSub,
+            onPick: x => {
+                const info = box.querySelector('.biz-info');
+                info.textContent = x ? `${x.group} · ${x.uptae} | 단순 ${pctText(x.simple)}${x.over > 0 ? ` (4천만 원 초과분 ${pctText(x.over)})` : ''} · 기준 ${pctText(x.standard)} | 창업감면 ${x.startup}${x.note ? ` (${x.note})` : ''}` : '';
+                scheduleCalc();
+            }
+        });
+        box.querySelector('.del').addEventListener('click', () => { box.remove(); if (!document.querySelector('.biz-box')) addBiz(); renumberBiz(); scheduleCalc(); });
         renumberBiz();
+        if (focus) ac.querySelector('input').focus();
         return box;
-    }
-    function removeBiz(btn) {
-        btn.closest('.biz-box').remove();
-        if (!document.querySelector('.biz-box')) addBiz();
-        renumberBiz();
     }
     function renumberBiz() {
         const boxes = document.querySelectorAll('.biz-box');
@@ -408,234 +451,223 @@
         });
         document.getElementById('addBizBtn').style.display = boxes.length >= 3 ? 'none' : 'block';
     }
-    function filterBiz(el) {
-        const box = el.closest('.biz-box');
-        const key = box.querySelector('.biz-key').value;
-        const q = box.querySelector('.biz-search').value.trim().toLowerCase();
-        const sel = box.querySelector('.biz-code');
-        const before = sel.value;
-        const list = IND.filter(x => (!key || x.key === key) && (!q || x.text.includes(q)));
-        const shown = list.slice(0, MAX_OPTIONS);
-        if (before && !shown.some(x => x.code === before) && IND_MAP.has(before)) shown.unshift(IND_MAP.get(before));
-        const head = list.length ? `— ${list.length}개 검색됨${list.length > MAX_OPTIONS ? ` (앞 ${MAX_OPTIONS}개 표시, 검색어를 더 입력하세요)` : ''} · 업종을 고르세요 —` : '— 검색 결과 없음: 다른 검색어를 입력하세요 —';
-        sel.innerHTML = `<option value="">${head}</option>` + shown.map(x => `<option value="${x.code}">${esc(x.label)}</option>`).join('');
-        sel.value = before && shown.some(x => x.code === before) ? before : '';
-        // 검색 결과가 하나뿐이면 자동 선택
-        if (!sel.value && list.length === 1) sel.value = list[0].code;
-        showBizInfo(sel);
-    }
-    function showBizInfo(sel) {
-        const box = sel.closest('.biz-box');
-        const info = box.querySelector('.biz-info');
-        const x = IND_MAP.get(sel.value);
-        info.classList.remove('warn');
-        if (!x) { info.textContent = ''; return; }
-        info.textContent = `→ ${x.group} · ${x.uptae} | 단순 ${pctText(x.simple)}${x.over > 0 ? ` (4천만 원 초과분 ${pctText(x.over)})` : ''} · 기준 ${pctText(x.standard)} | 창업감면 ${x.startup}${x.note ? ` (${x.note})` : ''}`;
-    }
 
-    // ===== 감면 판단 업종 (표준산업분류) =====
-    function filterKsic() {
-        const big = val('ksicBig');
-        const q = val('ksicSearch').toLowerCase();
-        const sel = document.getElementById('ksic');
-        const before = sel.value;
-        const list = KSIC.filter(x => (!big || x.big === big) && (!q || x.text.includes(q)));
-        const shown = list.slice(0, MAX_OPTIONS);
-        const head = !big && !q ? '— 비워두면 주업종 기준으로 자동 판단 —' : list.length ? `— ${list.length}개 검색됨 · 분류를 고르세요 (비워두면 자동) —` : '— 검색 결과 없음 —';
-        sel.innerHTML = `<option value="">${head}</option>` + shown.map(x => `<option value="${x.code}">${esc(x.label)}</option>`).join('');
-        sel.value = shown.some(x => x.code === before) ? before : '';
-        showKsicInfo();
+    // ===== 입력 서식 · 엔터로 다음 칸 =====
+    function formatMoney(input) {
+        const v = input.value.replace(/[^0-9]/g, '');
+        input.value = v ? Number(v).toLocaleString('ko-KR') : '';
     }
-    function showKsicInfo() {
-        const x = KSIC.find(k => k.code === val('ksic'));
-        document.getElementById('ksicInfo').textContent = x
-            ? `→ 창업감면 ${x.startup}${x.note ? ` (${x.note})` : ''} | ${x.big} > ${x.jungbun} | 연결 세법 업종코드: ${x.taxCode || '-'}` : '';
+    function formatDate(input) {
+        let v = input.value.replace(/\D/g, '');
+        if (v.length > 4 && v.length <= 6) v = v.slice(0, 4) + '-' + v.slice(4);
+        else if (v.length > 6) v = v.slice(0, 4) + '-' + v.slice(4, 6) + '-' + v.slice(6, 8);
+        input.value = v;
     }
+    function focusNext(el) {
+        const all = [...document.querySelectorAll('#taxForm input, #taxForm select')].filter(x => x.offsetParent !== null);
+        const next = all[all.indexOf(el) + 1];
+        if (next) next.focus();
+    }
+    const form = document.getElementById('taxForm');
+    form.addEventListener('input', e => {
+        if (e.target.classList.contains('money')) formatMoney(e.target);
+        if (e.target.classList.contains('date')) formatDate(e.target);
+        scheduleCalc();
+    });
+    form.addEventListener('change', scheduleCalc);
+    form.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && e.target.matches('input:not([type=checkbox]), select')) { e.preventDefault(); focusNext(e.target); }
+    });
+    // 금액 칸을 누르면 0을 지워서 바로 입력
+    form.addEventListener('focusin', e => { if (e.target.classList.contains('money') && e.target.value === '0') e.target.value = ''; });
+    form.addEventListener('focusout', e => { if (e.target.classList.contains('money') && e.target.value === '' && !e.target.closest('.biz-box')) e.target.value = '0'; });
 
-    function setup() {
-        document.getElementById('ksicBig').innerHTML += DATA.bigList.map(b => `<option>${esc(b)}</option>`).join('');
-        document.getElementById('region').innerHTML = GijangEngine.REGIONS.map(r => `<option>${esc(r[0])}</option>`).join('');
-        filterKsic();
-        addBiz();
-    }
-    setup();
+    // ===== 감면 판단 업종 · 소재지 =====
+    document.getElementById('region').innerHTML = GijangEngine.REGIONS.map(r => `<option>${esc(r[0])}</option>`).join('');
+    const ksicAc = document.getElementById('ksicAc');
+    makeAc(ksicAc, {
+        list: KSIC, map: KSIC_MAP, sub: x => `${x.big} > ${x.jungbun} · 창업감면 ${x.startup}`,
+        onPick: x => {
+            document.getElementById('ksicInfo').textContent = x ? `창업감면 ${x.startup}${x.note ? ` (${x.note})` : ''} | 연결 세법 업종코드 ${x.taxCode || '-'}` : '';
+            scheduleCalc();
+        }
+    });
+    addBiz();
 
-    // ===== 계산 =====
+    // ===== 계산 (입력할 때마다 바로) =====
+    const val = id => document.getElementById(id).value.trim();
+    const amt = id => Number(val(id).replace(/[^0-9]/g, '')) || 0;
+    const numOf = el => Number(String(el.value).replace(/[^0-9]/g, '')) || 0;
     function readInput() {
         const biz = [...document.querySelectorAll('.biz-box')].map(b => ({
-            code: b.querySelector('.biz-code').value, prev: numOf(b.querySelector('.biz-prev')), cur: numOf(b.querySelector('.biz-cur'))
+            code: b.querySelector('.ac').code, text: b.querySelector('.ac input').value.trim(),
+            prev: numOf(b.querySelector('.biz-prev')), cur: numOf(b.querySelector('.biz-cur'))
         }));
         return {
             bizName: val('bizName'), year: Number(val('year')) || 0,
             isNew: document.getElementById('isNew').checked, isPro: document.getElementById('isPro').checked, biz,
             purchase: amt('purchase'), rent: amt('rent'), labor: amt('labor'), bookExpense: amt('bookExpense'), deduction: amt('deduction'),
-            ksic: val('ksic'), birth: val('birth'), enlist: val('enlist'), discharge: val('discharge'), startDate: val('startDate'),
+            ksic: ksicAc.code, birth: val('birth'), enlist: val('enlist'), discharge: val('discharge'), startDate: val('startDate'),
             region: val('region'), firstIncomeYear: val('firstIncomeYear'), realStartup: document.getElementById('realStartup').checked,
             employees: amt('employees'), discount: Math.min(100, Number(val('discount').replace(/[^0-9.]/g, '')) || 0) / 100
         };
     }
-
-    function validate(input) {
-        if (input.year < 2000 || input.year > 2100) return '귀속연도를 4자리 숫자로 입력해 주세요.';
-        const boxes = input.biz;
-        if (!boxes[0].code) return '업종 1을 검색해서 골라 주세요.';
-        for (let i = 0; i < boxes.length; i++) {
-            const b = boxes[i];
-            if (!b.code && (b.prev || b.cur)) return `업종 ${i + 1}을 골라 주세요. (수입금액만 입력되어 있습니다)`;
-        }
-        const dates = [['birth', '생년월일'], ['startDate', '창업일'], ['enlist', '입대일'], ['discharge', '전역일']];
-        for (const [id, name] of dates) {
-            if (input[id] && GijangEngine.toDay(input[id]) == null) return `${name}을 YYYY-MM-DD 형식으로 올바르게 입력해 주세요.`;
-        }
-        if (!!input.enlist !== !!input.discharge) return '입대일과 전역일을 모두 입력하거나 모두 비워 주세요.';
-        return null;
-    }
-
-    async function runCalc(event) {
-        event.preventDefault();
-        const input = readInput();
-        const error = validate(input);
-        if (error) { alert(error); return; }
-        const r = GijangEngine.compute(input, DATA);
-        const t = r.tax.cols, f = r.fee.rows;
-
-        // 승인된 회원인지 서버에서 확인하고, 입력값과 결과를 상담용으로 기록
-        let res;
-        try {
-            res = await api('/api/calculate', {
-                product: 'gijang',
-                bizName: input.bizName, year: input.year,
-                biz: input.biz.map(b => ({ code: b.code, name: (IND_MAP.get(b.code) || {}).name || '', prev: b.prev, cur: b.cur })),
-                isNew: input.isNew, isPro: input.isPro,
-                expenses: { purchase: input.purchase, rent: input.rent, labor: input.labor, book: input.bookExpense, deduction: input.deduction },
-                startup: { ksic: input.ksic, birth: input.birth, startDate: input.startDate, region: input.region, firstIncomeYear: input.firstIncomeYear, realStartup: input.realStartup },
-                employees: input.employees,
-                result: {
-                    revenue: r.startup.revenue, book: r.judge.book.result, rate: r.judge.rate.result, external: r.judge.external.result,
-                    faithful: r.judge.faithful.result, relief: r.startup.reliefText,
-                    estimateTax: Math.round(t[0].total), simpleTax: Math.round(t[1].total), doubleTax: Math.round(t[2].total),
-                    best: r.tax.best, doubleFee: Math.round(f[2].withVat), bestWithFee: r.fee.best
-                }
-            });
-        } catch (e) {
-            console.error('통신 에러:', e);
-            alert('서버와 통신하지 못했습니다.');
-            return;
-        }
-        if (!res.ok) {
-            alert(res.data.message || '계산에 실패했습니다.');
-            if (res.status === 401 || res.status === 402) refreshUser();
-            return;
-        }
-        renderResult(r, input);
-    }
-
-    const won = n => Math.round(n).toLocaleString('ko-KR');
-    const signed = n => (Math.round(n) === 0 ? '0' : won(n));
-    const tag = (text, kind) => `<span class="tag ${kind}">${esc(text)}</span>`;
-
-    function renderResult(r, input) {
-        const j = r.judge, s = r.startup, t = r.tax.cols, f = r.fee.rows;
-        const dash = n => n ? won(n) : '-';
-        const judgeRow = (name, x, kind, reason) =>
-            `<tr><td class="k">${name}</td><td class="n">${dash(x.threshold)}</td><td class="n">${dash(x.amount)}</td><td>${tag(x.result, kind)}</td><td>${esc(reason)}</td></tr>`;
+    // 아직 계산할 수 없으면 안내 문구, 계산은 되지만 확인할 점이 있으면 warns
+    function check(input) {
+        const b0 = input.biz[0];
+        if (!b0.code) return { stop: b0.text ? '업종 1을 목록에서 골라 주세요.' : null };
+        if (!input.biz.some(b => b.prev || b.cur)) return { stop: '수입금액을 넣어 주세요.' };
         const warns = [];
-        if (input.firstIncomeYear && input.startDate && Number(input.firstIncomeYear) < Number(input.startDate.slice(0, 4))) {
-            warns.push(`최초 소득 발생 연도(${input.firstIncomeYear}년)가 창업일(${input.startDate})보다 앞섭니다. 감면기간 판단을 위해 다시 확인해 주세요.`);
+        input.biz.forEach((b, i) => { if (!b.code && (b.text || b.prev || b.cur)) warns.push(`업종 ${i + 1}을 목록에서 고르지 않아 계산에서 빠졌습니다.`); });
+        if (input.year < 2000 || input.year > 2100) return { stop: '귀속연도를 4자리로 넣어 주세요.' };
+        for (const [id, name] of [['birth', '생년월일'], ['startDate', '창업일'], ['enlist', '입대일'], ['discharge', '전역일']]) {
+            if (input[id] && input[id].length === 10 && GijangEngine.toDay(input[id]) == null) warns.push(`${name} 날짜를 확인해 주세요.`);
         }
-        if (r.rows.some(x => x.code && !x.found)) warns.push('업종코드를 찾을 수 없는 업종이 있습니다.');
-        if (s.ksicMatch === '주업종 코드와 다름 - 확인') warns.push(`직접 고른 감면 판단 업종의 세법 업종코드(${s.linkedTaxCode})가 해당연도 주업종(${r.curMainName.slice(0, 6)})과 다릅니다. 실제 업종을 확인해 주세요.`);
+        if (!!input.enlist !== !!input.discharge) warns.push('입대일과 전역일을 모두 넣어야 병역기간이 반영됩니다.');
+        if (input.firstIncomeYear.length === 4 && input.startDate.length >= 4 && Number(input.firstIncomeYear) < Number(input.startDate.slice(0, 4))) {
+            warns.push(`최초 소득 연도(${input.firstIncomeYear}년)가 창업일보다 앞섭니다. 감면기간 판단을 위해 확인해 주세요.`);
+        }
+        return { warns };
+    }
 
-        const taxRow = (label, key, fmt = signed, cls = '') =>
-            `<tr class="${cls}"><td class="k">${label}</td>${t.map(c => `<td class="n">${fmt(c[key])}</td>`).join('')}</tr>`;
-        const feeRow = (label, key, cls = '') =>
-            `<tr class="${cls}"><td class="k">${label}</td>${f.map(c => `<td class="n">${signed(c[key])}</td>`).join('')}</tr>`;
+    let calcTimer = null, logTimer = null, lastLogged = '';
+    function scheduleCalc() { clearTimeout(calcTimer); calcTimer = setTimeout(runCalc, 200); }
+    function runCalc() {
+        const input = readInput();
+        // 엔진은 고른 업종만 계산 (고르지 않은 줄은 빼고)
+        const engineInput = { ...input, biz: input.biz.filter(b => b.code) };
+        const c = check(input);
+        const panel = document.getElementById('resultPanel');
+        clearTimeout(logTimer);
+        if (c.stop !== undefined) {
+            panel.innerHTML = `<div class="empty">${c.stop ? esc(c.stop) + '<br><br>' : ''}왼쪽에 <b>업종</b>과 <b>수입금액</b>을 넣으면<br>판정 결과와 세금 · 기장료 비교가 여기에 바로 나옵니다.</div>`;
+            return;
+        }
+        const r = GijangEngine.compute(engineInput, DATA);
+        const s = r.startup;
+        if (s.ksicMatch === '주업종 코드와 다름 - 확인') c.warns.push(`직접 고른 감면 판단 업종의 세법 업종코드(${s.linkedTaxCode})가 해당연도 주업종(${r.curMainName.slice(0, 6)})과 다릅니다.`);
+        renderResult(r, engineInput, c.warns);
+        // 입력이 멈추고 10초 뒤, 바뀐 내용이면 상담용으로 기록 (이용 자격도 서버에서 다시 확인)
+        logTimer = setTimeout(() => logResult(r, engineInput), 10000);
+    }
 
-        document.getElementById('result').innerHTML = `
-          <h3>📌 ① 판정 결과${input.bizName ? ' · ' + esc(input.bizName) : ''} (${input.year}년 귀속)</h3>
-          <p class="calc-note" style="margin-top:0;">직전연도 주업종: <b>${esc(r.prevMainName)}</b> → 기장의무·경비율·외부조정 판단<br>
-             해당연도 주업종: <b>${esc(r.curMainName)}</b> → 성실신고·창업감면 판단</p>
+    async function logResult(r, input) {
+        const t = r.tax.cols, f = r.fee.rows;
+        const body = {
+            product: 'gijang',
+            bizName: input.bizName, year: input.year,
+            biz: input.biz.map(b => ({ code: b.code, name: (IND_MAP.get(b.code) || {}).name || '', prev: b.prev, cur: b.cur })),
+            isNew: input.isNew, isPro: input.isPro,
+            expenses: { purchase: input.purchase, rent: input.rent, labor: input.labor, book: input.bookExpense, deduction: input.deduction },
+            startup: { ksic: input.ksic, birth: input.birth, startDate: input.startDate, region: input.region, firstIncomeYear: input.firstIncomeYear, realStartup: input.realStartup },
+            employees: input.employees,
+            result: {
+                revenue: r.startup.revenue, book: r.judge.book.result, rate: r.judge.rate.result, external: r.judge.external.result,
+                faithful: r.judge.faithful.result, relief: r.startup.reliefText,
+                estimateTax: Math.round(t[0].total), simpleTax: Math.round(t[1].total), doubleTax: Math.round(t[2].total),
+                best: r.tax.best, doubleFee: Math.round(f[2].withVat), bestWithFee: r.fee.best
+            }
+        };
+        const key = JSON.stringify(body);
+        if (key === lastLogged) return;
+        try {
+            const res = await api('/api/calculate', body);
+            if (res.ok) lastLogged = key;
+            else if (res.status === 401 || res.status === 402) { alert(res.data.message || '이용 기간을 확인해 주세요.'); refreshUser(); }
+        } catch (e) { console.error('기록 저장 실패:', e); }
+    }
+
+    function renderResult(r, input, warns) {
+        const j = r.judge, s = r.startup, t = r.tax.cols, f = r.fee.rows;
+        const minTax = Math.min(...t.map(c => c.total)), minGrand = Math.min(...f.map(c => c.grand));
+        const card = (title, x, kind, desc) => `<div class="jcard"><div class="t">${title}</div><div class="v ${kind}">${esc(x)}</div>${desc ? `<div class="d">${desc}</div>` : ''}</div>`;
+        const th = (cols, min, key) => cols.map(c => `<th class="n${c[key] === min ? ' bestcol' : ''}">${esc(c.name.replace(/ \(.*\)/, ''))}</th>`).join('');
+        const row = (cols, label, key, min, minKey, cls = '', fmt = won) =>
+            `<tr class="${cls}"><td class="k">${label}</td>${cols.map(c => `<td class="n${minKey && c[minKey] === min ? ' bestcol' : ''}">${fmt(c[key])}</td>`).join('')}</tr>`;
+        const book = j.book.result === '복식부기의무자';
+
+        document.getElementById('resultPanel').innerHTML = `
+          <h3>📌 판정 결과 <small>${input.year}년 귀속${input.bizName ? ' · ' + esc(input.bizName) : ''}</small></h3>
+          <div class="main-biz">주업종(직전): <b>${esc(r.prevMainName)}</b>${r.prevMainName !== r.curMainName ? `<br>주업종(해당): <b>${esc(r.curMainName)}</b>` : ''}</div>
+          <div class="jgrid" style="margin-top: 8px;">
+            ${card('장부 기장의무', j.book.result, book ? 'on' : 'ok', `${esc(j.book.reason)}<br>기준 ${eok(j.book.threshold)} · 환산 ${eok(j.book.amount)}`)}
+            ${card('추계 시 경비율', j.rate.result, '', `단순경비율 기준 ${eok(j.rate.threshold)} · 직전 환산 ${eok(j.rate.amount)}${j.rate.multiBiz ? '<br>겸업: 수입금액 가중평균' : ''}`)}
+            ${card('외부조정', j.external.result, j.external.result === '외부조정 대상' ? 'on' : 'ok', `기준 ${eok(j.external.threshold)} · 환산 ${eok(j.external.amount)}`)}
+            ${card('성실신고확인', j.faithful.result, j.faithful.result === '성실신고확인대상' ? 'on' : 'ok', `기준 ${eok(j.faithful.threshold)} · 해당연도 환산 ${eok(j.faithful.amount)}`)}
+            ${card('무기장가산세 (추계 시)', j.penalty.result, j.penalty.result.startsWith('제외') ? 'ok' : 'on', `직전 수입 합계 ${eok(j.penalty.amount)} (4,800만 미만 제외)`)}
+            ${card('기장세액공제 · 사업용계좌', `${j.bookCredit === '해당 없음' ? '공제 없음' : '공제 가능'} · 계좌 ${j.account === '의무 없음' ? '의무 없음' : '의무'}`, '', j.bookCredit === '해당 없음' ? '' : '간편장부대상자가 복식부기로 신고하면 산출세액 20% (한도 100만 원)')}
+          </div>
+
+          <h3>⚖️ 추계 vs 장부 소득세</h3>
           <div class="table-wrap"><table class="rt">
-            <tr><th>판정 항목</th><th>주업종 기준금액</th><th>환산 수입금액</th><th>판정 결과</th><th>근거</th></tr>
-            ${judgeRow('장부 기장의무', j.book, j.book.result === '복식부기의무자' ? 'on' : 'ok', j.book.reason)}
-            ${judgeRow('추계 시 경비율', j.rate, 'off', '직전 단순경비율 기준 미만 + 해당연도 복식기준 미만이면 단순경비율 (시행령 제143조)' + (j.rate.multiBiz ? ' / 겸업: 업종별 경비율을 수입금액으로 가중평균' : ''))}
-            ${judgeRow('외부조정 대상', j.external, j.external.result === '외부조정 대상' ? 'on' : 'ok', '복식부기의무자 중 직전연도 기준 이상')}
-            ${judgeRow('성실신고확인 대상', j.faithful, j.faithful.result === '성실신고확인대상' ? 'on' : 'ok', '해당연도 수입 기준, 신고기한 6월 30일')}
-            ${judgeRow('무기장가산세 (추계 시)', j.penalty, j.penalty.result.startsWith('제외') ? 'ok' : 'on', '직전연도 합계 수입 (환산 없음)')}
-            <tr><td class="k">기장세액공제</td><td></td><td></td><td>${tag(j.bookCredit, j.bookCredit === '해당 없음' ? 'off' : 'ok')}</td><td>${j.bookCredit === '해당 없음' ? '' : '산출세액 20%, 한도 100만 원'}</td></tr>
-            <tr><td class="k">사업용계좌 신고</td><td></td><td></td><td>${tag(j.account, j.account === '의무 없음' ? 'off' : 'on')}</td><td>${j.account === '의무 없음' ? '' : '의무자가 된 연도 6월 30일까지'}</td></tr>
+            <tr><th>항목</th>${th(t, minTax, 'total')}</tr>
+            ${row(t, '적용 경비율', 'rate', minTax, 'total', '', pctText)}
+            ${row(t, '소득금액', 'income', minTax, 'total')}
+            ${row(t, '산출세액', 'tax', minTax, 'total')}
+            ${t.some(c => c.relief) ? row(t, '창업감면', 'relief', minTax, 'total') : ''}
+            ${t.some(c => c.credit) ? row(t, '기장세액공제', 'credit', minTax, 'total') : ''}
+            ${t.some(c => c.penalty) ? row(t, '무기장가산세', 'penalty', minTax, 'total') : ''}
+            ${row(t, '총 부담세액', 'total', minTax, 'total', 'total')}
+            ${row(t, '추계 대비 절감', 'saving', minTax, 'total', 'em')}
           </table></div>
+          <div class="best">👉 ${esc(r.tax.best)}</div>
+          <details><summary>계산 과정 자세히 보기</summary>
+            <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
+              <tr><th>항목</th>${th(t, null, 'total')}</tr>
+              ${row(t, '수입금액', 'revenue')}
+              ${row(t, '필요경비', 'expense')}
+              ${r.tax.isStandard ? `<tr><td class="k">소득금액 한도</td><td class="n">${won(r.tax.cap)}</td><td></td><td></td></tr>` : ''}
+              ${row(t, '소득금액', 'income')}
+              ${row(t, '종합소득공제', 'deduction')}
+              ${row(t, '과세표준', 'taxBase')}
+              ${row(t, '산출세액', 'tax')}
+              ${row(t, '창업감면세액', 'relief')}
+              ${row(t, '기장세액공제', 'credit')}
+              ${row(t, '무기장가산세', 'penalty')}
+              ${row(t, '결정세액', 'decided')}
+              ${row(t, '지방소득세', 'local')}
+              ${row(t, '총 부담세액', 'total', null, null, 'total')}
+            </table></div>
+            <p class="calc-note">· 추계 필요경비: ${esc(r.tax.expenseNote)}<br>· 소득금액 한도: ${esc(r.tax.capNote)}<br>· 추계 소득금액: ${esc(r.tax.incomeNote)}<br>· 창업감면: ${esc(r.tax.reliefNote)}<br>· 장부 신고의 필요경비는 장부상 실제 필요경비(수입금액 한도)입니다.</p>
+          </details>
 
-          <h3>🚀 ② 창업중소기업 세액감면 (조특법 제6조)</h3>
-          <div class="table-wrap"><table class="rt">
-            <tr><th>요건</th><th>확인 내용</th><th>판정</th></tr>
-            <tr><td class="k">감면 판단 업종</td><td>${esc(s.ksicText)}</td><td>${esc(s.ksicMatch)}</td></tr>
-            <tr><td class="k">창업 당시 나이</td><td>${s.age == null ? '' : s.age + '세'}${s.milText ? ` (병역 ${esc(s.milText)} 차감)` : ''}</td><td>${esc(s.ageText)}</td></tr>
-            <tr><td class="k">생계형 창업</td><td>해당연도 수입 ${won(s.revenue)}원</td><td>${esc(s.livelihoodText)}</td></tr>
-            <tr><td class="k">감면 대상 업종</td><td>${esc(s.industryText)}</td><td>${esc(s.industryOk)}</td></tr>
-            <tr><td class="k">실질 창업</td><td>${input.realStartup ? '예' : '아니오'}</td><td>${esc(s.realOk)}</td></tr>
-            <tr><td class="k">감면기간 (5년)</td><td>${esc(s.periodText)}</td><td>${esc(s.periodOk)}</td></tr>
-            <tr><td class="k">적용 규정 · 지역</td><td>${esc(s.ruleText)}</td><td>${esc(s.region)}</td></tr>
-            <tr><td class="k">지역별 감면율</td><td>${esc(s.rateGroup)}</td><td>${s.ruleText ? pctText(s.regionRate).replace('.0%', '%') : ''}</td></tr>
-            <tr class="em"><td class="k">최종 감면율</td><td>${esc(s.reliefText)}</td><td>${pctText(s.reliefRate).replace('.0%', '%')}</td></tr>
-          </table></div>
-          <p class="calc-note">※ 감면 배제: 기한후 신고·무신고 결정, 복식부기의무자의 추계·간편장부 신고(무신고 간주), 사업용계좌 미신고·현금영수증가맹점 미가입. 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도.</p>
+          <h3>🚀 창업중소기업 세액감면</h3>
+          <div class="relief"><span class="rate${s.reliefRate ? '' : ' zero'}">${pct0(s.reliefRate)}</span> &nbsp;${esc(s.reliefText)}</div>
+          <details><summary>요건 자세히 보기</summary>
+            <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
+              <tr><th>요건</th><th>내용</th><th>판정</th></tr>
+              <tr><td class="k">업종</td><td>${esc(s.ksicText)}<br>${esc(s.industryText)}</td><td>${esc(s.industryOk)}</td></tr>
+              <tr><td class="k">나이</td><td>${s.age == null ? '-' : s.age + '세'}${s.milText ? ` (병역 ${esc(s.milText)} 차감)` : ''}</td><td>${esc(s.ageText)}</td></tr>
+              <tr><td class="k">생계형</td><td>해당연도 수입 ${won(s.revenue)}원</td><td>${esc(s.livelihoodText)}</td></tr>
+              <tr><td class="k">실질 창업</td><td>${input.realStartup ? '예' : '아니오'}</td><td>${esc(s.realOk)}</td></tr>
+              <tr><td class="k">감면기간</td><td>${esc(s.periodText) || '-'}</td><td>${esc(s.periodOk)}</td></tr>
+              <tr><td class="k">지역 · 규정</td><td>${esc(s.region)}<br>${esc(s.ruleText)}</td><td>${esc(s.rateGroup)}${s.ruleText ? ' ' + pct0(s.regionRate) : ''}</td></tr>
+            </table></div>
+            <p class="calc-note">※ 감면 배제: 기한후 신고·무신고 결정, 복식부기의무자의 추계·간편장부 신고(무신고 간주), 사업용계좌 미신고·현금영수증가맹점 미가입. 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도.</p>
+          </details>
 
-          <h3>⚖️ ③ 추계 vs 장부 소득세 비교 (${input.year}년)</h3>
+          <h3>💼 기장료 · 조정료 <small>세무회계강남 보수표 · 부가세 포함</small></h3>
           <div class="table-wrap"><table class="rt">
-            <tr><th>항목</th>${t.map(c => `<th style="text-align:right;">${esc(c.name)}</th>`).join('')}</tr>
-            ${taxRow('수입금액', 'revenue')}
-            ${taxRow('적용 경비율', 'rate', pctText)}
-            ${taxRow('필요경비', 'expense')}
-            ${r.tax.isStandard ? `<tr><td class="k">소득금액 한도</td><td class="n">${won(r.tax.cap)}</td><td></td><td></td></tr>` : ''}
-            ${taxRow('소득금액', 'income')}
-            ${taxRow('종합소득공제', 'deduction')}
-            ${taxRow('과세표준', 'taxBase')}
-            ${taxRow('산출세액', 'tax')}
-            ${taxRow('창업감면세액', 'relief')}
-            ${taxRow('기장세액공제', 'credit')}
-            ${taxRow('무기장가산세', 'penalty')}
-            ${taxRow('결정세액 (소득세)', 'decided')}
-            ${taxRow('지방소득세 (10%)', 'local')}
-            ${taxRow('총 부담세액', 'total', signed, 'total')}
-            ${taxRow('추계 대비 절감액', 'saving', signed, 'em')}
+            <tr><th>항목</th>${th(f, minGrand, 'grand')}</tr>
+            ${row(f, '월 기장료', 'monthly', minGrand, 'grand')}
+            ${row(f, '조정료·신고대행', 'adjust', minGrand, 'grand')}
+            ${f.some(c => c.faithful) ? row(f, '성실신고확인', 'faithful', minGrand, 'grand') : ''}
+            ${row(f, '연간 보수 (VAT 포함)', 'withVat', minGrand, 'grand', 'em')}
+            ${row(f, '세금 + 보수', 'grand', minGrand, 'grand', 'total')}
+            ${row(f, '추계 대비 순효과', 'net', minGrand, 'grand')}
           </table></div>
-          <div class="best">👉 가장 유리한 방식: ${esc(r.tax.best)}</div>
-          <p class="calc-note">· 추계 필요경비: ${esc(r.tax.expenseNote)}<br>
-            · 소득금액 한도: ${esc(r.tax.capNote)}<br>
-            · 추계 소득금액: ${esc(r.tax.incomeNote)}<br>
-            · 창업감면: ${esc(r.tax.reliefNote)}<br>
-            · 장부 신고의 필요경비는 장부상 실제 필요경비(수입금액 한도)입니다. 무기장가산세는 복식부기의무자가 추계·간편장부로 신고하면 무기장·무신고 가산세 중 큰 금액입니다.</p>
-
-          <h3>💼 ④ 신고 방식별 기장료 · 조정료 (세무회계강남 보수표)</h3>
-          <div class="table-wrap"><table class="rt">
-            <tr><th>항목</th>${f.map(c => `<th style="text-align:right;">${esc(c.name)}</th>`).join('')}</tr>
-            ${feeRow('월 기장료', 'monthly')}
-            ${feeRow('연 기장료 (12개월)', 'yearly')}
-            ${feeRow('조정료 / 신고대행료', 'adjust')}
-            ${feeRow('성실신고확인 수수료', 'faithful')}
-            ${feeRow('연간 보수 (공급가액)', 'supply')}
-            ${feeRow('부가가치세', 'vat')}
-            ${feeRow('연간 보수 (부가세 포함)', 'withVat', 'em')}
-            ${feeRow('세금 + 보수 합계', 'grand', 'total')}
-            ${feeRow('추계 대비 고객 순효과', 'net')}
-          </table></div>
-          <div class="best">👉 보수 포함 가장 유리한 방식: ${esc(r.fee.best)}</div>
-          <p class="calc-note">· 월 기장료: ${esc(r.fee.monthlyNote)}<br>
-            · 조정료: ${esc(r.fee.adjustNote)}<br>
-            · 추계신고는 기장이 없어 기장료가 없습니다. 월 기장료에는 부가가치세 신고·원천세 신고 대행이 포함됩니다.<br>
-            · 보수는 사업소득의 필요경비로 인정되어 실제 세금은 이보다 조금 줄어듭니다.</p>
+          <div class="best">👉 보수 포함: ${esc(r.fee.best)}</div>
+          <details><summary>보수 계산 자세히 보기</summary>
+            <p class="calc-note">· 월 기장료: ${esc(r.fee.monthlyNote)}<br>· 조정료: ${esc(r.fee.adjustNote)}<br>· 추계신고는 기장이 없어 기장료가 없습니다. 월 기장료에는 부가가치세·원천세 신고 대행이 포함됩니다.<br>· 보수는 필요경비로 인정되어 실제 세금은 이보다 조금 줄어듭니다.</p>
+          </details>
 
           ${warns.length ? `<div class="warn-box">⚠️ ${warns.map(esc).join('<br>⚠️ ')}</div>` : ''}
-
           <div class="notice-text">
             <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
             <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
             <p>※ 경비율은 국세청 2024년 귀속 고시값입니다. 결손금, 성실신고확인비용 세액공제, 최저한세, 기타 세액공제는 반영하지 않았습니다.</p>
             <p>※ 종합소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
           </div>`;
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   </script>
 </body>
