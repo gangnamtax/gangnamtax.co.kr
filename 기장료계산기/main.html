@@ -69,7 +69,14 @@
     .biz-info.warn { color: #b91c1c; }
     .add-btn { background: #fff; border: 1px dashed #94a3b8; color: #475569; border-radius: 7px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; }
     .add-btn:hover { border-color: #2563eb; color: #2563eb; }
-    .save-note { font-size: 11px; color: #94a3b8; margin: 14px 0 0; }
+    .show-result {
+        width: 100%; margin-top: 18px; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 8px;
+        font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .show-result:hover { background: #1d4ed8; }
+    .show-result:disabled { background: #93c5fd; cursor: default; }
+    @keyframes flash { from { box-shadow: 0 0 0 4px rgba(37,99,235,.35); } to { box-shadow: 0 0 0 4px rgba(37,99,235,0); } }
+    .result-col.flash { animation: flash 1.2s ease-out; border-radius: 10px; }
 
     /* 업종 검색 목록 */
     .ac { position: relative; }
@@ -121,7 +128,6 @@
     .notice-text { font-size: 11px; color: #64748b; margin-top: 16px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 8px; }
     .notice-text p { margin: 0; padding-left: 1.2em; text-indent: -1.2em; }
     .warn-box { margin-top: 10px; padding: 9px 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; font-size: 12px; color: #9a3412; line-height: 1.6; }
-    .to-result { display: none; }
 
     @media (max-width: 900px) {
         body { padding: 16px 10px; }
@@ -129,10 +135,6 @@
         .calculator-card { padding: 18px 14px; }
         .layout { grid-template-columns: 1fr; }
         .result-col { position: static; max-height: none; overflow: visible; border-top: 2px solid #e2e8f0; padding-top: 18px; }
-        .to-result {
-            display: block; position: fixed; right: 14px; bottom: 16px; z-index: 20; background: #2563eb; color: #fff;
-            border: none; border-radius: 999px; padding: 11px 18px; font-size: 14px; font-weight: 700; box-shadow: 0 6px 16px rgba(37,99,235,.35);
-        }
     }
     @media (max-width: 420px) {
         .f { grid-template-columns: 1fr; gap: 4px; }
@@ -240,7 +242,7 @@
             <div class="sec">5. 기장료 산정</div>
             <div class="f"><label for="employees">직원 수 <small>원천세 신고 인원</small></label><input type="text" id="employees" class="num money" inputmode="numeric" value="0"></div>
             <div class="f"><label for="discount">보수 할인율 (%)</label><input type="text" id="discount" class="num" inputmode="numeric" value="0" maxlength="3"></div>
-            <p class="save-note">입력하는 대로 오른쪽 결과가 바로 바뀝니다. 입력하신 내용과 계산 결과는 세무 상담을 위해 세무회계강남에 저장됩니다.</p>
+            <button type="button" class="show-result" id="showResult">결과 보기</button>
           </form>
 
           <!-- 오른쪽: 결과 (입력하면 바로 계산) -->
@@ -251,7 +253,6 @@
         <div id="result" style="display: none;"></div>
       </div>
   </div>
-  <button type="button" class="to-result" id="toResult" onclick="document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth' })">결과 보기 ↓</button>
 
   <!-- 회원가입/로그인 팝업 모달 -->
   <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
@@ -530,7 +531,7 @@
         return { warns };
     }
 
-    let calcTimer = null, logTimer = null, lastLogged = '';
+    let calcTimer = null, lastLogged = '', current = null;
     function scheduleCalc() { clearTimeout(calcTimer); calcTimer = setTimeout(runCalc, 200); }
     function runCalc() {
         const input = readInput();
@@ -538,18 +539,32 @@
         const engineInput = { ...input, biz: input.biz.filter(b => b.code) };
         const c = check(input);
         const panel = document.getElementById('resultPanel');
-        clearTimeout(logTimer);
+        current = null;
         if (c.stop !== undefined) {
             panel.innerHTML = `<div class="empty">${c.stop ? esc(c.stop) + '<br><br>' : ''}왼쪽에 <b>업종</b>과 <b>수입금액</b>을 넣으면<br>판정 결과와 세금 · 기장료 비교가 여기에 바로 나옵니다.</div>`;
-            return;
+            return c.stop;
         }
         const r = GijangEngine.compute(engineInput, DATA);
         const s = r.startup;
         if (s.ksicMatch === '주업종 코드와 다름 - 확인') c.warns.push(`직접 고른 감면 판단 업종의 세법 업종코드(${s.linkedTaxCode})가 해당연도 주업종(${r.curMainName.slice(0, 6)})과 다릅니다.`);
         renderResult(r, engineInput, c.warns);
-        // 입력이 멈추고 10초 뒤, 바뀐 내용이면 상담용으로 기록 (이용 자격도 서버에서 다시 확인)
-        logTimer = setTimeout(() => logResult(r, engineInput), 10000);
+        current = { r, input: engineInput };
+        return null;
     }
+
+    // [결과 보기]: 최신 입력으로 다시 계산 → 결과로 이동 → 상담용으로 구글 시트에 기록 (이용 자격도 서버에서 다시 확인)
+    document.getElementById('showResult').addEventListener('click', async () => {
+        clearTimeout(calcTimer);
+        const stop = runCalc();
+        const panel = document.getElementById('resultPanel');
+        if (window.matchMedia('(max-width: 900px)').matches) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        else panel.scrollTop = 0;
+        panel.classList.remove('flash'); void panel.offsetWidth; panel.classList.add('flash');
+        if (stop || !current) { if (stop) alert(stop); return; }
+        const btn = document.getElementById('showResult');
+        btn.disabled = true;
+        try { await logResult(current.r, current.input); } finally { btn.disabled = false; }
+    });
 
     async function logResult(r, input) {
         const t = r.tax.cols, f = r.fee.rows;
