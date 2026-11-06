@@ -77,6 +77,8 @@
     .show-result:disabled { background: #93c5fd; cursor: default; }
     @keyframes flash { from { box-shadow: 0 0 0 4px rgba(37,99,235,.35); } to { box-shadow: 0 0 0 4px rgba(37,99,235,0); } }
     .result-col.flash { animation: flash 1.2s ease-out; border-radius: 10px; }
+    .result-col.stale > :not(.stale-note) { opacity: .4; }
+    .stale-note { position: sticky; top: 0; z-index: 2; margin-bottom: 10px; padding: 10px 12px; background: #fef9c3; border: 1px solid #fde047; border-radius: 8px; font-size: 13px; color: #854d0e; }
 
     /* 업종 검색 목록 */
     .ac { position: relative; }
@@ -247,7 +249,7 @@
 
           <!-- 오른쪽: 결과 (입력하면 바로 계산) -->
           <div class="result-col" id="resultPanel">
-            <div class="empty">왼쪽에 <b>업종</b>과 <b>수입금액</b>을 넣으면<br>판정 결과와 세금 · 기장료 비교가 여기에 바로 나옵니다.</div>
+            <div class="empty">왼쪽에 <b>업종</b>과 <b>수입금액</b> 등을 넣고<br>맨 아래 <b>[결과 보기]</b>를 누르면<br>판정 결과와 세금 · 기장료 비교가 여기에 나옵니다.</div>
           </div>
         </div>
         <div id="result" style="display: none;"></div>
@@ -322,6 +324,7 @@
   <script src="js/engine.js"></script>
   <script>
     const DATA = window.GIJANG_DATA;
+    const EMPTY_TEXT = '왼쪽에 <b>업종</b>과 <b>수입금액</b> 등을 넣고<br>맨 아래 <b>[결과 보기]</b>를 누르면<br>판정 결과와 세금 · 기장료 비교가 여기에 나옵니다.';
     const IND = DATA.industries.map(r => ({ code: r[0], group: r[1], uptae: r[2], sebun: r[3], name: r[4], simple: r[5], over: r[6], standard: r[7], startup: r[8], note: r[9], desc: r[10], ksic: r[11] }));
     IND.forEach(x => { x.label = `${x.code} ${x.name}`; x.hay = `${x.code} ${x.name} ${x.sebun} ${x.uptae} ${x.group} ${x.desc}`.toLowerCase(); x.nameHay = `${x.name} ${x.sebun}`.toLowerCase(); });
     const IND_MAP = new Map(IND.map(x => [x.code, x]));
@@ -467,7 +470,7 @@
     function focusNext(el) {
         const all = [...document.querySelectorAll('#taxForm input, #taxForm select')].filter(x => x.offsetParent !== null);
         const next = all[all.indexOf(el) + 1];
-        if (next) next.focus();
+        (next || document.getElementById('showResult')).focus();
     }
     const form = document.getElementById('taxForm');
     form.addEventListener('input', e => {
@@ -477,7 +480,9 @@
     });
     form.addEventListener('change', scheduleCalc);
     form.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && e.target.matches('input:not([type=checkbox]), select')) { e.preventDefault(); focusNext(e.target); }
+        if (e.key !== 'Enter') return;
+        if (e.target.id === 'showResult') { e.preventDefault(); e.target.click(); }
+        else if (e.target.matches('input:not([type=checkbox]), select')) { e.preventDefault(); focusNext(e.target); }
     });
     // 금액 칸을 누르면 0을 지워서 바로 입력
     form.addEventListener('focusin', e => { if (e.target.classList.contains('money') && e.target.value === '0') e.target.value = ''; });
@@ -532,16 +537,24 @@
     }
 
     let calcTimer = null, lastLogged = '', current = null;
-    function scheduleCalc() { clearTimeout(calcTimer); calcTimer = setTimeout(runCalc, 200); }
+    // 결과는 [결과 보기]를 눌러야 나옴. 결과를 본 뒤 입력을 바꾸면 '다시 눌러 주세요' 표시
+    function scheduleCalc() {
+        const panel = document.getElementById('resultPanel');
+        if (current && !panel.classList.contains('stale')) {
+            panel.classList.add('stale');
+            panel.insertAdjacentHTML('afterbegin', '<div class="stale-note">입력이 바뀌었습니다. 아래 <b>[결과 보기]</b>를 다시 눌러 주세요.</div>');
+        }
+    }
     function runCalc() {
         const input = readInput();
         // 엔진은 고른 업종만 계산 (고르지 않은 줄은 빼고)
         const engineInput = { ...input, biz: input.biz.filter(b => b.code) };
         const c = check(input);
         const panel = document.getElementById('resultPanel');
+        panel.classList.remove('stale');
         current = null;
         if (c.stop !== undefined) {
-            panel.innerHTML = `<div class="empty">${c.stop ? esc(c.stop) + '<br><br>' : ''}왼쪽에 <b>업종</b>과 <b>수입금액</b>을 넣으면<br>판정 결과와 세금 · 기장료 비교가 여기에 바로 나옵니다.</div>`;
+            panel.innerHTML = `<div class="empty">${c.stop ? esc(c.stop) + '<br><br>' : ''}${EMPTY_TEXT}</div>`;
             return c.stop;
         }
         const r = GijangEngine.compute(engineInput, DATA);
