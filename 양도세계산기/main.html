@@ -381,6 +381,10 @@
                     <input type="checkbox" id="singleExempt" checked onchange="updateHouseSummary()">
                     <span id="singleExemptText">1세대 1주택 비과세 적용</span>
                 </label>
+                <label id="acqRegBox" class="check-line">
+                    <input type="checkbox" id="acqRegulated" onchange="this.dataset.manual = '1'; updateHouseSummary()">
+                    취득 당시 조정대상지역 <span style="color:#64748b;">(2017.8.3 이후 취득 → 2년 이상 거주해야 비과세 · 주소와 취득일로 자동 판단)</span>
+                </label>
                 <label id="heavyExemptBox" class="check-line" style="display: none;">
                     <input type="checkbox" id="heavyExempt" onchange="updateHouseSummary()">
                     중과 배제 대상 (2026.5.9 이전 계약 특례, 장기임대주택 등)
@@ -393,7 +397,7 @@
                     <div class="date-col">
                         <label style="font-size: 12px; color: #64748b; margin-bottom: 4px;">취득일</label>
                         <div class="date-input-wrapper">
-                            <input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateLivePeriod()" required>
+                            <input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateLivePeriod(); updateHouseSummary()" required>
                         </div>
                     </div>
                     <div class="date-col">
@@ -646,6 +650,16 @@
         });
     }
 
+    // 취득 당시 조정대상지역 자동 판단 (비과세 2년 거주요건용)
+    // 2017.8.3 ~ 2023.1.4 취득: 현재 조정대상지역이면 대부분 당시에도 조정 / 2023.1.5 ~ 2025.10.15: 강남·서초·송파·용산만 / 2025.10.16 이후: 현재 지정 지역
+    function isAcqRegulated(address, acqDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(acqDate || '') || !isRegulated(address)) return false;
+        if (acqDate < '2017-08-03') return false;
+        if (acqDate < '2023-01-05') return true;
+        if (acqDate < '2025-10-16') return /(강남구|서초구|송파구|용산구)/.test(address.replace(/\s+/g, ''));
+        return true;
+    }
+
     let houseSeq = 0;
 
     // 카카오 주소 검색 창 열기 (검색 스크립트가 없으면 직접 입력)
@@ -737,6 +751,11 @@
             : '1세대 1주택 비과세 특례 적용 (일시적 2주택·상속주택 등)';
 
         const s = getHouseStatus();
+        const acqBox = document.getElementById('acqRegulated');
+        if (!acqBox.dataset.manual) {
+            acqBox.checked = !!s.sellRow && isAcqRegulated(s.sellRow.querySelector('.addr').value, document.getElementById('acquisitionDate').value);
+        }
+        document.getElementById('acqRegBox').style.display = s.taxType === 'single_house' ? 'flex' : 'none';
         document.getElementById('heavyExemptBox').style.display = s.count >= 2 && s.sellRegulated && s.taxType === 'general' ? 'flex' : 'none';
 
         let text = `보유 주택 ${s.count}채`;
@@ -852,6 +871,7 @@
             res = await api('/api/calculate', {
                 taxType: house.taxType,
                 heavy: house.heavy,
+                acqRegulated: house.taxType === 'single_house' && document.getElementById('acqRegulated').checked,
                 houses: [...document.querySelectorAll('.house-row')].map(r => ({
                     addr: r.querySelector('.addr').value.trim(),
                     regulated: r.querySelector('.regulated').checked,
