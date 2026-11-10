@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>세무회계강남 재개발 청산금 양도소득세 계산기</title>
-  <meta name="description" content="재개발 청산금 양도소득세 예상세액 계산기. 조합원 청산금(권리가액 안분)과 현금청산자, 1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 조특법 제77조 수용 감면까지 계산 - 세무회계강남 김하원 세무사">
+  <title>세무회계강남 재개발·재건축 청산금 양도소득세 계산기</title>
+  <meta name="description" content="재개발·재건축 청산금 수령액 양도소득세 예상세액 계산기. 조합원 청산금(권리가액 안분)과 현금청산자, 1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 조특법 제77조 수용 감면까지 계산 - 세무회계강남 김하원 세무사">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -140,6 +140,10 @@
     .result-col { position: sticky; top: 20px; }
     .result-col .empty { border: 1px dashed #cbd5e1; background: #fff; border-radius: 10px; padding: 48px 20px; text-align: center; color: #64748b; font-size: 14px; line-height: 1.8; }
     #result:not([style*="none"]) ~ .empty { display: none; }
+    .pagetabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 5px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .pagetabs a { text-align: center; padding: 12px 10px; border-radius: 7px; font-size: 15px; font-weight: 600; color: #475569; text-decoration: none; transition: background .15s, color .15s; }
+    .pagetabs a:hover { color: #8a6d3b; background: #faf7f1; }
+    .pagetabs a.on { background: #8a6d3b; color: #fff; }
     .hidden { display: none !important; }
     .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
     .amount-guide b { color: #3f3320; }
@@ -176,8 +180,8 @@
       <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
       <div class="header">
         <div class="title-block">
-          <span class="eyebrow">세무회계강남 · 재개발</span>
-          <h1>재개발 청산금 양도소득세 계산기</h1>
+          <span class="eyebrow">세무회계강남 · 재개발·재건축 양도세 계산기</span>
+          <h1>청산금 수령액 양도소득세 계산기</h1>
         </div>
         <div id="authButtons">
           <a id="adminLink" href="../양도세계산기/admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
@@ -188,10 +192,15 @@
         </div>
       </div>
 
+      <nav class="pagetabs" aria-label="재개발·재건축 양도세 계산기 선택">
+        <a href="house.html">주택 양도세 (입주권 · 신축주택)</a>
+        <a href="main.html" class="on" aria-current="page">청산금 수령액 양도세</a>
+      </nav>
+
       <div class="calculator-card">
         <div id="lockOverlay" class="lock-overlay">
           <div id="lockReady" style="display: none;">
-            <h3>재개발 계산기 서비스 준비 중</h3>
+            <h3>재개발·재건축 계산기 서비스 준비 중</h3>
             <p style="color: #666; margin-bottom: 20px;">더 정확한 계산 서비스로 곧 찾아뵙겠습니다.</p>
             <a href="/" class="btn btn-outline" style="text-decoration: none;">홈으로 가기</a>
           </div>
@@ -207,7 +216,7 @@
           <div id="lockWait" style="display: none;">
             <div id="applyBefore">
               <h3>인가 신청 후 이용 가능합니다</h3>
-              <p id="waitInfo" style="color: #666; margin-bottom: 6px;">재개발 계산기 전용 이용권을 계좌이체로 결제하시면 확인 후 승인해 드립니다.</p>
+              <p id="waitInfo" style="color: #666; margin-bottom: 6px;">재개발·재건축 양도세 계산기 이용권(주택 양도세·청산금 공용)을 계좌이체로 결제하시면 확인 후 승인해 드립니다.</p>
               <p id="applyPlan" style="font-weight: 700; margin-bottom: 18px;"></p>
               <button class="btn btn-login" onclick="applyAccess()" style="padding: 12px 24px;">인가 신청하기</button>
             </div>
@@ -370,7 +379,7 @@
 
         <div class="result-col">
             <div id="result" class="result-box" style="display: none;">
-                <h3 id="resTitle">재개발 청산금 양도소득세 계산 결과</h3>
+                <h3 id="resTitle">청산금 수령액 양도소득세 계산 결과</h3>
                 <div id="resRows"></div>
                 <div class="result-row total-tax">
                     <span id="resTotalLabel">최종 납부할 총 예상 세액</span>

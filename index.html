@@ -174,6 +174,9 @@
         .calc-card li::before { content: '✓ '; color: var(--green); font-weight: 700; }
         .calc-go { margin-top: auto; display: block; text-align: center; background: var(--navy); color: #fff; font-weight: 700; padding: 13px; border-radius: 8px; transition: background .15s; }
         .calc-card:hover .calc-go { background: #2e3470; }
+        .calc-card.multi:hover .calc-go { background: var(--navy); }
+        .calc-go-group { margin-top: auto; display: grid; gap: 8px; }
+        .calc-card.multi .calc-go:hover { background: #2e3470; }
         .btn-navy { background: var(--navy); color: #fff; padding: 16px 28px; font-size: 16px; }
 
         /* 핵심 칼럼 */
@@ -251,7 +254,7 @@
                 <a href="#info">세법정보</a>
                 <a href="양도세계산기/main.html" class="highlight">양도세 계산기</a>
                 <a href="기장료계산기/main.html">기장의무 판정</a>
-                <a href="재개발계산기/main.html">재개발 청산금</a>
+                <a href="재개발계산기/house.html">재개발·재건축</a>
                 <a href="https://blog.naver.com/gangnamcta" target="_blank" rel="noopener">블로그</a>
                 <a href="#location">오시는 길</a>
                 <a href="#contact">상담신청</a>
@@ -357,17 +360,20 @@
                         </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
-                    <a href="재개발계산기/main.html" class="calc-card">
+                    <div class="calc-card multi">
                         <span class="calc-icon">🏗️</span>
-                        <h3>재개발 청산금 양도세</h3>
-                        <p class="calc-desc">재개발 청산금을 받을 때 낼 세금을 미리 계산하세요.</p>
+                        <h3>재개발·재건축 양도세 계산기</h3>
+                        <p class="calc-desc">입주권·신축주택을 팔 때와 청산금을 받을 때 세금을 미리 계산하세요.</p>
                         <ul>
-                            <li>조합원 청산금 (권리가액 안분) · 현금청산자</li>
-                            <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
-                            <li>조특법 제77조 수용 감면 반영</li>
+                            <li>조합원입주권 · 신축주택 양도 (원조합원)</li>
+                            <li>청산금 수령 (조합원 · 현금청산자)</li>
+                            <li>1세대 1주택 비과세 · 12억 초과분 · 공동명의 지분</li>
                         </ul>
-                        <span class="calc-go">계산해보기 →</span>
-                    </a>
+                        <div class="calc-go-group">
+                            <a href="재개발계산기/house.html" class="calc-go">재개발·재건축 주택 양도세 계산기 →</a>
+                            <a href="재개발계산기/main.html" class="calc-go">청산금 수령액 양도세 계산기 →</a>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="calc-part">
