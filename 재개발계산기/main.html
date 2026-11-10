@@ -262,8 +262,14 @@
 
             <div class="section-title">금액</div>
 
+            <div class="form-group">
+                <label for="share">본인 지분율 (%) <span class="hint">(부부 공동명의 등 공유 시 · 단독 소유는 100)</span></label>
+                <input type="text" id="share" value="100" inputmode="decimal" style="max-width: 160px;" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); refreshForm()">
+                <div id="shareMsg" class="live-msg"></div>
+            </div>
+
             <div class="form-group member-only">
-                <label for="rightsValue">권리가액 <span class="hint">(종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
+                <label for="rightsValue">권리가액 <span class="hint">(주택 전체 · 종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
                 <input type="text" id="rightsValue" placeholder="예: 1,500,000,000" oninput="formatCurrency(this); refreshForm()">
                 <label class="check-line"><input type="checkbox" id="useHelper" onchange="refreshForm()"> 종전자산 평가액과 비례율로 계산하기</label>
                 <div id="helperBox" class="helper hidden">
@@ -287,12 +293,12 @@
             </div>
 
             <div class="form-group">
-                <label for="acquisitionPrice">종전 주택 취득가액 <span class="hint">(매입가)</span></label>
+                <label for="acquisitionPrice">종전 주택 취득가액 <span class="hint">(본인 지분 몫 매입가)</span></label>
                 <input type="text" id="acquisitionPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this)" required>
             </div>
 
             <div class="form-group">
-                <label for="expenses">필요경비 <span class="hint">(취득세·중개수수료·자본적 지출 등)</span></label>
+                <label for="expenses">필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료·자본적 지출 등)</span></label>
                 <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
             </div>
 
@@ -512,8 +518,11 @@
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
         $('reductionPanel').classList.toggle('hidden', !$('reduction').checked);
         $('settlementLabel').innerHTML = member
-            ? '청산금 (수령액) <span class="hint">(권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
-            : '청산금 (수령액) <span class="hint">(= 양도가액)</span>';
+            ? '청산금 (수령액) <span class="hint">(주택 전체 · 권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
+            : '청산금 (수령액) <span class="hint">(주택 전체 · 지분율만큼 본인 양도가액)</span>';
+        const sh = parseFloat($('share').value);
+        $('shareMsg').innerText = sh > 0 && sh < 100 ? '권리가액·청산금은 주택 전체 금액으로 넣으세요. 12억 판정은 주택 전체 기준, 양도차익은 지분율만큼 계산합니다.' : (sh > 100 || sh === 0 ? '※ 지분율은 0 초과 100 이하로 넣어주세요.' : '');
+        $('shareMsg').classList.toggle('warn', sh > 100 || sh === 0);
         $('heavyMsg').innerText = tt.startsWith('heavy') ? '중과 대상은 장기보유특별공제가 적용되지 않습니다.' : '';
 
         const acq = $('acquisitionDate').value, trf = $('transferDate').value, mgmt = $('mgmtApprovalDate').value;
@@ -567,6 +576,8 @@
         const tt = $('taxType').value;
         if (member && !isDate($('mgmtApprovalDate').value)) { alert('관리처분계획인가일을 입력해주세요.'); return; }
         if (member && !num('rightsValue')) { alert('권리가액을 입력해주세요.'); return; }
+        const shareVal = parseFloat($('share').value);
+        if (!(shareVal > 0 && shareVal <= 100)) { alert('지분율은 0 초과 100 이하로 넣어주세요.'); return; }
         if (!member && $('reduction').checked && !isDate($('projectApprovalDate').value)) { alert('사업시행계획인가 고시일을 입력해주세요.'); return; }
 
         const btn = $('calcBtn');
@@ -589,6 +600,7 @@
                 settlement: num('settlement'),
                 acquisitionPrice: num('acquisitionPrice'),
                 expenses: num('expenses'),
+                share: parseFloat($('share').value) || 100,
                 reduction: !member && $('reduction').checked,
                 reductionMethod: $('reductionMethod').value,
                 projectApprovalDate: !member && $('reduction').checked ? $('projectApprovalDate').value : ''
