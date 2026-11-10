@@ -523,7 +523,20 @@
         const sh = parseFloat($('share').value);
         $('shareMsg').innerText = sh > 0 && sh < 100 ? '권리가액·청산금은 주택 전체 금액으로 넣으세요. 12억 판정은 주택 전체 기준, 양도차익은 지분율만큼 계산합니다.' : (sh > 100 || sh === 0 ? '※ 지분율은 0 초과 100 이하로 넣어주세요.' : '');
         $('shareMsg').classList.toggle('warn', sh > 100 || sh === 0);
-        $('heavyMsg').innerText = tt.startsWith('heavy') ? '중과 대상은 장기보유특별공제가 적용되지 않습니다.' : '';
+        // 양도 주택이 조정대상지역이 아니면 중과 선택 불가
+        const addr = $('address').value.trim();
+        const noHeavy = !!addr && !isRegulated(addr);
+        document.querySelectorAll('#taxType option[value^="heavy"]').forEach(o => { o.disabled = noHeavy; });
+        let heavyNote = '';
+        if (noHeavy && tt.startsWith('heavy')) {
+            $('taxType').value = 'general';
+            heavyNote = '조정대상지역이 아닌 주택은 다주택 중과 대상이 아니어서 일반 과세로 바꿨습니다.';
+        } else if (noHeavy) {
+            heavyNote = '조정대상지역이 아닌 주택이라 다주택 중과는 선택할 수 없습니다.';
+        } else if (tt.startsWith('heavy')) {
+            heavyNote = '중과 대상은 장기보유특별공제가 적용되지 않습니다.' + (addr ? '' : ' (소재지를 넣으면 조정대상지역 여부를 확인합니다)');
+        }
+        $('heavyMsg').innerText = heavyNote;
 
         const acq = $('acquisitionDate').value, trf = $('transferDate').value, mgmt = $('mgmtApprovalDate').value;
         if (!$('acqRegulated').dataset.manual) $('acqRegulated').checked = isAcqRegulated($('address').value, acq);
@@ -532,7 +545,7 @@
         let warn = false;
         if (member) {
             const p1 = period(acq, mgmt), p2 = period(acq, trf);
-            if (isDate(acq) && isDate(mgmt) && !p1) { lines.push('※ 관리처분계획인가일이 취득일보다 빠를 수 없습니다.'); warn = true; }
+            if (isDate(acq) && isDate(mgmt) && !p1) { lines.push('※ 관리처분계획인가일 이후 취득(승계조합원)은 이 계산기에서 계산하지 않습니다. 원조합원만 계산 가능하니 상담해 주세요.'); warn = true; }
             else if (p1) lines.push(`보유기간 (취득일 ~ 관리처분계획인가일): ${p1.text} → 장기보유특별공제·비과세 판정`);
             if (isDate(acq) && isDate(trf) && !p2) { lines.push('※ 청산금 수령일이 취득일보다 빠를 수 없습니다.'); warn = true; }
             else if (p2) lines.push(`취득일 ~ 청산금 수령일: ${p2.text} → 세율 판정`);
@@ -575,6 +588,9 @@
         const member = currentType() === 'member';
         const tt = $('taxType').value;
         if (member && !isDate($('mgmtApprovalDate').value)) { alert('관리처분계획인가일을 입력해주세요.'); return; }
+        if (member && isDate($('acquisitionDate').value) && $('acquisitionDate').value > $('mgmtApprovalDate').value) {
+            alert('관리처분계획인가일 이후 취득(승계조합원)은 이 계산기에서 계산하지 않습니다.\n원조합원만 계산 가능합니다. 문의: 010-4454-2429'); return;
+        }
         if (member && !num('rightsValue')) { alert('권리가액을 입력해주세요.'); return; }
         const shareVal = parseFloat($('share').value);
         if (!(shareVal > 0 && shareVal <= 100)) { alert('지분율은 0 초과 100 이하로 넣어주세요.'); return; }
