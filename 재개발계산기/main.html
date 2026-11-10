@@ -71,7 +71,25 @@
         background: none; border: none; padding: 6px; border-radius: 6px; cursor: pointer; color: #8a6d3b; display: flex;
     }
     .cal-btn:hover { background-color: #f1f5f9; }
-    .date-picker-hidden { position: absolute; right: 6px; bottom: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+    /* 날짜 선택 팝업: 년·월 드롭다운 + 일 달력 */
+    .dp { position: absolute; z-index: 200; width: 296px; background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; box-shadow: 0 10px 28px rgba(15,23,42,.14); padding: 14px; display: none; font-family: inherit; }
+    .dp.open { display: block; }
+    .dp-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .dp-head select { flex: 1; width: auto; padding: 7px 8px; font-size: 14px; font-weight: 600; color: #1e293b; border-radius: 6px; cursor: pointer; }
+    .dp-nav { flex: 0 0 30px; height: 32px; background: none; border: 1px solid #e2e8f0; border-radius: 6px; color: #8a6d3b; font-size: 18px; line-height: 1; cursor: pointer; }
+    .dp-nav:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-week, .dp-days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+    .dp-week span { font-size: 12px; color: #64748b; padding: 4px 0 6px; font-weight: 500; }
+    .dp-week span:first-child { color: #b45309; }
+    .dp-days { gap: 2px; }
+    .dp-day { height: 34px; background: none; border: 1px solid transparent; border-radius: 6px; font-size: 14px; color: #1e293b; cursor: pointer; font-family: inherit; }
+    .dp-day.sun { color: #b45309; }
+    .dp-day:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-day.today { border-color: #cbd5e1; font-weight: 700; }
+    .dp-day.sel, .dp-day.sel:hover { background: #8a6d3b; border-color: #8a6d3b; color: #fff; font-weight: 700; }
+    .dp-foot { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+    .dp-foot button { background: none; border: none; font-size: 13px; color: #8a6d3b; font-weight: 600; cursor: pointer; padding: 4px 6px; font-family: inherit; }
+    .dp-foot .dp-close { color: #64748b; }
     .live-msg { font-size: 12px; color: #475569; font-weight: 600; margin-top: 6px; line-height: 1.5; }
     .live-msg.warn { color: #b45309; }
     .live-msg:empty { display: none; }
@@ -418,27 +436,108 @@
     const $ = id => document.getElementById(id);
     const CAL_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 
-    // 달력 버튼: 고른 날짜가 텍스트 칸에 들어감 (직접 입력도 가능)
+    // 달력 버튼: 년·월은 드롭다운으로, 일은 달력에서 선택 (직접 입력도 가능)
+    const pad2 = n => String(n).padStart(2, '0');
+    const THIS_YEAR = new Date().getFullYear();
+    const FIRST_YEAR = 1960, LAST_YEAR = THIS_YEAR + 5;
+    let dpTarget = null, dpYear, dpMonth; // dpMonth: 1~12
+    const dp = document.createElement('div');
+    dp.className = 'dp';
+    dp.setAttribute('role', 'dialog');
+    dp.setAttribute('aria-label', '날짜 선택');
+    dp.innerHTML = `
+        <div class="dp-head">
+            <button type="button" class="dp-nav" data-step="-1" aria-label="이전 달">&#8249;</button>
+            <select class="dp-year" aria-label="년">${Array.from({ length: LAST_YEAR - FIRST_YEAR + 1 }, (_, i) => LAST_YEAR - i).map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
+            <select class="dp-month" aria-label="월">${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+            <button type="button" class="dp-nav" data-step="1" aria-label="다음 달">&#8250;</button>
+        </div>
+        <div class="dp-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div class="dp-days"></div>
+        <div class="dp-foot"><button type="button" class="dp-today">오늘</button><button type="button" class="dp-close">닫기</button></div>`;
+    document.body.appendChild(dp);
+    const dpYearSel = dp.querySelector('.dp-year'), dpMonthSel = dp.querySelector('.dp-month');
+
+    function dpRender() {
+        if (dpYear < FIRST_YEAR) { dpYear = FIRST_YEAR; dpMonth = 1; }
+        if (dpYear > LAST_YEAR) { dpYear = LAST_YEAR; dpMonth = 12; }
+        dpYearSel.value = dpYear;
+        dpMonthSel.value = dpMonth;
+        const first = new Date(dpYear, dpMonth - 1, 1).getDay();
+        const last = new Date(dpYear, dpMonth, 0).getDate();
+        const sel = dpTarget && isDate(dpTarget.value) ? dpTarget.value : '';
+        const t = new Date(), today = `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`;
+        let html = '<span></span>'.repeat(first);
+        for (let d = 1; d <= last; d++) {
+            const v = `${dpYear}-${pad2(dpMonth)}-${pad2(d)}`;
+            const dow = (first + d - 1) % 7;
+            const cls = ['dp-day', v === sel ? 'sel' : '', v === today ? 'today' : '', dow === 0 ? 'sun' : '', dow === 6 ? 'sat' : ''].filter(Boolean).join(' ');
+            html += `<button type="button" class="${cls}" data-v="${v}">${d}</button>`;
+        }
+        dp.querySelector('.dp-days').innerHTML = html;
+    }
+    function dpPlace() {
+        const r = dpTarget.getBoundingClientRect();
+        const w = dp.offsetWidth, h = dp.offsetHeight;
+        let left = r.left + window.scrollX;
+        left = Math.max(8 + window.scrollX, Math.min(left, window.scrollX + document.documentElement.clientWidth - w - 8));
+        let top = r.bottom + window.scrollY + 6;
+        if (r.bottom + h + 6 > window.innerHeight && r.top - h - 6 > 0) top = r.top + window.scrollY - h - 6;
+        dp.style.left = left + 'px';
+        dp.style.top = top + 'px';
+    }
+    function dpOpen(input) {
+        dpTarget = input;
+        const v = isDate(input.value) ? input.value : '';
+        const t = new Date();
+        dpYear = v ? Number(v.slice(0, 4)) : t.getFullYear();
+        dpMonth = v ? Number(v.slice(5, 7)) : t.getMonth() + 1;
+        dpRender();
+        dp.classList.add('open');
+        dpPlace();
+    }
+    function dpClose() { dp.classList.remove('open'); dpTarget = null; }
+    function dpPick(v) {
+        const input = dpTarget;
+        input.value = v;
+        dpClose();
+        input.dispatchEvent(new Event('change'));
+    }
+    dpYearSel.addEventListener('change', () => { dpYear = Number(dpYearSel.value); dpRender(); });
+    dpMonthSel.addEventListener('change', () => { dpMonth = Number(dpMonthSel.value); dpRender(); });
+    dp.addEventListener('click', e => {
+        const nav = e.target.closest('.dp-nav');
+        if (nav) {
+            dpMonth += Number(nav.dataset.step);
+            if (dpMonth < 1) { dpMonth = 12; dpYear--; }
+            if (dpMonth > 12) { dpMonth = 1; dpYear++; }
+            dpRender();
+        } else if (e.target.closest('.dp-day')) {
+            dpPick(e.target.closest('.dp-day').dataset.v);
+        } else if (e.target.closest('.dp-today')) {
+            const t = new Date();
+            dpPick(`${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`);
+        } else if (e.target.closest('.dp-close')) {
+            dpClose();
+        }
+    });
+    document.addEventListener('mousedown', e => {
+        if (dpTarget && !dp.contains(e.target) && !e.target.closest('.cal-btn')) dpClose();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dpTarget) dpClose(); });
+    window.addEventListener('resize', () => { if (dpTarget) dpPlace(); });
+
     document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
         const textInput = wrapper.querySelector('input[type="text"]');
-        const picker = document.createElement('input');
-        picker.type = 'date';
-        picker.className = 'date-picker-hidden';
-        picker.tabIndex = -1;
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'cal-btn';
         btn.innerHTML = CAL_ICON;
         btn.setAttribute('aria-label', '달력에서 날짜 선택');
         btn.addEventListener('click', () => {
-            if (textInput.value.length === 10) picker.value = textInput.value;
-            if (picker.showPicker) picker.showPicker(); else picker.click();
+            if (dpTarget === textInput) dpClose(); else dpOpen(textInput);
         });
-        picker.addEventListener('change', () => {
-            textInput.value = picker.value;
-            textInput.dispatchEvent(new Event('change'));
-        });
-        wrapper.append(picker, btn);
+        wrapper.append(btn);
     });
 
     function formatDateInput(input) {
