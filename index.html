@@ -160,6 +160,10 @@
         /* 양도세 계산기 배너 */
         .calc { background: var(--bg); }
         .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+        .calc-part + .calc-part { margin-top: 36px; }
+        .calc-part-title { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
+        .calc-part-title::before { content: ''; width: 4px; height: 18px; background: #b08d57; border-radius: 2px; }
+        .calc-part-title::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
         .calc-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e2e8f0; border-top: 4px solid var(--navy); border-radius: 14px; padding: 28px 24px 24px; box-shadow: 0 2px 8px rgba(15,23,42,.05); transition: transform .15s, box-shadow .15s; }
         .calc-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15,23,42,.12); }
         .calc-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--sky-light); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; }
@@ -339,51 +343,59 @@
         <div class="inner">
             <h2>세금 계산기</h2>
             <p class="sub">세무사가 직접 만든 계산기로 미리 확인해 보세요.</p>
-            <div class="calc-grid">
-                <a href="양도세계산기/main.html" class="calc-card">
-                    <span class="calc-icon">🏠</span>
-                    <h3>양도세 계산기</h3>
-                    <p class="calc-desc">집을 팔기 전에 예상 세액을 미리 확인하세요.</p>
-                    <ul>
-                        <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
-                        <li>장기보유특별공제 (표1 · 표2) 자동 적용</li>
-                        <li>다주택 중과 · 단기세율 자동 적용</li>
-                    </ul>
-                    <span class="calc-go">계산해보기 →</span>
-                </a>
-                <a href="기장료계산기/main.html" class="calc-card">
-                    <span class="calc-icon">📒</span>
-                    <h3>기장의무 · 경비율 판정</h3>
-                    <p class="calc-desc">장부를 써야 할지, 추계로 신고해도 될지 알려드려요.</p>
-                    <ul>
-                        <li>복식부기 · 간편장부 대상 판정</li>
-                        <li>외부조정 · 성실신고확인 대상 판정</li>
-                        <li>업종별 단순 · 기준경비율 자동 적용</li>
-                    </ul>
-                    <span class="calc-go">계산해보기 →</span>
-                </a>
-                <a href="기장료계산기/main.html" class="calc-card">
-                    <span class="calc-icon">💰</span>
-                    <h3>나의 기장료는?</h3>
-                    <p class="calc-desc">수입금액과 직원 수로 기장료를 바로 알아보세요.</p>
-                    <ul>
-                        <li>월 기장료 · 조정료 · 성실신고 수수료 산정</li>
-                        <li>추계 vs 장부 신고 시 소득세 비교</li>
-                        <li>창업중소기업 세액감면 반영</li>
-                    </ul>
-                    <span class="calc-go">계산해보기 →</span>
-                </a>
-                <a href="재개발계산기/main.html" class="calc-card">
-                    <span class="calc-icon">🏗️</span>
-                    <h3>재개발 청산금 양도세</h3>
-                    <p class="calc-desc">재개발 청산금을 받을 때 낼 세금을 미리 계산하세요.</p>
-                    <ul>
-                        <li>조합원 청산금 (권리가액 안분) · 현금청산자</li>
-                        <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
-                        <li>조특법 제77조 수용 감면 반영</li>
-                    </ul>
-                    <span class="calc-go">계산해보기 →</span>
-                </a>
+            <div class="calc-part">
+                <h3 class="calc-part-title">양도세 계산</h3>
+                <div class="calc-grid">
+                    <a href="양도세계산기/main.html" class="calc-card">
+                        <span class="calc-icon">🏠</span>
+                        <h3>양도세 계산기</h3>
+                        <p class="calc-desc">집을 팔기 전에 예상 세액을 미리 확인하세요.</p>
+                        <ul>
+                            <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
+                            <li>장기보유특별공제 (표1 · 표2) 자동 적용</li>
+                            <li>다주택 중과 · 단기세율 자동 적용</li>
+                        </ul>
+                        <span class="calc-go">계산해보기 →</span>
+                    </a>
+                    <a href="재개발계산기/main.html" class="calc-card">
+                        <span class="calc-icon">🏗️</span>
+                        <h3>재개발 청산금 양도세</h3>
+                        <p class="calc-desc">재개발 청산금을 받을 때 낼 세금을 미리 계산하세요.</p>
+                        <ul>
+                            <li>조합원 청산금 (권리가액 안분) · 현금청산자</li>
+                            <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
+                            <li>조특법 제77조 수용 감면 반영</li>
+                        </ul>
+                        <span class="calc-go">계산해보기 →</span>
+                    </a>
+                </div>
+            </div>
+            <div class="calc-part">
+                <h3 class="calc-part-title">세무기장</h3>
+                <div class="calc-grid">
+                    <a href="기장료계산기/main.html" class="calc-card">
+                        <span class="calc-icon">📒</span>
+                        <h3>기장의무 · 경비율 판정</h3>
+                        <p class="calc-desc">장부를 써야 할지, 추계로 신고해도 될지 알려드려요.</p>
+                        <ul>
+                            <li>복식부기 · 간편장부 대상 판정</li>
+                            <li>외부조정 · 성실신고확인 대상 판정</li>
+                            <li>업종별 단순 · 기준경비율 자동 적용</li>
+                        </ul>
+                        <span class="calc-go">계산해보기 →</span>
+                    </a>
+                    <a href="기장료계산기/main.html" class="calc-card">
+                        <span class="calc-icon">💰</span>
+                        <h3>나의 기장료는?</h3>
+                        <p class="calc-desc">수입금액과 직원 수로 기장료를 바로 알아보세요.</p>
+                        <ul>
+                            <li>월 기장료 · 조정료 · 성실신고 수수료 산정</li>
+                            <li>추계 vs 장부 신고 시 소득세 비교</li>
+                            <li>창업중소기업 세액감면 반영</li>
+                        </ul>
+                        <span class="calc-go">계산해보기 →</span>
+                    </a>
+                </div>
             </div>
         </div>
     </section>
