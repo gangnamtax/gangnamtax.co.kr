@@ -149,8 +149,8 @@
     .split-row b { color: #1e293b; }
     .filing { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; }
     .filing p { font-size: 13px; color: #475569; margin: 0 0 10px; }
-    .filing-btn { width: 100%; padding: 14px; background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .3px; transition: background .2s, color .2s; }
-    .filing-btn:hover { background: #8a6d3b; color: #fff; }
+    .filing-btn { width: 100%; padding: 14px; background: #8a6d3b; color: #fff; border: 1px solid #8a6d3b; box-shadow: 0 2px 6px rgba(138,109,59,.25); border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .3px; transition: background .2s, color .2s; }
+    .filing-btn:hover { background: #74592e; border-color: #74592e; }
     .fmodal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 150; align-items: center; justify-content: center; padding: 16px; }
     .fmodal.open { display: flex; }
     .fbox { position: relative; background: #fff; width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 12px; border-top: 3px solid #b08d57; padding: 28px 26px 24px; box-shadow: 0 16px 40px rgba(15,23,42,.2); }
@@ -383,7 +383,7 @@
                     <p>※ 양도소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
                 </div>
                 <div class="filing">
-                    <p>이 계산 내용으로 세무회계강남에 양도소득세 신고를 맡기실 수 있습니다.</p>
+                    <p>위 예상 산출세액을 대표세무사가 검토 후 양도소득세 신고를 맡길 수 있습니다.</p>
                     <button type="button" class="filing-btn" onclick="openFiling()">신고 의뢰하기</button>
                 </div>
             </div>
