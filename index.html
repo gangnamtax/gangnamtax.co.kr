@@ -159,7 +159,7 @@
 
         /* 양도세 계산기 배너 */
         .calc { background: var(--bg); }
-        .calc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
         .calc-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e2e8f0; border-top: 4px solid var(--navy); border-radius: 14px; padding: 28px 24px 24px; box-shadow: 0 2px 8px rgba(15,23,42,.05); transition: transform .15s, box-shadow .15s; }
         .calc-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15,23,42,.12); }
         .calc-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--sky-light); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; }
@@ -247,6 +247,7 @@
                 <a href="#info">세법정보</a>
                 <a href="양도세계산기/main.html" class="highlight">양도세 계산기</a>
                 <a href="기장료계산기/main.html">기장의무 판정</a>
+                <a href="재개발계산기/main.html">재개발 청산금</a>
                 <a href="https://blog.naver.com/gangnamcta" target="_blank" rel="noopener">블로그</a>
                 <a href="#location">오시는 길</a>
                 <a href="#contact">상담신청</a>
@@ -369,6 +370,17 @@
                         <li>월 기장료 · 조정료 · 성실신고 수수료 산정</li>
                         <li>추계 vs 장부 신고 시 소득세 비교</li>
                         <li>창업중소기업 세액감면 반영</li>
+                    </ul>
+                    <span class="calc-go">계산해보기 →</span>
+                </a>
+                <a href="재개발계산기/main.html" class="calc-card">
+                    <span class="calc-icon">🏗️</span>
+                    <h3>재개발 청산금 양도세</h3>
+                    <p class="calc-desc">재개발 청산금을 받을 때 낼 세금을 미리 계산하세요.</p>
+                    <ul>
+                        <li>조합원 청산금 (권리가액 안분) · 현금청산자</li>
+                        <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
+                        <li>조특법 제77조 수용 감면 반영</li>
                     </ul>
                     <span class="calc-go">계산해보기 →</span>
                 </a>

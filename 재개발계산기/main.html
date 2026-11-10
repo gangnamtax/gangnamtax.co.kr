@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세무회계강남 재개발 청산금 양도소득세 계산기</title>
+  <meta name="description" content="재개발 청산금 양도소득세 예상세액 계산기. 조합원 청산금(권리가액 안분)과 현금청산자, 1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 조특법 제77조 수용 감면까지 계산 - 세무회계강남 김하원 세무사">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <link rel="stylesheet" href="../양도세계산기/css/login.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f4f6fa;
+        font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+        color: #1e293b;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px;
+    }
+    .wrapper { width: 100%; max-width: 1100px; display: flex; flex-direction: column; }
+    .header {
+        display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;
+        background: white; border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(15,23,42,.06); border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; padding: 24px 32px;
+    }
+    .title-block .eyebrow { display: block; font-size: 12px; font-weight: 500; color: #a08452; letter-spacing: .5px; margin-bottom: 4px; }
+    .title-block h1 { margin: 0; font-size: 24px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
+    .calculator-card {
+        width: 100%; background: white; padding: 40px; border-radius: 12px; position: relative;
+        border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(15,23,42,.06);
+    }
+    .lock-overlay {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.95); border-radius: 12px; z-index: 10; text-align: center; padding: 20px;
+    }
+    .lock-overlay h3 { color: #1e293b; font-weight: 700; }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; }
+    .tab-btn.active { color: #8a6d3b; border-bottom: 2px solid #8a6d3b; margin-bottom: -2px; }
+    .btn-login { background-color: #8a6d3b; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-login:hover { background-color: #74592e; }
+    .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-outline:hover { background-color: #f1f5f9; }
+    .btn-logout { background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-logout:hover { background: #8a6d3b; color: #fff; }
+
+    .form-group { margin-bottom: 22px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    .hint { font-size: 12px; color: #64748b; font-weight: normal; }
+    input, select {
+        width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;
+        outline: none; transition: border-color 0.2s; background-color: #fff; font-family: inherit;
+    }
+    input:focus, select:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    .date-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .date-col { flex: 1; min-width: 150px; }
+    .sub-label { font-size: 12px !important; color: #64748b !important; margin-bottom: 4px !important; }
+    .date-input-wrapper { position: relative; }
+    .date-input-wrapper input[type="text"] { padding-right: 40px; }
+    .cal-btn {
+        position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+        background: none; border: none; padding: 6px; border-radius: 6px; cursor: pointer; color: #8a6d3b; display: flex;
+    }
+    .cal-btn:hover { background-color: #f1f5f9; }
+    .date-picker-hidden { position: absolute; right: 6px; bottom: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none; }
+    .live-msg { font-size: 12px; color: #475569; font-weight: 600; margin-top: 6px; line-height: 1.5; }
+    .live-msg.warn { color: #b45309; }
+    .live-msg:empty { display: none; }
+
+    /* 청산금 유형 선택 */
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .seg label { margin: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; cursor: pointer; font-weight: normal; transition: border-color .15s, background .15s; }
+    .seg label b { display: block; font-size: 14px; color: #1e293b; margin-bottom: 3px; }
+    .seg label span { font-size: 12px; color: #64748b; line-height: 1.5; }
+    .seg input { display: none; }
+    .seg label:has(input:checked) { border-color: #8a6d3b; background: #faf7f1; box-shadow: inset 0 0 0 1px #8a6d3b; }
+    .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px !important; font-weight: normal !important; color: #334155; margin-top: 10px; cursor: pointer; }
+    .check-line input { width: auto; margin: 0; padding: 0; }
+    .addr-row { display: flex; gap: 8px; }
+    .addr-row button { white-space: nowrap; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .addr-row button:hover { border-color: #8a6d3b; color: #8a6d3b; }
+    .helper { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 8px; }
+    .helper .date-row input { padding: 9px 12px; font-size: 13px; }
+    .panel { border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 10px; padding: 16px; margin-top: 10px; }
+    .panel .form-group { margin-bottom: 12px; }
+    .panel .form-group:last-child { margin-bottom: 0; }
+    .section-title { font-size: 12px; font-weight: 700; color: #a08452; letter-spacing: .5px; margin: 6px 0 14px; padding-bottom: 6px; border-bottom: 1px solid #f1ece2; }
+
+    .calc-action-btn {
+        width: 100%; padding: 16px; background-color: #8a6d3b; color: white; border: none; border-radius: 6px;
+        font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: background 0.2s; letter-spacing: .5px; font-family: inherit;
+    }
+    .calc-action-btn:hover { background-color: #74592e; }
+    .calc-action-btn:disabled { background-color: #b9a682; cursor: wait; }
+
+    .result-box { background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .result-box h3 { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+    .result-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 15px; }
+    .result-row span:first-child { flex: 1; font-size: 13px; color: #334155; word-break: keep-all; line-height: 1.4; }
+    .result-row span:last-child { font-weight: 700; color: #1e293b; white-space: nowrap; flex-shrink: 0; font-size: 14px; }
+    .result-row.minus span:last-child { color: #8a6d3b; }
+    .total-tax { background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 16px 18px; margin: 18px 0 0; align-items: center; }
+    .total-tax span:first-child { font-size: 14px !important; font-weight: 600; color: #5b4a2e !important; }
+    .total-tax span:last-child { color: #5b4a2e !important; font-size: 20px !important; }
+    .basis { margin: 14px 0 0; padding: 12px 14px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #475569; line-height: 1.7; }
+    .basis div { padding-left: 1em; text-indent: -1em; }
+    .basis div::before { content: '· '; }
+    .basis:empty { display: none; }
+    .notice-text { font-size: 11px; color: #64748b; margin-top: 12px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    .notice-text p { margin: 0; padding-left: 1.2em; text-indent: -1.2em; }
+
+    .calc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
+    .result-col { position: sticky; top: 20px; }
+    .result-col .empty { border: 1px dashed #cbd5e1; background: #fff; border-radius: 10px; padding: 48px 20px; text-align: center; color: #64748b; font-size: 14px; line-height: 1.8; }
+    #result:not([style*="none"]) ~ .empty { display: none; }
+    .hidden { display: none !important; }
+    @media (max-width: 860px) {
+        body { padding: 24px 16px; }
+        .calc-layout { grid-template-columns: 1fr; }
+        .result-col { position: static; }
+        .calculator-card { padding: 24px 18px; }
+        .header { padding: 18px; flex-wrap: wrap; gap: 10px; }
+        .title-block h1 { font-size: 20px; }
+        .seg { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+      <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
+      <div class="header">
+        <div class="title-block">
+          <span class="eyebrow">세무회계강남 · 재개발</span>
+          <h1>재개발 청산금 양도소득세 계산기</h1>
+        </div>
+        <div id="authButtons">
+          <a id="adminLink" href="../양도세계산기/admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
+          <span id="planStatus" style="font-size: 12px; color: #8a6d3b; font-weight: 600; margin-right: 6px;"></span>
+          <button id="loginBtn" class="btn btn-login" onclick="openModal('login')" style="display:none;">로그인</button>
+          <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;">회원가입</button>
+          <button id="logoutBtn" class="btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="calculator-card">
+        <div id="lockOverlay" class="lock-overlay">
+          <div id="lockReady" style="display: none;">
+            <h3>재개발 계산기 서비스 준비 중</h3>
+            <p style="color: #666; margin-bottom: 20px;">더 정확한 계산 서비스로 곧 찾아뵙겠습니다.</p>
+            <a href="/" class="btn btn-outline" style="text-decoration: none;">홈으로 가기</a>
+          </div>
+          <div id="lockChecking"><h3>로그인 상태 확인 중...</h3></div>
+          <div id="lockLogin" style="display: none;">
+            <h3>로그인 후 이용 가능합니다</h3>
+            <p style="color: #666; margin-bottom: 20px;">회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.<br><span style="font-size: 13px;">양도세 계산기와 같은 회원 계정을 사용합니다.</span></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button class="btn btn-login" onclick="openModal('login')">로그인</button>
+              <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+            </div>
+          </div>
+          <div id="lockWait" style="display: none;">
+            <div id="applyBefore">
+              <h3>인가 신청 후 이용 가능합니다</h3>
+              <p id="waitInfo" style="color: #666; margin-bottom: 6px;">재개발 계산기 전용 이용권을 계좌이체로 결제하시면 확인 후 승인해 드립니다.</p>
+              <p id="applyPlan" style="font-weight: 700; margin-bottom: 18px;"></p>
+              <button class="btn btn-login" onclick="applyAccess()" style="padding: 12px 24px;">인가 신청하기</button>
+            </div>
+            <div id="applyAfter" style="display: none;">
+              <h3>아래 계좌로 입금해 주세요</h3>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 12px auto 12px; max-width: 360px; text-align: left; line-height: 1.8;">
+                <div><span style="color: #64748b;">입금 계좌</span> <strong id="bankLine" style="white-space: nowrap;"></strong></div>
+                <div><span style="color: #64748b;">예금주</span> <strong id="bankHolder"></strong></div>
+                <div><span style="color: #64748b;">금액</span> <strong id="bankAmount"></strong></div>
+              </div>
+              <p style="color: #666; font-size: 14px; margin-bottom: 6px;">입금자명은 가입하신 이름과 같게 해주세요.<br>입금 확인 후 승인되면 바로 이용하실 수 있습니다.</p>
+            </div>
+            <p style="color: #666; font-size: 14px;">문의: <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600;">010-4454-2429</a></p>
+          </div>
+          <div id="lockPay" style="display: none;">
+            <h3>이용권 결제 후 이용 가능합니다</h3>
+            <p id="planInfo" style="color: #666; margin-bottom: 20px;"></p>
+            <button class="btn btn-login" onclick="startPayment()" style="padding: 12px 24px;">카드로 결제하기</button>
+          </div>
+        </div>
+
+        <div class="calc-layout">
+        <form id="taxForm" onsubmit="calculateTax(event)">
+            <div class="form-group">
+                <label>1. 청산금 유형</label>
+                <div class="seg">
+                    <label><input type="radio" name="type" value="member" checked onchange="refreshForm()"><b>조합원 청산금</b><span>입주권을 받으면서 권리가액 중 일부를 청산금으로 받는 경우</span></label>
+                    <label><input type="radio" name="type" value="cash" onchange="refreshForm()"><b>현금청산자</b><span>분양 미신청·분양 제외 등으로 전부 현금으로 받는 경우</span></label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>2. 종전 주택 소재지 <span class="hint">(선택 · 조정대상지역 자동 판단용)</span></label>
+                <div class="addr-row">
+                    <input type="text" id="address" placeholder="예: 서울 강동구 천호동 000" oninput="refreshForm()">
+                    <button type="button" onclick="searchAddress()">주소 검색</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="taxType">3. 과세 유형</label>
+                <select id="taxType" onchange="refreshForm()">
+                    <option value="single">1세대 1주택 (비과세 · 12억 초과분만 과세)</option>
+                    <option value="general">일반 과세</option>
+                    <option value="heavy20">다주택 중과 · 조정대상지역 2주택 (+20%p)</option>
+                    <option value="heavy30">다주택 중과 · 조정대상지역 3주택 이상 (+30%p)</option>
+                </select>
+                <label id="acqRegBox" class="check-line">
+                    <input type="checkbox" id="acqRegulated" onchange="this.dataset.manual = '1'">
+                    취득 당시 조정대상지역 <span class="hint">(2017.8.3 이후 취득 → 2년 이상 거주해야 비과세 · 주소와 취득일로 자동 판단)</span>
+                </label>
+                <div id="heavyMsg" class="live-msg"></div>
+            </div>
+
+            <div class="form-group">
+                <label>4. 날짜</label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label class="sub-label">종전 주택 취득일</label>
+                        <div class="date-input-wrapper"><input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
+                    </div>
+                    <div class="date-col member-only">
+                        <label class="sub-label">관리처분계획인가일</label>
+                        <div class="date-input-wrapper"><input type="text" id="mgmtApprovalDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
+                    <div class="date-col">
+                        <label class="sub-label" id="transferDateLabel">청산금 수령일</label>
+                        <div class="date-input-wrapper"><input type="text" id="transferDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
+                    </div>
+                </div>
+                <div id="periodMsg" class="live-msg"></div>
+            </div>
+
+            <div id="residenceBox" class="form-group">
+                <label>5. 실제 거주 기간 <span class="hint">[1세대 1주택 전용 · 장기보유특별공제 표2 및 거주요건 판정]</span></label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label class="sub-label">거주 시작일 (전입일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="residenceStartDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
+                    <div class="date-col">
+                        <label class="sub-label">거주 종료일 (전출일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="residenceEndDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
+                </div>
+                <div id="residenceMsg" class="live-msg"></div>
+            </div>
+
+            <div class="section-title">금액</div>
+
+            <div class="form-group member-only">
+                <label for="rightsValue">권리가액 <span class="hint">(종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
+                <input type="text" id="rightsValue" placeholder="예: 1,500,000,000" oninput="formatCurrency(this); refreshForm()">
+                <label class="check-line"><input type="checkbox" id="useHelper" onchange="refreshForm()"> 종전자산 평가액과 비례율로 계산하기</label>
+                <div id="helperBox" class="helper hidden">
+                    <div class="date-row">
+                        <div class="date-col">
+                            <label class="sub-label">종전자산 평가액</label>
+                            <input type="text" id="priorValue" placeholder="예: 1,200,000,000" oninput="formatCurrency(this); applyHelper()">
+                        </div>
+                        <div class="date-col" style="max-width: 160px;">
+                            <label class="sub-label">비례율 (%)</label>
+                            <input type="text" id="ratio" placeholder="예: 105.3" inputmode="decimal" oninput="applyHelper()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="settlement" id="settlementLabel">청산금 (수령액)</label>
+                <input type="text" id="settlement" placeholder="예: 300,000,000" oninput="formatCurrency(this); refreshForm()" required>
+                <div id="ratioMsg" class="live-msg"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="acquisitionPrice">종전 주택 취득가액 <span class="hint">(매입가)</span></label>
+                <input type="text" id="acquisitionPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this)" required>
+            </div>
+
+            <div class="form-group">
+                <label for="expenses">필요경비 <span class="hint">(취득세·중개수수료·자본적 지출 등)</span></label>
+                <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
+            </div>
+
+            <div id="reductionBox" class="form-group cash-only">
+                <label class="check-line" style="margin-top: 0; font-weight: 600 !important;">
+                    <input type="checkbox" id="reduction" onchange="refreshForm()">
+                    조특법 제77조 공익사업 수용 감면 적용
+                </label>
+                <div id="reductionPanel" class="panel hidden">
+                    <div class="form-group">
+                        <label class="sub-label">사업시행계획인가 고시일 <span class="hint">(사업인정고시일로 봄)</span></label>
+                        <div class="date-input-wrapper"><input type="text" id="projectApprovalDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                        <div id="reductionMsg" class="live-msg"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="sub-label" for="reductionMethod">보상 방식 · 감면율</label>
+                        <select id="reductionMethod">
+                            <option value="cash">현금 보상 – 15%</option>
+                            <option value="bond">채권 보상 – 20%</option>
+                            <option value="bond3">채권 보상 (만기 3년 이상) – 35%</option>
+                            <option value="bond5">채권 보상 (만기 5년 이상) – 45%</option>
+                        </select>
+                        <div class="live-msg" style="font-weight: normal;">감면 한도 연 1억 원 · 감면세액의 20% 농어촌특별세 부과</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="calcBtn" class="calc-action-btn">예상 양도세 결과보기</button>
+        </form>
+
+        <div class="result-col">
+            <div id="result" class="result-box" style="display: none;">
+                <h3 id="resTitle">재개발 청산금 양도소득세 계산 결과</h3>
+                <div id="resRows"></div>
+                <div class="result-row total-tax">
+                    <span id="resTotalLabel">최종 납부할 총 예상 세액</span>
+                    <span id="resTotal">0 원</span>
+                </div>
+                <div id="resNotes" class="basis"></div>
+                <div class="notice-text">
+                    <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
+                    <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
+                    <p>※ 양도소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
+                </div>
+            </div>
+            <div class="empty">왼쪽에 <b>청산금 유형</b>과 <b>날짜 · 금액</b>을 넣고<br><b>[예상 양도세 결과보기]</b>를 누르면<br>계산 결과가 여기에 나옵니다.</div>
+        </div>
+        </div>
+      </div>
+  </div>
+
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 94vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>아이디 (이메일)</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
+      </form>
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- login.js가 찾는 결제 팝업 (이 계산기는 계좌이체 인가만 사용) -->
+  <div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
+
+  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script>window.CALC_PRODUCT = 'redev';</script>
+  <script src="../양도세계산기/js/login.js"></script>
+  <script>
+    // Apps Script가 아직 재개발 이용권을 모르는 예전 버전이면 양도세 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
+    const baseUpdateUi = updateUi;
+    updateUi = function (user, plan, ...rest) {
+        if (plan && !/재개발/.test(plan.name)) { showComingSoon(); return; }
+        return baseUpdateUi(user, plan, ...rest);
+    };
+  </script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const CAL_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+
+    // 달력 버튼: 고른 날짜가 텍스트 칸에 들어감 (직접 입력도 가능)
+    document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
+        const textInput = wrapper.querySelector('input[type="text"]');
+        const picker = document.createElement('input');
+        picker.type = 'date';
+        picker.className = 'date-picker-hidden';
+        picker.tabIndex = -1;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cal-btn';
+        btn.innerHTML = CAL_ICON;
+        btn.setAttribute('aria-label', '달력에서 날짜 선택');
+        btn.addEventListener('click', () => {
+            if (textInput.value.length === 10) picker.value = textInput.value;
+            if (picker.showPicker) picker.showPicker(); else picker.click();
+        });
+        picker.addEventListener('change', () => {
+            textInput.value = picker.value;
+            textInput.dispatchEvent(new Event('change'));
+        });
+        wrapper.append(picker, btn);
+    });
+
+    function formatDateInput(input) {
+        let v = input.value.replace(/\D/g, '');
+        if (v.length > 6) v = v.slice(0, 4) + '-' + v.slice(4, 6) + '-' + v.slice(6, 8);
+        else if (v.length > 4) v = v.slice(0, 4) + '-' + v.slice(4);
+        input.value = v;
+    }
+    function formatCurrency(input) {
+        const v = input.value.replace(/[^0-9]/g, '');
+        input.value = v ? Number(v).toLocaleString('ko-KR') : '';
+    }
+    const num = id => Number($(id).value.replace(/[^0-9]/g, '')) || 0;
+    const won = n => Math.round(n).toLocaleString('ko-KR') + ' 원';
+    const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+
+    // 조정대상지역 (양도세 계산기와 같은 기준: 2025.10.16 지정 서울 전역 + 경기 일부)
+    const REGULATED_AREAS = ['과천시', '광명시', '성남시 분당구', '성남시 수정구', '성남시 중원구',
+        '수원시 영통구', '수원시 장안구', '수원시 팔달구', '안양시 동안구', '용인시 수지구', '의왕시', '하남시',
+        '화성시 동탄구', '용인시 기흥구', '구리시'];
+    const SEOUL_GU = ['강남구', '강동구', '강북구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구',
+        '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중랑구'];
+    function isRegulated(address) {
+        const a = address.replace(/\s+/g, '');
+        if (!a) return false;
+        if (/^서울/.test(a)) return true;
+        if (/^(부산|대구|인천|광주|대전|울산|세종|강원|충북|충남|충청|전북|전남|전라|경북|경남|경상|제주)/.test(a)) return false;
+        if (SEOUL_GU.some(gu => a.startsWith(gu))) return true;
+        return REGULATED_AREAS.some(area => {
+            const gu = area.split(' ')[1];
+            return a.includes(area.replace(/\s+/g, '')) || (gu && a.startsWith(gu));
+        });
+    }
+    function isAcqRegulated(address, acqDate) {
+        if (!isDate(acqDate) || !isRegulated(address)) return false;
+        if (acqDate < '2017-08-03') return false;
+        if (acqDate < '2023-01-05') return true;
+        if (acqDate < '2025-10-16') return /(강남구|서초구|송파구|용산구)/.test(address.replace(/\s+/g, ''));
+        return true;
+    }
+    function searchAddress() {
+        if (window.daum && daum.Postcode) {
+            new daum.Postcode({ oncomplete: d => { $('address').value = d.address; refreshForm(); } }).open();
+        } else {
+            $('address').focus();
+        }
+    }
+
+    // 만 연수와 'n년 n개월' 표시
+    function period(start, end) {
+        if (!isDate(start) || !isDate(end) || end < start) return null;
+        const [sy, sm, sd] = start.split('-').map(Number), [ey, em, ed] = end.split('-').map(Number);
+        let y = ey - sy, m = em - sm;
+        if (ed < sd) m -= 1;
+        if (m < 0) { y -= 1; m += 12; }
+        return { years: y, text: (y ? `${y}년 ` : '') + `${m}개월` };
+    }
+    function twoYearsBefore(d) { const [y, m, dd] = d.split('-'); return `${Number(y) - 2}-${m}-${dd}`; }
+
+    function currentType() { return document.querySelector('input[name="type"]:checked').value; }
+
+    function applyHelper() {
+        const prior = num('priorValue');
+        const ratio = parseFloat($('ratio').value.replace(/[^0-9.]/g, ''));
+        if (prior && ratio > 0) $('rightsValue').value = Math.round(prior * ratio / 100).toLocaleString('ko-KR');
+        refreshForm();
+    }
+
+    // 입력이 바뀔 때마다 보이는 칸과 안내 문구 갱신
+    function refreshForm() {
+        const member = currentType() === 'member';
+        const tt = $('taxType').value;
+        document.querySelectorAll('.member-only').forEach(el => el.classList.toggle('hidden', !member));
+        document.querySelectorAll('.cash-only').forEach(el => el.classList.toggle('hidden', member));
+        $('residenceBox').classList.toggle('hidden', tt !== 'single');
+        $('acqRegBox').classList.toggle('hidden', tt !== 'single');
+        $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
+        $('reductionPanel').classList.toggle('hidden', !$('reduction').checked);
+        $('settlementLabel').innerHTML = member
+            ? '청산금 (수령액) <span class="hint">(권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
+            : '청산금 (수령액) <span class="hint">(= 양도가액)</span>';
+        $('heavyMsg').innerText = tt.startsWith('heavy') ? '중과 대상은 장기보유특별공제가 적용되지 않습니다.' : '';
+
+        const acq = $('acquisitionDate').value, trf = $('transferDate').value, mgmt = $('mgmtApprovalDate').value;
+        if (!$('acqRegulated').dataset.manual) $('acqRegulated').checked = isAcqRegulated($('address').value, acq);
+
+        const lines = [];
+        let warn = false;
+        if (member) {
+            const p1 = period(acq, mgmt), p2 = period(acq, trf);
+            if (isDate(acq) && isDate(mgmt) && !p1) { lines.push('※ 관리처분계획인가일이 취득일보다 빠를 수 없습니다.'); warn = true; }
+            else if (p1) lines.push(`보유기간 (취득일 ~ 관리처분계획인가일): ${p1.text} → 장기보유특별공제·비과세 판정`);
+            if (isDate(acq) && isDate(trf) && !p2) { lines.push('※ 청산금 수령일이 취득일보다 빠를 수 없습니다.'); warn = true; }
+            else if (p2) lines.push(`취득일 ~ 청산금 수령일: ${p2.text} → 세율 판정`);
+        } else {
+            const p = period(acq, trf);
+            if (isDate(acq) && isDate(trf) && !p) { lines.push('※ 청산금 수령일이 취득일보다 빠를 수 없습니다.'); warn = true; }
+            else if (p) lines.push(`보유기간 (취득일 ~ 청산금 수령일): ${p.text}`);
+        }
+        $('periodMsg').innerText = lines.join('\n');
+        $('periodMsg').classList.toggle('warn', warn);
+
+        const endDate = member ? mgmt : trf;
+        const rs = $('residenceStartDate').value, re = $('residenceEndDate').value;
+        const capped = isDate(re) && isDate(endDate) && re > endDate ? endDate : re;
+        const rp = period(rs, capped);
+        $('residenceMsg').innerText = rp ? `거주기간: ${rp.text}` + (capped !== re ? ` (${member ? '관리처분계획인가일' : '청산금 수령일'}까지만 인정)` : '') : '';
+
+        const rights = num('rightsValue'), settle = num('settlement');
+        $('ratioMsg').innerText = member && rights && settle
+            ? (settle > rights ? '※ 청산금이 권리가액보다 클 수 없습니다.' : `권리가액 중 청산금 비율: ${(settle / rights * 100).toFixed(2)}% (이 비율만큼 양도한 것으로 계산)`)
+            : '';
+        $('ratioMsg').classList.toggle('warn', member && settle > rights && rights > 0);
+
+        const proj = $('projectApprovalDate').value;
+        const rm = $('reductionMsg');
+        if (isDate(proj) && isDate(acq)) {
+            const limit = twoYearsBefore(proj);
+            const ok = acq <= limit;
+            rm.innerText = ok ? `취득일이 고시일부터 소급 2년(${limit}) 이전 → 감면 대상` : `취득일이 소급 2년(${limit})보다 늦어 감면 대상이 아닙니다.`;
+            rm.classList.toggle('warn', !ok);
+        } else {
+            rm.innerText = '사업인정고시일(사업시행계획인가 고시일)부터 소급하여 2년 이전에 취득해야 감면됩니다.';
+            rm.classList.remove('warn');
+        }
+    }
+    refreshForm();
+
+    async function calculateTax(event) {
+        event.preventDefault();
+        const member = currentType() === 'member';
+        const tt = $('taxType').value;
+        if (member && !isDate($('mgmtApprovalDate').value)) { alert('관리처분계획인가일을 입력해주세요.'); return; }
+        if (member && !num('rightsValue')) { alert('권리가액을 입력해주세요.'); return; }
+        if (!member && $('reduction').checked && !isDate($('projectApprovalDate').value)) { alert('사업시행계획인가 고시일을 입력해주세요.'); return; }
+
+        const btn = $('calcBtn');
+        btn.disabled = true;
+        btn.innerText = '계산 중...';
+        let res;
+        try {
+            res = await api('/api/calculate', {
+                type: member ? 'member' : 'cash',
+                taxType: tt === 'single' ? 'single_house' : 'general',
+                heavy: tt === 'heavy20' ? 20 : tt === 'heavy30' ? 30 : 0,
+                acqRegulated: tt === 'single' && $('acqRegulated').checked,
+                address: $('address').value.trim(),
+                acquisitionDate: $('acquisitionDate').value,
+                mgmtApprovalDate: member ? $('mgmtApprovalDate').value : '',
+                transferDate: $('transferDate').value,
+                residenceStartDate: tt === 'single' ? $('residenceStartDate').value : '',
+                residenceEndDate: tt === 'single' ? $('residenceEndDate').value : '',
+                rightsValue: member ? num('rightsValue') : 0,
+                settlement: num('settlement'),
+                acquisitionPrice: num('acquisitionPrice'),
+                expenses: num('expenses'),
+                reduction: !member && $('reduction').checked,
+                reductionMethod: $('reductionMethod').value,
+                projectApprovalDate: !member && $('reduction').checked ? $('projectApprovalDate').value : ''
+            });
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다.');
+            return;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '예상 양도세 결과보기';
+        }
+        if (!res.ok) {
+            alert(res.data.message || '계산에 실패했습니다.');
+            if (res.status === 401 || res.status === 402) refreshUser();
+            return;
+        }
+
+        const r = res.data.result;
+        const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        $('resTitle').innerText = r.type === 'cash' ? '현금청산자 양도소득세 계산 결과' : '조합원 청산금 양도소득세 계산 결과';
+        $('resRows').innerHTML = r.rows.map(x =>
+            `<div class="result-row${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`).join('');
+        $('resTotalLabel').innerText = r.totalLabel;
+        $('resTotal').innerText = won(r.total);
+        $('resNotes').innerHTML = r.notes.map(n => `<div>${esc(n)}</div>`).join('');
+        $('result').style.display = 'block';
+        if (window.matchMedia('(max-width: 860px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
+</body>
+</html>
