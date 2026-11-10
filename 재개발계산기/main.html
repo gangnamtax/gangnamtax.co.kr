@@ -141,6 +141,22 @@
     .result-col .empty { border: 1px dashed #cbd5e1; background: #fff; border-radius: 10px; padding: 48px 20px; text-align: center; color: #64748b; font-size: 14px; line-height: 1.8; }
     #result:not([style*="none"]) ~ .empty { display: none; }
     .hidden { display: none !important; }
+    .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
+    .split-title { font-size: 12px; font-weight: 700; color: #8a6d3b; margin-bottom: 4px; }
+    .split-row { display: flex; justify-content: space-between; font-size: 13px; color: #334155; padding: 2px 0; }
+    .split-row b { color: #1e293b; }
+    .filing { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; }
+    .filing p { font-size: 13px; color: #475569; margin: 0 0 10px; }
+    .filing-btn { width: 100%; padding: 14px; background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .3px; transition: background .2s, color .2s; }
+    .filing-btn:hover { background: #8a6d3b; color: #fff; }
+    .fmodal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 150; align-items: center; justify-content: center; padding: 16px; }
+    .fmodal.open { display: flex; }
+    .fbox { position: relative; background: #fff; width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 12px; border-top: 3px solid #b08d57; padding: 28px 26px 24px; box-shadow: 0 16px 40px rgba(15,23,42,.2); }
+    .fbox h3 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
+    .fdesc { font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 18px; }
+    .fclose { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+    .fbox textarea { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; }
+    .fbox textarea:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
     @media (max-width: 860px) {
         body { padding: 24px 16px; }
         .calc-layout { grid-template-columns: 1fr; }
@@ -282,12 +298,13 @@
 
             <div class="form-group">
                 <label for="share">본인 지분율 (%) <span class="hint">(부부 공동명의 등 공유 시 · 단독 소유는 100)</span></label>
+                <div class="hint" style="margin: -2px 0 8px;">아래 권리가액과 청산금은 지분 100%(주택 전체) 금액으로 넣으시면, 본인 지분율만큼 자동으로 나눠 계산합니다.</div>
                 <input type="text" id="share" value="100" inputmode="decimal" style="max-width: 160px;" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); refreshForm()">
                 <div id="shareMsg" class="live-msg"></div>
             </div>
 
             <div class="form-group member-only">
-                <label for="rightsValue">권리가액 <span class="hint">(주택 전체 · 종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
+                <label for="rightsValue">권리가액 <span class="hint">(지분 100% · 종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
                 <input type="text" id="rightsValue" placeholder="예: 1,500,000,000" oninput="formatCurrency(this); refreshForm()">
                 <label class="check-line"><input type="checkbox" id="useHelper" onchange="refreshForm()"> 종전자산 평가액과 비례율로 계산하기</label>
                 <div id="helperBox" class="helper hidden">
@@ -308,6 +325,7 @@
                 <label for="settlement" id="settlementLabel">청산금 (수령액)</label>
                 <input type="text" id="settlement" placeholder="예: 300,000,000" oninput="formatCurrency(this); refreshForm()" required>
                 <div id="ratioMsg" class="live-msg"></div>
+                <div id="shareSplit" class="split hidden"></div>
             </div>
 
             <div class="form-group">
@@ -360,6 +378,10 @@
                     <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
                     <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
                     <p>※ 양도소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
+                </div>
+                <div class="filing">
+                    <p>이 계산 내용으로 세무회계강남에 양도소득세 신고를 맡기실 수 있습니다.</p>
+                    <button type="button" class="filing-btn" onclick="openFiling()">신고 의뢰하기</button>
                 </div>
             </div>
             <div class="empty">왼쪽에 <b>청산금 유형</b>과 <b>날짜 · 금액</b>을 넣고<br><b>[예상 양도세 결과보기]</b>를 누르면<br>계산 결과가 여기에 나옵니다.</div>
@@ -415,6 +437,37 @@
         </div>
         <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
       </form>
+    </div>
+  </div>
+
+  <!-- 신고 의뢰 팝업 -->
+  <div id="filingModal" class="fmodal" onclick="if (event.target === this) closeFiling()">
+    <div class="fbox" role="dialog" aria-labelledby="filingTitle">
+      <button type="button" class="fclose" onclick="closeFiling()" aria-label="닫기">&times;</button>
+      <form id="filingForm" onsubmit="submitFiling(event)">
+        <h3 id="filingTitle">양도소득세 신고 의뢰</h3>
+        <p class="fdesc">성함과 연락받으실 연락처를 남겨 주시면,<br>세무사가 메일을 확인한 뒤 연락드리겠습니다.</p>
+        <div class="form-group">
+          <label for="filingName">성함</label>
+          <input type="text" id="filingName" maxlength="50" autocomplete="name" required>
+        </div>
+        <div class="form-group">
+          <label for="filingPhone">연락받으실 연락처</label>
+          <input type="tel" id="filingPhone" maxlength="30" placeholder="010-0000-0000" autocomplete="tel" required>
+        </div>
+        <div class="form-group">
+          <label for="filingMemo">요청사항 <span class="hint">(선택)</span></label>
+          <textarea id="filingMemo" rows="3" maxlength="1000" placeholder="통화 가능한 시간, 문의하실 내용 등"></textarea>
+        </div>
+        <label class="check-line" style="margin: 0 0 16px;"><input type="checkbox" id="filingAgree" required> 입력한 정보와 계산 내용을 세무회계강남에 전달하는 데 동의합니다.</label>
+        <button type="submit" id="filingSubmit" class="calc-action-btn" style="margin-top: 0;">신고 의뢰 보내기</button>
+      </form>
+      <div id="filingDone" class="hidden" style="text-align: center; padding: 10px 0;">
+        <h3>신고 의뢰가 접수되었습니다</h3>
+        <p class="fdesc">세무사가 메일을 확인한 뒤<br>남겨 주신 연락처로 연락드리겠습니다.</p>
+        <p class="fdesc" style="margin-bottom: 18px;">급하신 경우 <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600;">010-4454-2429</a></p>
+        <button type="button" class="btn-outline" onclick="closeFiling()">닫기</button>
+      </div>
     </div>
   </div>
 
@@ -617,10 +670,10 @@
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
         $('reductionPanel').classList.toggle('hidden', !$('reduction').checked);
         $('settlementLabel').innerHTML = member
-            ? '청산금 (수령액) <span class="hint">(주택 전체 · 권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
-            : '청산금 (수령액) <span class="hint">(주택 전체 · 지분율만큼 본인 양도가액)</span>';
+            ? '청산금 (수령액) <span class="hint">(지분 100% · 권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
+            : '청산금 (수령액) <span class="hint">(지분 100% · 지분율만큼 본인 양도가액)</span>';
         const sh = parseFloat($('share').value);
-        $('shareMsg').innerText = sh > 0 && sh < 100 ? '권리가액·청산금은 주택 전체 금액으로 넣으세요. 12억 판정은 주택 전체 기준, 양도차익은 지분율만큼 계산합니다.' : (sh > 100 || sh === 0 ? '※ 지분율은 0 초과 100 이하로 넣어주세요.' : '');
+        $('shareMsg').innerText = sh > 0 && sh < 100 ? '12억 비과세 판정은 주택 전체(지분 100%) 기준, 양도차익은 본인 지분율만큼 계산합니다.' : (sh > 100 || sh === 0 ? '※ 지분율은 0 초과 100 이하로 넣어주세요.' : '');
         $('shareMsg').classList.toggle('warn', sh > 100 || sh === 0);
         // 양도 주택이 조정대상지역이 아니면 중과 선택 불가
         const addr = $('address').value.trim();
@@ -667,6 +720,14 @@
             ? (settle > rights ? '※ 청산금이 권리가액보다 클 수 없습니다.' : `권리가액 중 청산금 비율: ${(settle / rights * 100).toFixed(2)}% (이 비율만큼 양도한 것으로 계산)`)
             : '';
         $('ratioMsg').classList.toggle('warn', member && settle > rights && rights > 0);
+        // 본인 지분만큼 나눈 금액 표시
+        const shareOk = sh > 0 && sh < 100;
+        const parts = [];
+        if (shareOk && member && rights) parts.push(['본인 지분 권리가액', rights * sh / 100]);
+        if (shareOk && settle) parts.push(['본인 지분 청산금', settle * sh / 100]);
+        $('shareSplit').innerHTML = parts.length ? `<div class="split-title">지분 ${sh}% 기준 본인 몫</div>` +
+            parts.map(([k, v]) => `<div class="split-row"><span>${k}</span><b>${won(v)}</b></div>`).join('') : '';
+        $('shareSplit').classList.toggle('hidden', !parts.length);
 
         const proj = $('projectApprovalDate').value;
         const rm = $('reductionMsg');
@@ -700,7 +761,7 @@
         btn.innerText = '계산 중...';
         let res;
         try {
-            res = await api('/api/calculate', {
+            lastInput = {
                 type: member ? 'member' : 'cash',
                 taxType: tt === 'single' ? 'single_house' : 'general',
                 heavy: tt === 'heavy20' ? 20 : tt === 'heavy30' ? 30 : 0,
@@ -719,7 +780,8 @@
                 reduction: !member && $('reduction').checked,
                 reductionMethod: $('reductionMethod').value,
                 projectApprovalDate: !member && $('reduction').checked ? $('projectApprovalDate').value : ''
-            });
+            };
+            res = await api('/api/calculate', lastInput);
         } catch (error) {
             console.error('통신 에러:', error);
             alert('서버와 통신하지 못했습니다.');
@@ -744,6 +806,45 @@
         $('resNotes').innerHTML = r.notes.map(n => `<div>${esc(n)}</div>`).join('');
         $('result').style.display = 'block';
         if (window.matchMedia('(max-width: 860px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ===== 신고 의뢰: 성함·연락처와 마지막 계산 내용을 세무사에게 메일로 전달 =====
+    let lastInput = null;
+    function openFiling() {
+        if (!lastInput) { alert('먼저 계산 결과를 확인해주세요.'); return; }
+        $('filingForm').classList.remove('hidden');
+        $('filingDone').classList.add('hidden');
+        $('filingModal').classList.add('open');
+        setTimeout(() => $('filingName').focus(), 50);
+    }
+    function closeFiling() { $('filingModal').classList.remove('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFiling(); });
+    async function submitFiling(event) {
+        event.preventDefault();
+        const btn = $('filingSubmit');
+        btn.disabled = true;
+        btn.innerText = '보내는 중...';
+        try {
+            const res = await api('/api/request-filing', {
+                ...lastInput,
+                name: $('filingName').value.trim(),
+                phone: $('filingPhone').value.trim(),
+                memo: $('filingMemo').value.trim()
+            });
+            if (!res.ok) {
+                alert(res.data.message || '신고 의뢰를 보내지 못했습니다. 010-4454-2429로 연락 주세요.');
+                if (res.status === 401) refreshUser();
+                return;
+            }
+            $('filingForm').classList.add('hidden');
+            $('filingDone').classList.remove('hidden');
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다. 010-4454-2429로 연락 주세요.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '신고 의뢰 보내기';
+        }
     }
   </script>
 </body>
