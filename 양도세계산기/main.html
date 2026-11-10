@@ -302,6 +302,45 @@
     .house-row.selling { border-color: #cbd5e1; background: #f8fafc; }
     .house-row .sell, .live-period-msg { color: #475569; }
     @media (max-width: 860px) { .header { padding: 18px; flex-wrap: wrap; gap: 10px; } .title-block h1 { font-size: 20px; } }
+    /* ===== 재개발 계산기와 같은 날짜 선택 팝업 · 신고 의뢰 ===== */
+    .cal-btn {
+        position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+        background: none; border: none; padding: 6px; border-radius: 6px; cursor: pointer; color: #8a6d3b; display: flex;
+    }
+    .cal-btn:hover { background-color: #f1f5f9; }
+    /* 날짜 선택 팝업: 년·월 드롭다운 + 일 달력 */
+    .dp { position: absolute; z-index: 200; width: 296px; background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; box-shadow: 0 10px 28px rgba(15,23,42,.14); padding: 14px; display: none; font-family: inherit; }
+    .dp.open { display: block; }
+    .dp-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .dp-head select { flex: 1; width: auto; padding: 7px 8px; font-size: 14px; font-weight: 600; color: #1e293b; border-radius: 6px; cursor: pointer; }
+    .dp-nav { flex: 0 0 30px; height: 32px; background: none; border: 1px solid #e2e8f0; border-radius: 6px; color: #8a6d3b; font-size: 18px; line-height: 1; cursor: pointer; }
+    .dp-nav:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-week, .dp-days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+    .dp-week span { font-size: 12px; color: #64748b; padding: 4px 0 6px; font-weight: 500; }
+    .dp-week span:first-child { color: #b45309; }
+    .dp-days { gap: 2px; }
+    .dp-day { height: 34px; background: none; border: 1px solid transparent; border-radius: 6px; font-size: 14px; color: #1e293b; cursor: pointer; font-family: inherit; }
+    .dp-day.sun { color: #b45309; }
+    .dp-day:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-day.today { border-color: #cbd5e1; font-weight: 700; }
+    .dp-day.sel, .dp-day.sel:hover { background: #8a6d3b; border-color: #8a6d3b; color: #fff; font-weight: 700; }
+    .dp-foot { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+    .dp-foot button { background: none; border: none; font-size: 13px; color: #8a6d3b; font-weight: 600; cursor: pointer; padding: 4px 6px; font-family: inherit; }
+    .dp-foot .dp-close { color: #64748b; }
+    .hidden { display: none !important; }
+    .hint { font-size: 12px; color: #64748b; font-weight: normal; }
+    .filing { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; }
+    .filing p { font-size: 13px; color: #475569; margin: 0 0 10px; }
+    .filing-btn { width: 100%; padding: 14px; background: #8a6d3b; color: #fff; border: 1px solid #8a6d3b; box-shadow: 0 2px 6px rgba(138,109,59,.25); border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .3px; transition: background .2s, color .2s; }
+    .filing-btn:hover { background: #74592e; border-color: #74592e; }
+    .fmodal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 150; align-items: center; justify-content: center; padding: 16px; }
+    .fmodal.open { display: flex; }
+    .fbox { position: relative; background: #fff; width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 12px; border-top: 3px solid #b08d57; padding: 28px 26px 24px; box-shadow: 0 16px 40px rgba(15,23,42,.2); }
+    .fbox h3 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
+    .fdesc { font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 18px; }
+    .fclose { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+    .fbox textarea { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; }
+    .fbox textarea:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
   </style>
 </head>
 <body>
@@ -485,6 +524,10 @@
                 <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
                 <p>※ 양도소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
             </div>
+            <div class="filing">
+                <p>위 예상 산출세액을 대표세무사가 검토 후 양도소득세 신고를 맡길 수 있습니다.</p>
+                <button type="button" class="filing-btn" onclick="openFiling()">신고 의뢰하기</button>
+            </div>
         </div>
         <div class="empty">왼쪽에 <b>주택</b>과 <b>날짜 · 금액</b>을 넣고<br><b>[예상 양도세 결과보기]</b>를 누르면<br>계산 결과가 여기에 나옵니다.</div>
         </div>
@@ -546,6 +589,37 @@
     </div>
   </div>
 
+  <!-- 신고 의뢰 팝업 -->
+  <div id="filingModal" class="fmodal" onclick="if (event.target === this) closeFiling()">
+    <div class="fbox" role="dialog" aria-labelledby="filingTitle">
+      <button type="button" class="fclose" onclick="closeFiling()" aria-label="닫기">&times;</button>
+      <form id="filingForm" onsubmit="submitFiling(event)">
+        <h3 id="filingTitle">양도소득세 신고 의뢰</h3>
+        <p class="fdesc">성함과 연락받으실 연락처를 남겨 주시면,<br>세무사가 메일을 확인한 뒤 연락드리겠습니다.</p>
+        <div class="form-group">
+          <label for="filingName">성함</label>
+          <input type="text" id="filingName" maxlength="50" autocomplete="name" required>
+        </div>
+        <div class="form-group">
+          <label for="filingPhone">연락받으실 연락처</label>
+          <input type="tel" id="filingPhone" maxlength="30" placeholder="010-0000-0000" autocomplete="tel" required>
+        </div>
+        <div class="form-group">
+          <label for="filingMemo">요청사항 <span class="hint">(선택)</span></label>
+          <textarea id="filingMemo" rows="3" maxlength="1000" placeholder="통화 가능한 시간, 문의하실 내용 등"></textarea>
+        </div>
+        <label class="check-line" style="margin: 0 0 16px;"><input type="checkbox" id="filingAgree" required> 입력한 정보와 계산 내용을 세무회계강남에 전달하는 데 동의합니다.</label>
+        <button type="submit" id="filingSubmit" class="calc-action-btn" style="margin-top: 0;">신고 의뢰 보내기</button>
+      </form>
+      <div id="filingDone" class="hidden" style="text-align: center; padding: 10px 0;">
+        <h3>신고 의뢰가 접수되었습니다</h3>
+        <p class="fdesc">세무사가 메일을 확인한 뒤<br>남겨 주신 연락처로 연락드리겠습니다.</p>
+        <p class="fdesc" style="margin-bottom: 18px;">급하신 경우 <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600;">010-4454-2429</a></p>
+        <button type="button" class="btn-outline" onclick="closeFiling()">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 이용권 결제 팝업 모달 (토스페이먼츠 결제위젯) -->
   <div id="payModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
     <div class="modal-content" style="background: white; padding: 30px 20px; border-radius: 12px; width: 520px; max-width: 95vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
@@ -562,40 +636,113 @@
   <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   <script src="js/login.js"></script>
   <script>
-    // 📅 버튼을 누르면 달력이 열리고, 고른 날짜가 텍스트 칸에 들어감 (직접 입력도 그대로 가능)
-    function setupDatePickers() {
-        document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
-            const textInput = wrapper.querySelector('input[type="text"]');
+    const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+    const CAL_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
 
-            const picker = document.createElement('input');
-            picker.type = 'date';
-            picker.className = 'date-picker-hidden';
-            picker.tabIndex = -1;
+    // 달력 버튼: 년·월은 드롭다운으로, 일은 달력에서 선택 (직접 입력도 가능)
+    const pad2 = n => String(n).padStart(2, '0');
+    const THIS_YEAR = new Date().getFullYear();
+    const FIRST_YEAR = 1960, LAST_YEAR = THIS_YEAR + 5;
+    let dpTarget = null, dpYear, dpMonth; // dpMonth: 1~12
+    const dp = document.createElement('div');
+    dp.className = 'dp';
+    dp.setAttribute('role', 'dialog');
+    dp.setAttribute('aria-label', '날짜 선택');
+    dp.innerHTML = `
+        <div class="dp-head">
+            <button type="button" class="dp-nav" data-step="-1" aria-label="이전 달">&#8249;</button>
+            <select class="dp-year" aria-label="년">${Array.from({ length: LAST_YEAR - FIRST_YEAR + 1 }, (_, i) => LAST_YEAR - i).map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
+            <select class="dp-month" aria-label="월">${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+            <button type="button" class="dp-nav" data-step="1" aria-label="다음 달">&#8250;</button>
+        </div>
+        <div class="dp-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div class="dp-days"></div>
+        <div class="dp-foot"><button type="button" class="dp-today">오늘</button><button type="button" class="dp-close">닫기</button></div>`;
+    document.body.appendChild(dp);
+    const dpYearSel = dp.querySelector('.dp-year'), dpMonthSel = dp.querySelector('.dp-month');
 
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'cal-btn';
-            btn.textContent = '📅';
-            btn.setAttribute('aria-label', '달력에서 날짜 선택');
-
-            btn.addEventListener('click', () => {
-                if (textInput.value.length === 10) picker.value = textInput.value;
-                if (picker.showPicker) {
-                    picker.showPicker();
-                } else {
-                    picker.click();
-                }
-            });
-
-            picker.addEventListener('change', () => {
-                textInput.value = picker.value;
-                textInput.dispatchEvent(new Event('change'));
-            });
-
-            wrapper.append(picker, btn);
-        });
+    function dpRender() {
+        if (dpYear < FIRST_YEAR) { dpYear = FIRST_YEAR; dpMonth = 1; }
+        if (dpYear > LAST_YEAR) { dpYear = LAST_YEAR; dpMonth = 12; }
+        dpYearSel.value = dpYear;
+        dpMonthSel.value = dpMonth;
+        const first = new Date(dpYear, dpMonth - 1, 1).getDay();
+        const last = new Date(dpYear, dpMonth, 0).getDate();
+        const sel = dpTarget && isDate(dpTarget.value) ? dpTarget.value : '';
+        const t = new Date(), today = `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`;
+        let html = '<span></span>'.repeat(first);
+        for (let d = 1; d <= last; d++) {
+            const v = `${dpYear}-${pad2(dpMonth)}-${pad2(d)}`;
+            const dow = (first + d - 1) % 7;
+            const cls = ['dp-day', v === sel ? 'sel' : '', v === today ? 'today' : '', dow === 0 ? 'sun' : '', dow === 6 ? 'sat' : ''].filter(Boolean).join(' ');
+            html += `<button type="button" class="${cls}" data-v="${v}">${d}</button>`;
+        }
+        dp.querySelector('.dp-days').innerHTML = html;
     }
-    setupDatePickers();
+    function dpPlace() {
+        const r = dpTarget.getBoundingClientRect();
+        const w = dp.offsetWidth, h = dp.offsetHeight;
+        let left = r.left + window.scrollX;
+        left = Math.max(8 + window.scrollX, Math.min(left, window.scrollX + document.documentElement.clientWidth - w - 8));
+        let top = r.bottom + window.scrollY + 6;
+        if (r.bottom + h + 6 > window.innerHeight && r.top - h - 6 > 0) top = r.top + window.scrollY - h - 6;
+        dp.style.left = left + 'px';
+        dp.style.top = top + 'px';
+    }
+    function dpOpen(input) {
+        dpTarget = input;
+        const v = isDate(input.value) ? input.value : '';
+        const t = new Date();
+        dpYear = v ? Number(v.slice(0, 4)) : t.getFullYear();
+        dpMonth = v ? Number(v.slice(5, 7)) : t.getMonth() + 1;
+        dpRender();
+        dp.classList.add('open');
+        dpPlace();
+    }
+    function dpClose() { dp.classList.remove('open'); dpTarget = null; }
+    function dpPick(v) {
+        const input = dpTarget;
+        input.value = v;
+        dpClose();
+        input.dispatchEvent(new Event('change'));
+    }
+    dpYearSel.addEventListener('change', () => { dpYear = Number(dpYearSel.value); dpRender(); });
+    dpMonthSel.addEventListener('change', () => { dpMonth = Number(dpMonthSel.value); dpRender(); });
+    dp.addEventListener('click', e => {
+        const nav = e.target.closest('.dp-nav');
+        if (nav) {
+            dpMonth += Number(nav.dataset.step);
+            if (dpMonth < 1) { dpMonth = 12; dpYear--; }
+            if (dpMonth > 12) { dpMonth = 1; dpYear++; }
+            dpRender();
+        } else if (e.target.closest('.dp-day')) {
+            dpPick(e.target.closest('.dp-day').dataset.v);
+        } else if (e.target.closest('.dp-today')) {
+            const t = new Date();
+            dpPick(`${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`);
+        } else if (e.target.closest('.dp-close')) {
+            dpClose();
+        }
+    });
+    document.addEventListener('mousedown', e => {
+        if (dpTarget && !dp.contains(e.target) && !e.target.closest('.cal-btn')) dpClose();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dpTarget) dpClose(); });
+    window.addEventListener('resize', () => { if (dpTarget) dpPlace(); });
+
+    document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
+        const textInput = wrapper.querySelector('input[type="text"]');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cal-btn';
+        btn.innerHTML = CAL_ICON;
+        btn.setAttribute('aria-label', '달력에서 날짜 선택');
+        btn.addEventListener('click', () => {
+            if (dpTarget === textInput) dpClose(); else dpOpen(textInput);
+        });
+        wrapper.append(btn);
+    });
+
 
     function formatDateInput(input) {
         let val = input.value.replace(/\D/g, '');
@@ -865,10 +1012,11 @@
             return;
         }
 
-        let res;
+        let res, input;
+        lastInput = null;
         try {
             const house = getHouseStatus();
-            res = await api('/api/calculate', {
+            input = {
                 taxType: house.taxType,
                 heavy: house.heavy,
                 acqRegulated: house.taxType === 'single_house' && document.getElementById('acqRegulated').checked,
@@ -885,7 +1033,8 @@
                 transferPrice: parseNum('transferPrice'),
                 acquisitionPrice: parseNum('acquisitionPrice'),
                 expenses: parseNum('expenses')
-            });
+            };
+            res = await api('/api/calculate', input);
         } catch (error) {
             console.error('통신 에러:', error);
             alert('서버와 통신하지 못했습니다.');
@@ -912,9 +1061,49 @@
         document.getElementById('resTotalTax').innerText = won(r.total);
 
         document.getElementById('result').style.display = 'block';
+        lastInput = input;
         // 휴대폰처럼 결과가 입력란 아래에 있을 때는 결과 위치로 이동
         if (window.matchMedia('(max-width: 860px)').matches) {
             document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    // ===== 신고 의뢰: 성함·연락처와 마지막 계산 내용을 세무사에게 메일로 전달 =====
+    let lastInput = null;
+    function openFiling() {
+        if (!lastInput) { alert('먼저 계산 결과를 확인해주세요.'); return; }
+        document.getElementById('filingForm').classList.remove('hidden');
+        document.getElementById('filingDone').classList.add('hidden');
+        document.getElementById('filingModal').classList.add('open');
+        setTimeout(() => document.getElementById('filingName').focus(), 50);
+    }
+    function closeFiling() { document.getElementById('filingModal').classList.remove('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFiling(); });
+    async function submitFiling(event) {
+        event.preventDefault();
+        const btn = document.getElementById('filingSubmit');
+        btn.disabled = true;
+        btn.innerText = '보내는 중...';
+        try {
+            const res = await api('/api/request-filing', {
+                ...lastInput,
+                name: document.getElementById('filingName').value.trim(),
+                phone: document.getElementById('filingPhone').value.trim(),
+                memo: document.getElementById('filingMemo').value.trim()
+            });
+            if (!res.ok) {
+                alert(res.data.message || '신고 의뢰를 보내지 못했습니다. 010-4454-2429로 연락 주세요.');
+                if (res.status === 401) refreshUser();
+                return;
+            }
+            document.getElementById('filingForm').classList.add('hidden');
+            document.getElementById('filingDone').classList.remove('hidden');
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다. 010-4454-2429로 연락 주세요.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '신고 의뢰 보내기';
         }
     }
   </script>
