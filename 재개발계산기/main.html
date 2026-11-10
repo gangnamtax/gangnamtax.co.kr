@@ -145,6 +145,12 @@
     .pagetabs a:hover { color: #8a6d3b; background: #faf7f1; }
     .pagetabs a.on { background: #8a6d3b; color: #fff; }
     .hidden { display: none !important; }
+    .pill-row { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
+    .pill-row label { margin: 0; cursor: pointer; }
+    .pill-row input { display: none; }
+    .pill-row span { display: block; padding: 9px 26px; font-size: 14px; font-weight: 600; color: #475569; background: #fff; }
+    .pill-row label + label span { border-left: 1px solid #cbd5e1; }
+    .pill-row input:checked + span { background: #8a6d3b; color: #fff; }
     .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
     .amount-guide b { color: #3f3320; }
     .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
@@ -240,6 +246,14 @@
 
         <div class="calc-layout">
         <form id="taxForm" onsubmit="calculateTax(event)">
+            <div class="form-group">
+                <label>사업 종류</label>
+                <div class="pill-row">
+                    <label><input type="radio" name="project" value="redev" checked onchange="refreshForm()"><span>재개발</span></label>
+                    <label><input type="radio" name="project" value="rebuild" onchange="refreshForm()"><span>재건축</span></label>
+                </div>
+            </div>
+
             <div class="form-group">
                 <label>1. 청산금 유형</label>
                 <div class="seg">
@@ -350,12 +364,17 @@
                 <div id="shareSplit" class="split hidden"></div>
             </div>
 
+            <div id="rebuildNote" class="form-group cash-only hidden">
+                <div class="amount-guide" style="margin-bottom: 0;">재건축 현금청산(매도청구)은 공익사업 수용이 아니어서 <b>조특법 제77조 수용 감면</b> 대상이 아닙니다.</div>
+            </div>
+
             <div id="reductionBox" class="form-group cash-only">
-                <label class="check-line" style="margin-top: 0; font-weight: 600 !important;">
-                    <input type="checkbox" id="reduction" onchange="refreshForm()">
-                    조특법 제77조 공익사업 수용 감면 적용
-                </label>
-                <div id="reductionPanel" class="panel hidden">
+                <label>조특법 제77조 공익사업 수용 감면 <span class="hint">(재개발 현금청산자)</span></label>
+                <div id="reductionPanel" class="panel" style="margin-top: 0;">
+                    <label class="check-line" style="margin: 0 0 12px; font-weight: 600 !important;">
+                        <input type="checkbox" id="reduction" checked onchange="refreshForm()">
+                        수용 감면 적용
+                    </label>
                     <div class="form-group">
                         <label class="sub-label">사업시행계획인가 고시일 <span class="hint">(사업인정고시일로 봄)</span></label>
                         <div class="date-input-wrapper"><input type="text" id="projectApprovalDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
@@ -663,6 +682,7 @@
     function twoYearsBefore(d) { const [y, m, dd] = d.split('-'); return `${Number(y) - 2}-${m}-${dd}`; }
 
     function currentType() { return document.querySelector('input[name="type"]:checked').value; }
+    function currentProject() { return document.querySelector('input[name="project"]:checked').value; }
 
     function applyHelper() {
         const prior = num('priorValue');
@@ -677,10 +697,13 @@
         const tt = $('taxType').value;
         document.querySelectorAll('.member-only').forEach(el => el.classList.toggle('hidden', !member));
         document.querySelectorAll('.cash-only').forEach(el => el.classList.toggle('hidden', member));
+        // 재건축 현금청산은 수용 감면 대상 아님 → 감면 칸 숨기고 안내
+        const rebuild = currentProject() === 'rebuild';
+        $('reductionBox').classList.toggle('hidden', member || rebuild);
+        $('rebuildNote').classList.toggle('hidden', member || !rebuild);
         $('residenceBox').classList.toggle('hidden', tt !== 'single');
         $('acqRegBox').classList.toggle('hidden', tt !== 'single');
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
-        $('reductionPanel').classList.toggle('hidden', !$('reduction').checked);
         $('settlementLabel').innerHTML = member
             ? '청산금 (수령액) <span class="hint">(주택 전체 금액 · 권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
             : '청산금 (수령액) <span class="hint">(주택 전체 금액 · 지분율만큼 본인 양도가액)</span>';
@@ -789,7 +812,8 @@
                 acquisitionPrice: num('acquisitionPrice'),
                 expenses: num('expenses'),
                 share: parseFloat($('share').value) || 100,
-                reduction: !member && $('reduction').checked,
+                projectType: currentProject(),
+                reduction: !member && currentProject() !== 'rebuild' && $('reduction').checked,
                 reductionMethod: $('reductionMethod').value,
                 projectApprovalDate: !member && $('reduction').checked ? $('projectApprovalDate').value : ''
             };
