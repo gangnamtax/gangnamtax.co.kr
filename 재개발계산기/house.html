@@ -158,6 +158,13 @@
     .hidden { display: none !important; }
     .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
     .amount-guide b { color: #3f3320; }
+    .cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
+    .cost-col { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 14px 0; background: #fcfcfd; }
+    .cost-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+    .cost-col .form-group { margin-bottom: 14px; }
+    .cost-col .form-group > label { font-size: 13px; }
+    .cost-col .form-group > label .hint { display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    @media (max-width: 600px) { .cost-grid { grid-template-columns: 1fr; } }
     .own { display: inline-block; font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff4ff; border: 1px solid #c7d6f5; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
     .tot { display: inline-block; font-size: 11px; font-weight: 600; color: #8a6d3b; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
     .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
@@ -363,24 +370,29 @@
                 </div>
             </div>
 
-            <div class="form-group" id="paidBox">
-                <label for="paidSettlement">납부한 청산금 <span class="own">본인 몫</span> <span class="hint">(본인이 낸 분담금 · 조합원 분양가가 권리가액보다 커서 낸 금액, 없으면 0)</span></label>
-                <input type="text" id="paidSettlement" value="0" oninput="formatCurrency(this); refreshForm()">
-            </div>
-
-            <div class="form-group">
-                <label for="acquisitionPrice" id="acqPriceLabel">종전 주택 취득가액 <span class="hint">(본인 지분 몫 매입가)</span></label>
-                <input type="text" id="acquisitionPrice" placeholder="예: 300,000,000" oninput="formatCurrency(this)" required>
-            </div>
-
-            <div class="form-group">
-                <label for="expenses" id="expensesLabel">종전 주택 필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료·자본적 지출 등)</span></label>
-                <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
-            </div>
-
-            <div class="form-group">
-                <label for="saleExpenses" id="saleExpLabel">양도비용 <span class="own">본인 몫</span> <span class="hint">(양도 시 중개수수료 등)</span></label>
-                <input type="text" id="saleExpenses" value="0" oninput="formatCurrency(this)">
+            <div class="cost-grid">
+                <div class="cost-col">
+                    <div class="cost-title" id="costOldTitle">종전 주택 <span class="own">본인 몫</span></div>
+                    <div class="form-group">
+                        <label for="acquisitionPrice" id="acqPriceLabel">취득가액</label>
+                        <input type="text" id="acquisitionPrice" placeholder="예: 300,000,000" oninput="formatCurrency(this)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenses" id="expensesLabel">필요경비</label>
+                        <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
+                    </div>
+                </div>
+                <div class="cost-col">
+                    <div class="cost-title" id="costNewTitle">신축주택 <span class="own">본인 몫</span></div>
+                    <div class="form-group" id="paidBox">
+                        <label for="paidSettlement">납부한 청산금 <span class="hint">(분담금, 없으면 0)</span></label>
+                        <input type="text" id="paidSettlement" value="0" oninput="formatCurrency(this); refreshForm()">
+                    </div>
+                    <div class="form-group">
+                        <label for="saleExpenses" id="saleExpLabel">필요경비 · 양도비용</label>
+                        <input type="text" id="saleExpenses" value="0" oninput="formatCurrency(this)">
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -783,12 +795,12 @@
         // 날짜 순서: 원조합원은 취득일 → 관리처분, 승계조합원은 관리처분 → 입주권 취득일
         const acqCol = $('acquisitionDate').closest('.date-col'), mgmtCol = $('mgmtApprovalDate').closest('.date-col');
         if (succ) mgmtCol.after(acqCol); else mgmtCol.before(acqCol);
-        $('acqPriceLabel').innerHTML = succ ? '입주권 매입가 <span class="own">본인 몫</span> <span class="hint">(본인 지분 매입가 · 권리가액 + 프리미엄)</span>' : '종전 주택 취득가액 <span class="own">본인 몫</span> <span class="hint">(본인 지분 매입가)</span>';
-        $('expensesLabel').innerHTML = succ ? '입주권 취득 필요경비 <span class="own">본인 몫</span> <span class="hint">(본인이 낸 취득세·중개수수료 등)</span>' : '종전 주택 필요경비 <span class="own">본인 몫</span> <span class="hint">(본인이 낸 취득세·중개수수료·자본적 지출 등)</span>';
+        $('costOldTitle').innerHTML = (succ ? '입주권 취득 ' : '종전 주택 ') + '<span class="own">본인 몫</span>';
+        $('costNewTitle').innerHTML = (newhouse ? '신축주택 ' : '입주권 양도 ') + '<span class="own">본인 몫</span>';
+        $('acqPriceLabel').innerHTML = succ ? '입주권 매입가 <span class="hint">(프리미엄 포함)</span>' : '취득가액 <span class="hint">(본인 지분 매입가)</span>';
+        $('expensesLabel').innerHTML = '필요경비 <span class="hint">(취득세·중개수수료 등)</span>';
         $('paidBox').classList.toggle('hidden', succ && !newhouse);
-        $('saleExpLabel').innerHTML = (newhouse ? '신축주택 필요경비 · 양도비용 ' : '양도비용 ') + '<span class="own">본인 몫</span>' + (newhouse
-            ? ' <span class="hint">(신축 취득세 등 관리처분 후 지출 + 양도 시 중개수수료 등)</span>'
-            : ' <span class="hint">(양도 시 중개수수료 등)</span>');
+        $('saleExpLabel').innerHTML = newhouse ? '필요경비 · 양도비용 <span class="hint">(신축 취득세·중개수수료)</span>' : '양도비용 <span class="hint">(양도 시 중개수수료 등)</span>';
         $('residenceBox').classList.toggle('hidden', tt !== 'single');
         $('acqRegBox').classList.toggle('hidden', tt !== 'single');
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
