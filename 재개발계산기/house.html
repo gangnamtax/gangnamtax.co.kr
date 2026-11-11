@@ -283,6 +283,10 @@
                         <label class="sub-label">관리처분계획인가일</label>
                         <div class="date-input-wrapper"><input type="text" id="mgmtApprovalDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
                     </div>
+                    <div class="date-col newhouse-only">
+                        <label class="sub-label">준공일 (사용승인일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="completionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
                     <div class="date-col">
                         <label class="sub-label" id="transferDateLabel">입주권 양도일 (잔금일)</label>
                         <div class="date-input-wrapper"><input type="text" id="transferDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
@@ -814,6 +818,9 @@
         if (!isDate(acq) || !isDate(mgmt) || !isDate(trf)) { alert('취득일·관리처분계획인가일·양도일을 입력해주세요.'); return; }
         if (acq > mgmt) { alert('관리처분계획인가일 이후 취득(승계조합원)은 이 계산기에서 계산하지 않습니다.\n원조합원만 계산 가능합니다. 문의: 010-4454-2429'); return; }
         if (trf < mgmt) { alert('양도일이 관리처분계획인가일보다 빠를 수 없습니다.'); return; }
+        const comp = $('completionDate').value;
+        if (newhouse && !isDate(comp)) { alert('준공일(사용승인일)을 입력해주세요.'); return; }
+        if (newhouse && (comp < mgmt || comp > trf)) { alert('준공일은 관리처분계획인가일과 양도일 사이여야 합니다.'); return; }
         const shareVal = parseFloat($('share').value);
         if (!(shareVal > 0 && shareVal <= 100)) { alert('지분율은 0 초과 100 이하로 넣어주세요.'); return; }
 
@@ -832,6 +839,7 @@
                 acquisitionDate: acq,
                 mgmtApprovalDate: mgmt,
                 transferDate: trf,
+                completionDate: newhouse ? comp : '',
                 residenceStartDate: tt === 'single' ? $('residenceStartDate').value : '',
                 residenceEndDate: tt === 'single' ? $('residenceEndDate').value : '',
                 newResidenceStartDate: tt === 'single' && newhouse ? $('newResidenceStartDate').value : '',
