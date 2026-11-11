@@ -364,18 +364,17 @@
                 <div id="shareSplit" class="split hidden"></div>
             </div>
 
-            <div id="reductionBox" class="form-group cash-only">
-                <label>조특법 제77조 감면 <span class="hint">(현금청산자 · 정비구역 토지등을 사업시행자에게 양도)</span></label>
+            <div id="rebuildNote" class="form-group hidden">
+                <div class="amount-guide" style="margin-bottom: 0;">재건축은 정비기반시설을 수반하지 않는 정비구역이어서 <b>조특법 제77조 감면</b> 대상이 아닙니다.</div>
+            </div>
+
+            <div id="reductionBox" class="form-group">
+                <label>조특법 제77조 감면 <span class="hint">(재개발 · 정비구역 토지등을 사업시행자에게 양도)</span></label>
                 <div id="reductionPanel" class="panel" style="margin-top: 0;">
                     <label class="check-line" style="margin: 0 0 12px; font-weight: 600 !important;">
                         <input type="checkbox" id="reduction" checked onchange="refreshForm()">
                         감면 적용
                     </label>
-                    <label class="check-line" style="margin: 0 0 12px;">
-                        <input type="checkbox" id="infraOk" checked onchange="refreshForm()">
-                        정비기반시설을 수반하는 정비구역입니다
-                    </label>
-                    <div id="infraMsg" class="live-msg warn hidden" style="margin: -6px 0 12px;">정비기반시설을 수반하지 않는 정비구역은 조특법 제77조 감면 대상에서 제외됩니다.</div>
                     <div class="form-group">
                         <label class="sub-label">사업시행계획인가 고시일 <span class="hint">(사업인정고시일로 봄)</span></label>
                         <div class="date-input-wrapper"><input type="text" id="projectApprovalDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
@@ -699,8 +698,9 @@
         document.querySelectorAll('.member-only').forEach(el => el.classList.toggle('hidden', !member));
         document.querySelectorAll('.cash-only').forEach(el => el.classList.toggle('hidden', member));
         // 조특법 77①2: 정비구역(정비기반시설 미수반 구역 제외) 토지등을 사업시행자에게 양도 → 재개발·재건축 현금청산자 모두
-        $('reductionBox').classList.toggle('hidden', member);
-        $('infraMsg').classList.toggle('hidden', !$('reduction').checked || $('infraOk').checked);
+        const rebuild = currentProject() === 'rebuild';
+        $('reductionBox').classList.toggle('hidden', rebuild);
+        $('rebuildNote').classList.toggle('hidden', !rebuild);
         $('residenceBox').classList.toggle('hidden', tt !== 'single');
         $('acqRegBox').classList.toggle('hidden', tt !== 'single');
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
@@ -789,7 +789,7 @@
         if (member && !num('rightsValue')) { alert('권리가액을 입력해주세요.'); return; }
         const shareVal = parseFloat($('share').value);
         if (!(shareVal > 0 && shareVal <= 100)) { alert('지분율은 0 초과 100 이하로 넣어주세요.'); return; }
-        if (!member && $('reduction').checked && !isDate($('projectApprovalDate').value)) { alert('사업시행계획인가 고시일을 입력해주세요.'); return; }
+        if (currentProject() !== 'rebuild' && $('reduction').checked && !isDate($('projectApprovalDate').value)) { alert('사업시행계획인가 고시일을 입력해주세요.'); return; }
 
         const btn = $('calcBtn');
         btn.disabled = true;
@@ -813,10 +813,9 @@
                 expenses: num('expenses'),
                 share: parseFloat($('share').value) || 100,
                 projectType: currentProject(),
-                reduction: !member && $('reduction').checked,
-                infraOk: !member && $('infraOk').checked,
+                reduction: currentProject() !== 'rebuild' && $('reduction').checked,
                 reductionMethod: $('reductionMethod').value,
-                projectApprovalDate: !member && $('reduction').checked ? $('projectApprovalDate').value : ''
+                projectApprovalDate: currentProject() !== 'rebuild' && $('reduction').checked ? $('projectApprovalDate').value : ''
             };
             res = await api('/api/calculate', lastInput);
         } catch (error) {
