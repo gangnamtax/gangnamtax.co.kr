@@ -196,6 +196,7 @@
     .seg3 { grid-template-columns: 1fr 1fr; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .two .form-group { margin-bottom: 0; }
+    .two.one { grid-template-columns: 1fr; }
     @media (max-width: 600px) { .two { grid-template-columns: 1fr; } }
     .step-title { display: flex; align-items: baseline; gap: 8px; font-size: 15px; font-weight: 700; color: #1e293b; margin: 30px 0 14px; padding-bottom: 8px; border-bottom: 1px solid #f1ece2; }
     .step-title:first-of-type { margin-top: 0; }
@@ -352,7 +353,7 @@
                     <label><input type="radio" name="valuation" value="std" onchange="refreshForm()"><b>기준시가</b><span>매매사례가 없는 단독·다가구·빌라 등 (공시가격으로 신고)</span></label>
                 </div>
             </div>
-            <div class="two">
+            <div class="two one">
                 <div class="form-group market-only">
                     <label for="marketValue">시가 <span class="tot">주택 전체</span> <span class="hint">(매매사례가액·감정가액)</span></label>
                     <input type="text" id="marketValue" placeholder="예: 1,000,000,000" oninput="formatCurrency(this); refreshForm()">
@@ -362,7 +363,7 @@
                     <input type="text" id="stdValue" placeholder="예: 700,000,000" oninput="formatCurrency(this); refreshForm()" required>
                 </div>
             </div>
-            <div class="two" style="margin-top: 14px;">
+            <div class="two one" style="margin-top: 12px;">
                 <div class="form-group">
                     <label for="giftShare">증여하는 지분 (%) <span class="hint">(주택 전부 증여 = 100)</span></label>
                     <input type="text" id="giftShare" value="100" inputmode="decimal" oninput="keepDecimal(this); refreshForm()">
@@ -419,7 +420,7 @@
                 </div>
                 <div id="residenceMsg" class="live-msg"></div>
             </div>
-            <div class="two market-only">
+            <div class="two one market-only">
                 <div class="form-group">
                     <label for="acquisitionPrice">취득가액 <span class="own">증여 지분</span> <span class="hint">(실제 매입가)</span></label>
                     <input type="text" id="acquisitionPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this)">
