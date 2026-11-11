@@ -154,6 +154,7 @@
     .pill-row input:checked + span { background: #8a6d3b; color: #fff; }
     .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
     .amount-guide b { color: #3f3320; }
+    .own { display: inline-block; font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff4ff; border: 1px solid #c7d6f5; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
     .tot { display: inline-block; font-size: 11px; font-weight: 600; color: #8a6d3b; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
     .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
     .split-title { font-size: 12px; font-weight: 700; color: #8a6d3b; margin-bottom: 4px; }
@@ -323,7 +324,7 @@
 
             <div class="section-title">금액</div>
 
-            <div class="amount-guide" id="amountGuide">아래 <b>모든 금액은 주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 맨 아래 <b>본인 지분율</b>만큼 모든 금액을 자동으로 나눠 계산합니다.</div>
+            <div class="amount-guide" id="amountGuide"><span class="tot">전체 금액</span> 칸은 <b>주택 전체 금액(지분 100%)</b>으로 넣으면 맨 아래 <b>본인 지분율</b>만큼 자동으로 나눕니다.<br><span class="own">본인 몫</span> 칸은 공동명의라도 <b>본인이 실제로 부담한 금액</b>만 넣으세요. (취득일·취득가액·납부 청산금·경비는 사람마다 다를 수 있습니다)</div>
 
             <div class="form-group member-only">
                 <label for="rightsValue">권리가액 <span class="tot">전체 금액</span> <span class="hint">(종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
@@ -350,12 +351,12 @@
             </div>
 
             <div class="form-group">
-                <label for="acquisitionPrice">종전 주택 취득가액 <span class="tot">전체 금액</span> <span class="hint">(매매계약서상 주택 전체 매입가)</span></label>
+                <label for="acquisitionPrice">종전 주택 취득가액 <span class="own">본인 몫</span> <span class="hint">(본인 지분 매입가)</span></label>
                 <input type="text" id="acquisitionPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this)" required>
             </div>
 
             <div class="form-group">
-                <label for="expenses">필요경비 <span class="tot">전체 금액</span> <span class="hint">(취득세·중개수수료·자본적 지출 등 전체 합계)</span></label>
+                <label for="expenses">필요경비 <span class="own">본인 몫</span> <span class="hint">(본인이 낸 취득세·중개수수료·자본적 지출 등)</span></label>
                 <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
             </div>
 
@@ -839,8 +840,6 @@
         const parts = [];
         if (shareOk && member && rights) parts.push(['본인 지분 권리가액', rights * sh / 100]);
         if (shareOk && settle) parts.push(['본인 지분 청산금', settle * sh / 100]);
-        if (shareOk && num('acquisitionPrice')) parts.push(['본인 지분 취득가액', num('acquisitionPrice') * sh / 100]);
-        if (shareOk && num('expenses')) parts.push(['본인 지분 필요경비', num('expenses') * sh / 100]);
         $('shareSplit').innerHTML = parts.length ? `<div class="split-title">지분 ${sh}% 기준 본인 몫</div>` +
             parts.map(([k, v]) => `<div class="split-row"><span>${k}</span><b>${won(v)}</b></div>`).join('') : '';
         $('shareSplit').classList.toggle('hidden', !parts.length);

@@ -158,6 +158,7 @@
     .hidden { display: none !important; }
     .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
     .amount-guide b { color: #3f3320; }
+    .own { display: inline-block; font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff4ff; border: 1px solid #c7d6f5; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
     .tot { display: inline-block; font-size: 11px; font-weight: 600; color: #8a6d3b; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
     .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
     .split-title { font-size: 12px; font-weight: 700; color: #8a6d3b; margin-bottom: 4px; }
@@ -337,7 +338,7 @@
 
             <div class="section-title">금액</div>
 
-            <div class="amount-guide" id="amountGuide">아래 <b>모든 금액은 주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 맨 아래 <b>본인 지분율</b>만큼 모든 금액을 자동으로 나눠 계산합니다.</div>
+            <div class="amount-guide" id="amountGuide"><span class="tot">전체 금액</span> 칸은 <b>주택 전체 금액(지분 100%)</b>으로 넣으면 맨 아래 <b>본인 지분율</b>만큼 자동으로 나눕니다.<br><span class="own">본인 몫</span> 칸은 공동명의라도 <b>본인이 실제로 부담한 금액</b>만 넣으세요. (취득일·취득가액·납부 청산금·경비는 사람마다 다를 수 있습니다)</div>
 
             <div class="form-group">
                 <label for="transferPrice" id="transferPriceLabel">입주권 양도가액 <span class="hint">(주택 전체 금액 · 실거래가)</span></label>
@@ -363,7 +364,7 @@
             </div>
 
             <div class="form-group" id="paidBox">
-                <label for="paidSettlement">납부한 청산금 <span class="tot">전체 금액</span> <span class="hint">(조합원 분양가가 권리가액보다 커서 낸 금액, 없으면 0)</span></label>
+                <label for="paidSettlement">납부한 청산금 <span class="own">본인 몫</span> <span class="hint">(본인이 낸 분담금 · 조합원 분양가가 권리가액보다 커서 낸 금액, 없으면 0)</span></label>
                 <input type="text" id="paidSettlement" value="0" oninput="formatCurrency(this); refreshForm()">
             </div>
 
@@ -378,7 +379,7 @@
             </div>
 
             <div class="form-group">
-                <label for="saleExpenses" id="saleExpLabel">양도비용 <span class="tot">전체 금액</span> <span class="hint">(양도 시 중개수수료 등)</span></label>
+                <label for="saleExpenses" id="saleExpLabel">양도비용 <span class="own">본인 몫</span> <span class="hint">(양도 시 중개수수료 등)</span></label>
                 <input type="text" id="saleExpenses" value="0" oninput="formatCurrency(this)">
             </div>
 
@@ -782,10 +783,10 @@
         // 날짜 순서: 원조합원은 취득일 → 관리처분, 승계조합원은 관리처분 → 입주권 취득일
         const acqCol = $('acquisitionDate').closest('.date-col'), mgmtCol = $('mgmtApprovalDate').closest('.date-col');
         if (succ) mgmtCol.after(acqCol); else mgmtCol.before(acqCol);
-        $('acqPriceLabel').innerHTML = succ ? '입주권 매입가 <span class="tot">전체 금액</span> <span class="hint">(권리가액 + 프리미엄, 매매계약서 전체 금액)</span>' : '종전 주택 취득가액 <span class="tot">전체 금액</span> <span class="hint">(매매계약서상 주택 전체 매입가)</span>';
-        $('expensesLabel').innerHTML = succ ? '입주권 취득 필요경비 <span class="tot">전체 금액</span> <span class="hint">(취득세·중개수수료 등 전체 합계)</span>' : '종전 주택 필요경비 <span class="tot">전체 금액</span> <span class="hint">(취득세·중개수수료·자본적 지출 등 전체 합계)</span>';
+        $('acqPriceLabel').innerHTML = succ ? '입주권 매입가 <span class="own">본인 몫</span> <span class="hint">(본인 지분 매입가 · 권리가액 + 프리미엄)</span>' : '종전 주택 취득가액 <span class="own">본인 몫</span> <span class="hint">(본인 지분 매입가)</span>';
+        $('expensesLabel').innerHTML = succ ? '입주권 취득 필요경비 <span class="own">본인 몫</span> <span class="hint">(본인이 낸 취득세·중개수수료 등)</span>' : '종전 주택 필요경비 <span class="own">본인 몫</span> <span class="hint">(본인이 낸 취득세·중개수수료·자본적 지출 등)</span>';
         $('paidBox').classList.toggle('hidden', succ && !newhouse);
-        $('saleExpLabel').innerHTML = (newhouse ? '신축주택 필요경비 · 양도비용 ' : '양도비용 ') + '<span class="tot">전체 금액</span>' + (newhouse
+        $('saleExpLabel').innerHTML = (newhouse ? '신축주택 필요경비 · 양도비용 ' : '양도비용 ') + '<span class="own">본인 몫</span>' + (newhouse
             ? ' <span class="hint">(신축 취득세 등 관리처분 후 지출 + 양도 시 중개수수료 등)</span>'
             : ' <span class="hint">(양도 시 중개수수료 등)</span>');
         $('residenceBox').classList.toggle('hidden', tt !== 'single');
@@ -839,7 +840,7 @@
         else if (p2 && newhouse) {
             const comp = $('completionDate').value, p4 = period(comp, trf);
             if (isDate(comp) && (comp < mgmt || !p4)) { lines.push('※ 준공일은 관리처분계획인가일과 양도일 사이여야 합니다.'); warn = true; }
-            else if (p4) lines.push(`준공일 ~ 양도일: ${p4.text} → 청산금납부분 장기보유특별공제`);
+            else if (p2) lines.push(`관리처분계획인가일 ~ 양도일: ${p2.text} → 청산금납부분 장기보유특별공제`);
         }
         if (p3 && !warn) lines.push(`취득일 ~ 양도일: ${p3.text}` + (newhouse ? ' → 기존건물분 장기보유특별공제·비과세·세율 판정' : ' → 세율 판정'));
         $('periodMsg').innerText = lines.join('\n');
@@ -855,8 +856,7 @@
 
         const parts = [];
         if (sh > 0 && sh < 100) {
-            [['본인 지분 양도가액', 'transferPrice'], ['본인 지분 권리가액', succ ? '' : 'rightsValue'], ['본인 지분 납부 청산금', succ && !newhouse ? '' : 'paidSettlement'],
-             [succ ? '본인 지분 입주권 매입가' : '본인 지분 취득가액', 'acquisitionPrice'], ['본인 지분 필요경비', 'expenses'], [newhouse ? '본인 지분 신축 필요경비·양도비용' : '본인 지분 양도비용', 'saleExpenses']]
+            [['본인 지분 양도가액', 'transferPrice'], ['본인 지분 권리가액', succ ? '' : 'rightsValue']]
                 .filter(([, id]) => id).forEach(([k, id]) => { if (num(id)) parts.push([k, num(id) * sh / 100]); });
         }
         $('shareSplit').innerHTML = parts.length ? `<div class="split-title">지분 ${sh}% 기준 본인 몫</div>` +
