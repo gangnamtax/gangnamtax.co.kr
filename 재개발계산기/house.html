@@ -63,6 +63,11 @@
     input:focus, select:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
     .date-row { display: flex; gap: 12px; flex-wrap: wrap; }
     .date-col { flex: 1; min-width: 150px; }
+    .date-row.dates4 { flex-wrap: nowrap; gap: 8px; }
+    .date-row.dates4 .date-col { min-width: 0; }
+    .date-row.dates4 .sub-label { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .date-row.dates4 input { padding-left: 10px; padding-right: 30px; font-size: 14px; }
+    @media (max-width: 600px) { .date-row.dates4 { flex-wrap: wrap; } .date-row.dates4 .date-col { flex: 1 1 calc(50% - 4px); } }
     .sub-label { font-size: 12px !important; color: #64748b !important; margin-bottom: 4px !important; }
     .date-input-wrapper { position: relative; }
     .date-input-wrapper input[type="text"] { padding-right: 40px; }
@@ -274,7 +279,7 @@
 
             <div class="form-group">
                 <label>4. 날짜</label>
-                <div class="date-row">
+                <div class="date-row dates4">
                     <div class="date-col">
                         <label class="sub-label">종전 주택 취득일</label>
                         <div class="date-input-wrapper"><input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
@@ -755,7 +760,7 @@
         $('residenceBox').classList.toggle('hidden', tt !== 'single');
         $('acqRegBox').classList.toggle('hidden', tt !== 'single');
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
-        $('transferDateLabel').innerText = newhouse ? '신축주택 양도일 (잔금일)' : '입주권 양도일 (잔금일)';
+        $('transferDateLabel').innerText = newhouse ? '양도일 (잔금일)' : '입주권 양도일 (잔금일)';
         $('transferPriceLabel').innerHTML = (newhouse ? '신축주택 양도가액' : '입주권 양도가액') + ' <span class="hint">(주택 전체 금액 · 실거래가)</span>';
 
         const sh = parseFloat($('share').value);
