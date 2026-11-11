@@ -457,10 +457,31 @@
     }
 
     // ===== 입력 서식 · 엔터로 다음 칸 =====
-    function formatMoney(input) {
-        const v = input.value.replace(/[^0-9]/g, '');
-        input.value = v ? Number(v).toLocaleString('ko-KR') : '';
+    // 금액 입력: 콤마를 넣어도 커서가 고치던 자리에 남게
+    function formatCurrency(input) {
+        const ev = window.event || {};
+        const prev = input.dataset.prev || '';
+        let v = input.value, caret = input.selectionStart == null ? v.length : input.selectionStart;
+        const commas = s => (s.match(/,/g) || []).length;
+        // ','만 지운 경우 → 그 옆 숫자를 지움
+        if (prev.length === v.length + 1 && commas(prev) === commas(v) + 1) {
+            let i = 0; while (i < v.length && v[i] === prev[i]) i++;
+            if (prev[i] === ',') {
+                if (ev.inputType === 'deleteContentForward') { v = prev.slice(0, i + 1) + prev.slice(i + 2); caret = i + 1; }
+                else if (i > 0) { v = prev.slice(0, i - 1) + prev.slice(i); caret = i - 1; }
+            }
+        }
+        const digitsAfter = v.slice(caret).replace(/\D/g, '').length;
+        const d = v.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+        const out = d ? Number(d).toLocaleString('ko-KR') : '';
+        // 커서: 뒤쪽 숫자 개수가 같도록
+        let pos = out.length, n = 0;
+        while (pos > 0 && n < Math.min(digitsAfter, d.length)) { pos--; if (/\d/.test(out[pos])) n++; }
+        input.value = out;
+        input.dataset.prev = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
     }
+    const formatMoney = formatCurrency;
     // 날짜 입력: 년·월·일 칸을 각각 고칠 수 있게 (커서 위치 유지)
     function formatDateInput(input) {
         const ev = window.event || {};
@@ -509,7 +530,7 @@
         if (document.activeElement === input) input.setSelectionRange(pos, pos);
     }
     // 키를 누르기 직전 값을 기억 ('-' 삭제 감지용)
-    document.addEventListener('keydown', e => { const t = e.target; if (t && t.tagName === 'INPUT' && t.placeholder === 'YYYY-MM-DD') t.dataset.prev = t.value; }, true);
+    document.addEventListener('keydown', e => { const t = e.target; if (t && t.tagName === 'INPUT' && t.type === 'text') t.dataset.prev = t.value; }, true);
     const formatDate = formatDateInput;
     function focusNext(el) {
         const all = [...document.querySelectorAll('#taxForm input, #taxForm select')].filter(x => x.offsetParent !== null);
