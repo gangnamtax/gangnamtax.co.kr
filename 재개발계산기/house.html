@@ -105,6 +105,12 @@
     .seg label b { display: block; font-size: 14px; color: #1e293b; margin-bottom: 3px; }
     .seg label span { font-size: 12px; color: #64748b; line-height: 1.5; }
     .seg input { display: none; }
+    .membertabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 22px; }
+    .membertabs label { margin: 0; padding: 11px 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600 !important; color: #475569; background: #fff; transition: background .15s, color .15s; }
+    .membertabs label + label { border-left: 1px solid #cbd5e1; }
+    .membertabs label small { display: block; font-size: 11px; font-weight: normal; color: inherit; opacity: .85; margin-top: 2px; }
+    .membertabs input { display: none; }
+    .membertabs label:has(input:checked) { background: #8a6d3b; color: #fff; }
     .seg label:has(input:checked) { border-color: #8a6d3b; background: #faf7f1; box-shadow: inset 0 0 0 1px #8a6d3b; }
     .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px !important; font-weight: normal !important; color: #334155; margin-top: 10px; cursor: pointer; }
     .check-line input { width: auto; margin: 0; padding: 0; }
@@ -245,13 +251,18 @@
 
         <div class="calc-layout">
         <form id="taxForm" onsubmit="calculateTax(event)">
+            <div class="membertabs" role="tablist" aria-label="조합원 구분">
+                <label><input type="radio" name="member" value="original" checked onchange="refreshForm()">원조합원<small>관리처분계획인가 전부터 종전 주택 보유</small></label>
+                <label><input type="radio" name="member" value="succession" onchange="refreshForm()">승계조합원<small>관리처분계획인가 후 입주권 매입</small></label>
+            </div>
+
             <div class="form-group">
                 <label>1. 양도하는 것</label>
                 <div class="seg">
                     <label><input type="radio" name="kind" value="ticket" checked onchange="refreshForm()"><b>조합원입주권 양도</b><span>완공 전, 관리처분계획인가 후 입주권 상태로 파는 경우</span></label>
                     <label><input type="radio" name="kind" value="newhouse" onchange="refreshForm()"><b>신축주택 양도</b><span>완공(준공) 후 새 아파트를 파는 경우</span></label>
                 </div>
-                <div class="live-msg" style="font-weight: normal;">원조합원(관리처분계획인가 전부터 종전 주택을 보유한 조합원) 기준으로 계산합니다.</div>
+                <div id="memberMsg" class="live-msg" style="font-weight: normal;"></div>
             </div>
 
             <div class="form-group">
@@ -265,7 +276,7 @@
             <div class="form-group">
                 <label for="taxType">3. 과세 유형</label>
                 <select id="taxType" onchange="refreshForm()">
-                    <option value="single">1세대 1주택 (비과세 · 12억 초과분만 과세)</option>
+                    <option value="single" id="singleOpt">1세대 1주택 (비과세 · 12억 초과분만 과세)</option>
                     <option value="general">일반 과세</option>
                     <option value="heavy20" class="newhouse-only">다주택 중과 · 조정대상지역 2주택 (+20%p)</option>
                     <option value="heavy30" class="newhouse-only">다주택 중과 · 조정대상지역 3주택 이상 (+30%p)</option>
@@ -281,7 +292,7 @@
                 <label>4. 날짜</label>
                 <div class="date-row dates4">
                     <div class="date-col">
-                        <label class="sub-label">종전 주택 취득일</label>
+                        <label class="sub-label" id="acqDateLabel">종전 주택 취득일</label>
                         <div class="date-input-wrapper"><input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
                     </div>
                     <div class="date-col">
@@ -303,11 +314,11 @@
             <div id="residenceBox" class="form-group">
                 <label>5. 실제 거주 기간 <span class="hint">[1세대 1주택 전용 · 장기보유특별공제 표2 및 거주요건 판정]</span></label>
                 <div class="date-row dates4">
-                    <div class="date-col">
+                    <div class="date-col original-only">
                         <label class="sub-label" title="종전 주택 거주 시작일">종전 주택 거주 시작</label>
                         <div class="date-input-wrapper"><input type="text" id="residenceStartDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                     </div>
-                    <div class="date-col">
+                    <div class="date-col original-only">
                         <label class="sub-label" title="종전 주택 거주 종료일 (이주일)">종전 주택 이주일</label>
                         <div class="date-input-wrapper"><input type="text" id="residenceEndDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                     </div>
@@ -325,14 +336,14 @@
 
             <div class="section-title">금액</div>
 
-            <div class="amount-guide">양도가액·권리가액·납부 청산금은 <b>주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 아래 <b>본인 지분율</b>만큼 자동으로 나눠 계산합니다.</div>
+            <div class="amount-guide" id="amountGuide">양도가액·권리가액·납부 청산금은 <b>주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 아래 <b>본인 지분율</b>만큼 자동으로 나눠 계산합니다.</div>
 
             <div class="form-group">
                 <label for="transferPrice" id="transferPriceLabel">입주권 양도가액 <span class="hint">(주택 전체 금액 · 실거래가)</span></label>
                 <input type="text" id="transferPrice" placeholder="예: 1,500,000,000" oninput="formatCurrency(this); refreshForm()" required>
             </div>
 
-            <div class="form-group">
+            <div class="form-group original-only" id="rightsBox">
                 <label for="rightsValue">권리가액 <span class="hint">(주택 전체 금액 · 종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
                 <input type="text" id="rightsValue" placeholder="예: 600,000,000" oninput="formatCurrency(this); refreshForm()" required>
                 <label class="check-line"><input type="checkbox" id="useHelper" onchange="refreshForm()"> 종전자산 평가액과 비례율로 계산하기</label>
@@ -350,18 +361,18 @@
                 </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="paidBox">
                 <label for="paidSettlement">납부한 청산금 <span class="hint">(주택 전체 금액 · 조합원 분양가가 권리가액보다 커서 낸 금액, 없으면 0)</span></label>
                 <input type="text" id="paidSettlement" value="0" oninput="formatCurrency(this); refreshForm()">
             </div>
 
             <div class="form-group">
-                <label for="acquisitionPrice">종전 주택 취득가액 <span class="hint">(본인 지분 몫 매입가)</span></label>
+                <label for="acquisitionPrice" id="acqPriceLabel">종전 주택 취득가액 <span class="hint">(본인 지분 몫 매입가)</span></label>
                 <input type="text" id="acquisitionPrice" placeholder="예: 300,000,000" oninput="formatCurrency(this)" required>
             </div>
 
             <div class="form-group">
-                <label for="expenses">종전 주택 필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료·자본적 지출 등)</span></label>
+                <label for="expenses" id="expensesLabel">종전 주택 필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료·자본적 지출 등)</span></label>
                 <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
             </div>
 
@@ -739,6 +750,7 @@
     function twoYearsBefore(d) { const [y, m, dd] = d.split('-'); return `${Number(y) - 2}-${m}-${dd}`; }
 
     function currentKind() { return document.querySelector('input[name="kind"]:checked').value; }
+    function isSucc() { return document.querySelector('input[name="member"]:checked').value === 'succession'; }
 
     function applyHelper() {
         const prior = num('priorValue');
@@ -753,8 +765,25 @@
         document.querySelectorAll('.newhouse-only').forEach(el => {
             if (el.tagName === 'OPTION') el.hidden = !newhouse; else el.classList.toggle('hidden', !newhouse);
         });
+        const succ = isSucc();
+        document.querySelectorAll('.original-only').forEach(el => el.classList.toggle('hidden', succ));
+        $('rightsValue').required = !succ;
+        // 승계조합원 입주권 양도는 비과세 대상 아님 → 일반 과세만
+        const noSingle = succ && !newhouse;
+        $('singleOpt').disabled = noSingle;
         let tt = $('taxType').value;
+        if (noSingle && tt === 'single') { $('taxType').value = tt = 'general'; }
         if (!newhouse && tt.startsWith('heavy')) { $('taxType').value = tt = 'general'; }
+        $('memberMsg').innerText = !succ ? '원조합원: 관리처분계획인가 전부터 종전 주택을 보유한 조합원'
+            : newhouse ? '승계조합원 신축주택: 준공일(사용승인일)에 취득한 것으로 보아 보유·거주·장기보유특별공제를 준공일부터 계산 (단기세율 판정은 입주권 취득일부터)'
+            : '승계조합원 입주권: 1세대 1주택 비과세·장기보유특별공제 대상이 아니어서 일반 과세로 계산';
+        $('acqDateLabel').innerText = succ ? '입주권 취득일 (잔금일)' : '종전 주택 취득일';
+        $('acqPriceLabel').innerHTML = succ ? '입주권 매입가 <span class="hint">(본인 몫 · 권리가액 + 프리미엄)</span>' : '종전 주택 취득가액 <span class="hint">(본인 지분 몫 매입가)</span>';
+        $('expensesLabel').innerHTML = succ ? '입주권 취득 필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료 등)</span>' : '종전 주택 필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료·자본적 지출 등)</span>';
+        $('paidBox').classList.toggle('hidden', succ && !newhouse);
+        $('amountGuide').innerHTML = succ
+            ? '양도가액·납부 청산금은 <b>주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 아래 <b>본인 지분율</b>만큼 자동으로 나눠 계산합니다.'
+            : '양도가액·권리가액·납부 청산금은 <b>주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 아래 <b>본인 지분율</b>만큼 자동으로 나눠 계산합니다.';
         $('residenceBox').classList.toggle('hidden', tt !== 'single');
         $('acqRegBox').classList.toggle('hidden', tt !== 'single');
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
@@ -787,7 +816,20 @@
         const lines = [];
         let warn = false;
         const p1 = period(acq, mgmt), p2 = period(mgmt, trf), p3 = period(acq, trf);
-        if (isDate(acq) && isDate(mgmt) && !p1) { lines.push('※ 관리처분계획인가일 이후 취득(승계조합원)은 이 계산기에서 계산하지 않습니다. 원조합원만 계산 가능하니 상담해 주세요.'); warn = true; }
+        if (succ) {
+            const comp = $('completionDate').value;
+            if (isDate(acq) && isDate(mgmt) && acq < mgmt) { lines.push('※ 관리처분계획인가일 전에 취득했다면 원조합원 탭에서 계산해주세요.'); warn = true; }
+            else if (isDate(acq) && isDate(trf) && !p3) { lines.push('※ 양도일이 입주권 취득일보다 빠를 수 없습니다.'); warn = true; }
+            else if (newhouse && isDate(comp) && (comp < acq || comp < mgmt || (isDate(trf) && comp > trf))) { lines.push('※ 준공일은 입주권 취득일과 양도일 사이여야 합니다.'); warn = true; }
+            else {
+                const p4 = newhouse ? period(comp, trf) : null;
+                if (p4) lines.push(`준공일 ~ 양도일: ${p4.text} → 보유·비과세·장기보유특별공제 판정`);
+                if (p3) lines.push(`입주권 취득일 ~ 양도일: ${p3.text} → 세율 판정`);
+            }
+            $('periodMsg').innerText = lines.join('\n');
+            $('periodMsg').classList.toggle('warn', warn);
+        } else {
+        if (isDate(acq) && isDate(mgmt) && !p1) { lines.push('※ 관리처분계획인가일 이후 취득했다면 승계조합원 탭에서 계산해주세요.'); warn = true; }
         else if (p1) lines.push(`취득일 ~ 관리처분계획인가일: ${p1.text}` + (newhouse ? '' : ' → 장기보유특별공제·비과세 판정'));
         if (isDate(mgmt) && isDate(trf) && !p2) { lines.push('※ 양도일이 관리처분계획인가일보다 빠를 수 없습니다.'); warn = true; }
         else if (p2 && newhouse) {
@@ -798,8 +840,9 @@
         if (p3 && !warn) lines.push(`취득일 ~ 양도일: ${p3.text}` + (newhouse ? ' → 기존건물분 장기보유특별공제·비과세·세율 판정' : ' → 세율 판정'));
         $('periodMsg').innerText = lines.join('\n');
         $('periodMsg').classList.toggle('warn', warn);
+        }
 
-        const rp = period($('residenceStartDate').value, $('residenceEndDate').value);
+        const rp = succ ? null : period($('residenceStartDate').value, $('residenceEndDate').value);
         const np = newhouse ? period($('newResidenceStartDate').value, $('newResidenceEndDate').value) : null;
         const resLines = [];
         if (rp) resLines.push(`종전 주택 거주: ${rp.text}` + (!newhouse ? ' (관리처분계획인가일까지만 인정)' : ''));
@@ -808,8 +851,8 @@
 
         const parts = [];
         if (sh > 0 && sh < 100) {
-            [['본인 지분 양도가액', 'transferPrice'], ['본인 지분 권리가액', 'rightsValue'], ['본인 지분 납부 청산금', 'paidSettlement']]
-                .forEach(([k, id]) => { if (num(id)) parts.push([k, num(id) * sh / 100]); });
+            [['본인 지분 양도가액', 'transferPrice'], ['본인 지분 권리가액', succ ? '' : 'rightsValue'], ['본인 지분 납부 청산금', succ && !newhouse ? '' : 'paidSettlement']]
+                .filter(([, id]) => id).forEach(([k, id]) => { if (num(id)) parts.push([k, num(id) * sh / 100]); });
         }
         $('shareSplit').innerHTML = parts.length ? `<div class="split-title">지분 ${sh}% 기준 본인 몫</div>` +
             parts.map(([k, v]) => `<div class="split-row"><span>${k}</span><b>${won(v)}</b></div>`).join('') : '';
@@ -823,9 +866,12 @@
         const tt = $('taxType').value;
         const acq = $('acquisitionDate').value, mgmt = $('mgmtApprovalDate').value, trf = $('transferDate').value;
         if (!isDate(acq) || !isDate(mgmt) || !isDate(trf)) { alert('취득일·관리처분계획인가일·양도일을 입력해주세요.'); return; }
-        if (acq > mgmt) { alert('관리처분계획인가일 이후 취득(승계조합원)은 이 계산기에서 계산하지 않습니다.\n원조합원만 계산 가능합니다. 문의: 010-4454-2429'); return; }
-        if (trf < mgmt) { alert('양도일이 관리처분계획인가일보다 빠를 수 없습니다.'); return; }
+        const succ = isSucc();
+        if (!succ && acq > mgmt) { alert('관리처분계획인가일 이후 취득했다면 승계조합원 탭에서 계산해주세요.'); return; }
+        if (succ && acq < mgmt) { alert('관리처분계획인가일 전에 취득했다면 원조합원 탭에서 계산해주세요.'); return; }
+        if (trf < mgmt || trf < acq) { alert('양도일이 관리처분계획인가일·취득일보다 빠를 수 없습니다.'); return; }
         const comp = $('completionDate').value;
+        if (succ && newhouse && isDate(comp) && comp < acq) { alert('준공일이 입주권 취득일보다 빠를 수 없습니다.'); return; }
         if (newhouse && !isDate(comp)) { alert('준공일(사용승인일)을 입력해주세요.'); return; }
         if (newhouse && (comp < mgmt || comp > trf)) { alert('준공일은 관리처분계획인가일과 양도일 사이여야 합니다.'); return; }
         const shareVal = parseFloat($('share').value);
@@ -838,6 +884,7 @@
         try {
             lastInput = {
                 calc: 'house',
+                member: succ ? 'succession' : 'original',
                 kind: newhouse ? 'newhouse' : 'ticket',
                 taxType: tt === 'single' ? 'single_house' : 'general',
                 heavy: newhouse ? (tt === 'heavy20' ? 20 : tt === 'heavy30' ? 30 : 0) : 0,
@@ -847,13 +894,13 @@
                 mgmtApprovalDate: mgmt,
                 transferDate: trf,
                 completionDate: newhouse ? comp : '',
-                residenceStartDate: tt === 'single' ? $('residenceStartDate').value : '',
-                residenceEndDate: tt === 'single' ? $('residenceEndDate').value : '',
+                residenceStartDate: tt === 'single' && !succ ? $('residenceStartDate').value : '',
+                residenceEndDate: tt === 'single' && !succ ? $('residenceEndDate').value : '',
                 newResidenceStartDate: tt === 'single' && newhouse ? $('newResidenceStartDate').value : '',
                 newResidenceEndDate: tt === 'single' && newhouse ? $('newResidenceEndDate').value : '',
                 transferPrice: num('transferPrice'),
-                rightsValue: num('rightsValue'),
-                paidSettlement: num('paidSettlement'),
+                rightsValue: succ ? 0 : num('rightsValue'),
+                paidSettlement: succ && !newhouse ? 0 : num('paidSettlement'),
                 acquisitionPrice: num('acquisitionPrice'),
                 expenses: num('expenses'),
                 saleExpenses: num('saleExpenses'),
@@ -876,7 +923,7 @@
 
         const r = res.data.result;
         const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-        $('resTitle').innerText = r.kind === 'newhouse' ? '신축주택 양도소득세 계산 결과' : '조합원입주권 양도소득세 계산 결과';
+        $('resTitle').innerText = (lastInput && lastInput.member === 'succession' ? '승계조합원 ' : '') + (r.kind === 'newhouse' ? '신축주택 양도소득세 계산 결과' : '조합원입주권 양도소득세 계산 결과');
         $('resRows').innerHTML = r.rows.map(x =>
             `<div class="result-row${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`).join('');
         $('resTotalLabel').innerText = r.totalLabel;
