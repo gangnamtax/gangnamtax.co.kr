@@ -144,6 +144,7 @@
     .pagetabs a { text-align: center; padding: 12px 10px; border-radius: 7px; font-size: 15px; font-weight: 600; color: #475569; text-decoration: none; transition: background .15s, color .15s; }
     .pagetabs a:hover { color: #8a6d3b; background: #faf7f1; }
     .pagetabs a.on { background: #8a6d3b; color: #fff; }
+    #reductionBox select:disabled, #reductionBox input:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
     .hidden { display: none !important; }
     .pill-row { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
     .pill-row label { margin: 0; cursor: pointer; }
@@ -770,15 +771,19 @@
 
         const proj = $('projectApprovalDate').value;
         const rm = $('reductionMsg');
+        let eligible = false;
         if (isDate(proj) && isDate(acq)) {
             const limit = twoYearsBefore(proj);
             const ok = acq <= limit;
+            eligible = ok;
             rm.innerText = `고시일(${proj})부터 소급 2년 = ${limit} · 취득일 ${acq}` + (ok ? ' → 2년 이전 취득, 감면 자동 적용' : ' → 2년 이전 취득이 아니어서 감면 대상이 아닙니다.');
             rm.classList.toggle('warn', !ok);
         } else {
             rm.innerText = '고시일을 넣으면 취득일이 소급 2년 이전인지 확인해 감면을 자동 적용합니다. (비워두면 감면 없이 계산)';
             rm.classList.remove('warn');
         }
+        // 감면 대상일 때만 보상 방식·기감면세액 입력 가능
+        ['reductionMethod', 'priorReductionYear', 'priorReduction4y'].forEach(id => { $(id).disabled = !eligible; });
     }
     refreshForm();
 
