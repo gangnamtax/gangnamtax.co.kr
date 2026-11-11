@@ -365,12 +365,12 @@
             </div>
             <div class="two one" style="margin-top: 12px;">
                 <div class="form-group">
-                    <label for="giftShare">증여하는 지분 (%) <span class="hint">(주택 전부 증여 = 100)</span></label>
-                    <input type="text" id="giftShare" value="100" inputmode="decimal" oninput="keepDecimal(this); refreshForm()">
-                </div>
-                <div class="form-group">
                     <label for="debt">수증자가 떠안는 채무 <span class="hint">(전세보증금·대출금)</span></label>
                     <input type="text" id="debt" placeholder="예: 400,000,000" oninput="formatCurrency(this); refreshForm()" required>
+                </div>
+                <div class="form-group">
+                    <label for="giftShare">증여하는 지분 (%) <span class="hint">(주택 전부 증여 = 100)</span></label>
+                    <input type="text" id="giftShare" value="100" inputmode="decimal" oninput="keepDecimal(this); refreshForm()">
                 </div>
             </div>
             <div id="valueMsg" class="live-msg"></div>
