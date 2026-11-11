@@ -154,6 +154,7 @@
     .pill-row input:checked + span { background: #8a6d3b; color: #fff; }
     .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
     .amount-guide b { color: #3f3320; }
+    .tot { display: inline-block; font-size: 11px; font-weight: 600; color: #8a6d3b; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
     .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
     .split-title { font-size: 12px; font-weight: 700; color: #8a6d3b; margin-bottom: 4px; }
     .split-row { display: flex; justify-content: space-between; font-size: 13px; color: #334155; padding: 2px 0; }
@@ -322,10 +323,10 @@
 
             <div class="section-title">금액</div>
 
-            <div class="amount-guide">권리가액과 청산금은 <b>주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 아래 <b>본인 지분율</b>만큼 자동으로 나눠 계산합니다.</div>
+            <div class="amount-guide" id="amountGuide">아래 <b>모든 금액은 주택 전체 금액(지분 100%)</b>으로 넣으세요.<br>공동명의라면 맨 아래 <b>본인 지분율</b>만큼 모든 금액을 자동으로 나눠 계산합니다.</div>
 
             <div class="form-group member-only">
-                <label for="rightsValue">권리가액 <span class="hint">(주택 전체 금액 · 종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
+                <label for="rightsValue">권리가액 <span class="tot">전체 금액</span> <span class="hint">(종전자산 평가액 × 비례율, 관리처분계획서 기준)</span></label>
                 <input type="text" id="rightsValue" placeholder="예: 1,500,000,000" oninput="formatCurrency(this); refreshForm()">
                 <label class="check-line"><input type="checkbox" id="useHelper" onchange="refreshForm()"> 종전자산 평가액과 비례율로 계산하기</label>
                 <div id="helperBox" class="helper hidden">
@@ -349,12 +350,12 @@
             </div>
 
             <div class="form-group">
-                <label for="acquisitionPrice">종전 주택 취득가액 <span class="hint">(본인 지분 몫 매입가)</span></label>
+                <label for="acquisitionPrice">종전 주택 취득가액 <span class="tot">전체 금액</span> <span class="hint">(매매계약서상 주택 전체 매입가)</span></label>
                 <input type="text" id="acquisitionPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this)" required>
             </div>
 
             <div class="form-group">
-                <label for="expenses">필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료·자본적 지출 등)</span></label>
+                <label for="expenses">필요경비 <span class="tot">전체 금액</span> <span class="hint">(취득세·중개수수료·자본적 지출 등 전체 합계)</span></label>
                 <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
             </div>
 
@@ -783,8 +784,8 @@
         $('acqRegBox').classList.toggle('hidden', tt !== 'single');
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
         $('settlementLabel').innerHTML = member
-            ? '청산금 (수령액) <span class="hint">(주택 전체 금액 · 권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
-            : '청산금 (수령액) <span class="hint">(주택 전체 금액 · 지분율만큼 본인 양도가액)</span>';
+            ? '청산금 (수령액) <span class="tot">전체 금액</span> <span class="hint">(권리가액 − 조합원 분양가 차액으로 받는 금액)</span>'
+            : '청산금 (수령액) <span class="tot">전체 금액</span> <span class="hint">(현금청산으로 받는 금액)</span>';
         const sh = parseFloat($('share').value);
         $('shareMsg').innerText = sh > 0 && sh < 100 ? '12억 비과세 판정은 주택 전체(지분 100%) 기준, 양도차익은 본인 지분율만큼 계산합니다.' : (sh > 100 || sh === 0 ? '※ 지분율은 0 초과 100 이하로 넣어주세요.' : '');
         $('shareMsg').classList.toggle('warn', sh > 100 || sh === 0);
@@ -838,6 +839,8 @@
         const parts = [];
         if (shareOk && member && rights) parts.push(['본인 지분 권리가액', rights * sh / 100]);
         if (shareOk && settle) parts.push(['본인 지분 청산금', settle * sh / 100]);
+        if (shareOk && num('acquisitionPrice')) parts.push(['본인 지분 취득가액', num('acquisitionPrice') * sh / 100]);
+        if (shareOk && num('expenses')) parts.push(['본인 지분 필요경비', num('expenses') * sh / 100]);
         $('shareSplit').innerHTML = parts.length ? `<div class="split-title">지분 ${sh}% 기준 본인 몫</div>` +
             parts.map(([k, v]) => `<div class="split-row"><span>${k}</span><b>${won(v)}</b></div>`).join('') : '';
         $('shareSplit').classList.toggle('hidden', !parts.length);
