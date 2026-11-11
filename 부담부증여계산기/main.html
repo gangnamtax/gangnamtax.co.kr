@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세무회계강남 부담부증여 계산기 · 양도세·증여세·취득세 한 번에</title>
+  <meta name="description" content="부담부증여 세금 계산기. 증여자 양도소득세(채무인수분), 수증자 증여세, 수증자 취득세(유상분·무상분)와 등기비용까지 한 번에 계산하고 순수 증여와 비교 - 세무회계강남 김하원 세무사">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <link rel="stylesheet" href="../양도세계산기/css/login.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f4f6fa;
+        font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+        color: #1e293b;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px;
+    }
+    .wrapper { width: 100%; max-width: 1100px; display: flex; flex-direction: column; }
+    .header {
+        display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;
+        background: white; border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(15,23,42,.06); border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; padding: 24px 32px;
+    }
+    .title-block .eyebrow { display: block; font-size: 12px; font-weight: 500; color: #a08452; letter-spacing: .5px; margin-bottom: 4px; }
+    .title-block h1 { margin: 0; font-size: 24px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
+    .calculator-card {
+        width: 100%; background: white; padding: 40px; border-radius: 12px; position: relative;
+        border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(15,23,42,.06);
+    }
+    .lock-overlay {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.95); border-radius: 12px; z-index: 10; text-align: center; padding: 20px;
+    }
+    .lock-overlay h3 { color: #1e293b; font-weight: 700; }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; }
+    .tab-btn.active { color: #8a6d3b; border-bottom: 2px solid #8a6d3b; margin-bottom: -2px; }
+    .btn-login { background-color: #8a6d3b; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-login:hover { background-color: #74592e; }
+    .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-outline:hover { background-color: #f1f5f9; }
+    .btn-logout { background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-logout:hover { background: #8a6d3b; color: #fff; }
+
+    .form-group { margin-bottom: 22px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    .hint { font-size: 12px; color: #64748b; font-weight: normal; }
+    input, select {
+        width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;
+        outline: none; transition: border-color 0.2s; background-color: #fff; font-family: inherit;
+    }
+    input:focus, select:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    .date-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .date-col { flex: 1; min-width: 150px; }
+    .date-row.dates4 { flex-wrap: nowrap; gap: 8px; }
+    .date-row.dates4 .date-col { min-width: 0; }
+    .date-row.dates4 .sub-label { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .date-row.dates4 input { padding-left: 10px; padding-right: 30px; font-size: 14px; }
+    @media (max-width: 600px) { .date-row.dates4 { flex-wrap: wrap; } .date-row.dates4 .date-col { flex: 1 1 calc(50% - 4px); } }
+    .sub-label { font-size: 12px !important; color: #64748b !important; margin-bottom: 4px !important; }
+    .date-input-wrapper { position: relative; }
+    .date-input-wrapper input[type="text"] { padding-right: 40px; }
+    .cal-btn {
+        position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+        background: none; border: none; padding: 6px; border-radius: 6px; cursor: pointer; color: #8a6d3b; display: flex;
+    }
+    .cal-btn:hover { background-color: #f1f5f9; }
+    /* 날짜 선택 팝업: 년·월 드롭다운 + 일 달력 */
+    .dp { position: absolute; z-index: 200; width: 296px; background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; box-shadow: 0 10px 28px rgba(15,23,42,.14); padding: 14px; display: none; font-family: inherit; }
+    .dp.open { display: block; }
+    .dp-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .dp-head select { flex: 1; width: auto; padding: 7px 8px; font-size: 14px; font-weight: 600; color: #1e293b; border-radius: 6px; cursor: pointer; }
+    .dp-nav { flex: 0 0 30px; height: 32px; background: none; border: 1px solid #e2e8f0; border-radius: 6px; color: #8a6d3b; font-size: 18px; line-height: 1; cursor: pointer; }
+    .dp-nav:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-week, .dp-days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+    .dp-week span { font-size: 12px; color: #64748b; padding: 4px 0 6px; font-weight: 500; }
+    .dp-week span:first-child { color: #b45309; }
+    .dp-days { gap: 2px; }
+    .dp-day { height: 34px; background: none; border: 1px solid transparent; border-radius: 6px; font-size: 14px; color: #1e293b; cursor: pointer; font-family: inherit; }
+    .dp-day.sun { color: #b45309; }
+    .dp-day:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-day.today { border-color: #cbd5e1; font-weight: 700; }
+    .dp-day.sel, .dp-day.sel:hover { background: #8a6d3b; border-color: #8a6d3b; color: #fff; font-weight: 700; }
+    .dp-foot { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+    .dp-foot button { background: none; border: none; font-size: 13px; color: #8a6d3b; font-weight: 600; cursor: pointer; padding: 4px 6px; font-family: inherit; }
+    .dp-foot .dp-close { color: #64748b; }
+    .live-msg { font-size: 12px; color: #475569; font-weight: 600; margin-top: 6px; line-height: 1.5; }
+    .live-msg.warn { color: #b45309; }
+    .live-msg:empty { display: none; }
+
+    /* 청산금 유형 선택 */
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .seg label { margin: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; cursor: pointer; font-weight: normal; transition: border-color .15s, background .15s; }
+    .seg label b { display: block; font-size: 14px; color: #1e293b; margin-bottom: 3px; }
+    .seg label span { font-size: 12px; color: #64748b; line-height: 1.5; }
+    .seg input { display: none; }
+    .membertabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 22px; }
+    .membertabs label { margin: 0; padding: 11px 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600 !important; color: #475569; background: #fff; transition: background .15s, color .15s; }
+    .membertabs label + label { border-left: 1px solid #cbd5e1; }
+    .membertabs label small { display: block; font-size: 11px; font-weight: normal; color: inherit; opacity: .85; margin-top: 2px; }
+    .membertabs input { display: none; }
+    .membertabs label:has(input:checked) { background: #8a6d3b; color: #fff; }
+    .seg label:has(input:checked) { border-color: #8a6d3b; background: #faf7f1; box-shadow: inset 0 0 0 1px #8a6d3b; }
+    .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px !important; font-weight: normal !important; color: #334155; margin-top: 10px; cursor: pointer; }
+    .check-line input { width: auto; margin: 0; padding: 0; }
+    .addr-row { display: flex; gap: 8px; }
+    .addr-row button { white-space: nowrap; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .addr-row button:hover { border-color: #8a6d3b; color: #8a6d3b; }
+    .helper { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 8px; }
+    .helper .date-row input { padding: 9px 12px; font-size: 13px; }
+    .panel { border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 10px; padding: 16px; margin-top: 10px; }
+    .panel .form-group { margin-bottom: 12px; }
+    .panel .form-group:last-child { margin-bottom: 0; }
+    .section-title { font-size: 12px; font-weight: 700; color: #a08452; letter-spacing: .5px; margin: 6px 0 14px; padding-bottom: 6px; border-bottom: 1px solid #f1ece2; }
+
+    .calc-action-btn {
+        width: 100%; padding: 16px; background-color: #8a6d3b; color: white; border: none; border-radius: 6px;
+        font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: background 0.2s; letter-spacing: .5px; font-family: inherit;
+    }
+    .calc-action-btn:hover { background-color: #74592e; }
+    .calc-action-btn:disabled { background-color: #b9a682; cursor: wait; }
+
+    .result-box { background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .result-box h3 { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+    .result-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 15px; }
+    .result-row span:first-child { flex: 1; font-size: 13px; color: #334155; word-break: keep-all; line-height: 1.4; }
+    .result-row span:last-child { font-weight: 700; color: #1e293b; white-space: nowrap; flex-shrink: 0; font-size: 14px; }
+    .result-row.minus span:last-child { color: #8a6d3b; }
+    .total-tax { background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 16px 18px; margin: 18px 0 0; align-items: center; }
+    .total-tax span:first-child { font-size: 14px !important; font-weight: 600; color: #5b4a2e !important; }
+    .total-tax span:last-child { color: #5b4a2e !important; font-size: 20px !important; }
+    .basis { margin: 14px 0 0; padding: 12px 14px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #475569; line-height: 1.7; }
+    .basis div { padding-left: 1em; text-indent: -1em; }
+    .basis div::before { content: '· '; }
+    .basis:empty { display: none; }
+    .notice-text { font-size: 11px; color: #64748b; margin-top: 12px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    .notice-text p { margin: 0; padding-left: 1.2em; text-indent: -1.2em; }
+
+    .calc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
+    .result-col { position: sticky; top: 20px; }
+    .result-col .empty { border: 1px dashed #cbd5e1; background: #fff; border-radius: 10px; padding: 48px 20px; text-align: center; color: #64748b; font-size: 14px; line-height: 1.8; }
+    #result:not([style*="none"]) ~ .empty { display: none; }
+    .pagetabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 5px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .pagetabs a { text-align: center; padding: 12px 10px; border-radius: 7px; font-size: 15px; font-weight: 600; color: #475569; text-decoration: none; transition: background .15s, color .15s; }
+    .pagetabs a:hover { color: #8a6d3b; background: #faf7f1; }
+    .pagetabs a.on { background: #8a6d3b; color: #fff; }
+    .hidden { display: none !important; }
+    .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
+    .amount-guide b { color: #3f3320; }
+    .cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
+    .cost-col { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 14px 0; background: #fcfcfd; }
+    .cost-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+    .cost-col .form-group { margin-bottom: 14px; }
+    .cost-col .form-group > label { font-size: 13px; }
+    .cost-col .form-group > label .hint { display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    @media (max-width: 600px) { .cost-grid { grid-template-columns: 1fr; } }
+    .own { display: inline-block; font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff4ff; border: 1px solid #c7d6f5; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
+    .tot { display: inline-block; font-size: 11px; font-weight: 600; color: #8a6d3b; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
+    .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
+    .split-title { font-size: 12px; font-weight: 700; color: #8a6d3b; margin-bottom: 4px; }
+    .split-row { display: flex; justify-content: space-between; font-size: 13px; color: #334155; padding: 2px 0; }
+    .split-row b { color: #1e293b; }
+    .filing { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; }
+    .filing p { font-size: 13px; color: #475569; margin: 0 0 10px; }
+    .filing-btn { width: 100%; padding: 14px; background: #8a6d3b; color: #fff; border: 1px solid #8a6d3b; box-shadow: 0 2px 6px rgba(138,109,59,.25); border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .3px; transition: background .2s, color .2s; }
+    .filing-btn:hover { background: #74592e; border-color: #74592e; }
+    .fmodal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 150; align-items: center; justify-content: center; padding: 16px; }
+    .fmodal.open { display: flex; }
+    .fbox { position: relative; background: #fff; width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 12px; border-top: 3px solid #b08d57; padding: 28px 26px 24px; box-shadow: 0 16px 40px rgba(15,23,42,.2); }
+    .fbox h3 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
+    .fdesc { font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 18px; }
+    .fclose { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+    .fbox textarea { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; }
+    .fbox textarea:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    @media (max-width: 860px) {
+        body { padding: 24px 16px; }
+        .calc-layout { grid-template-columns: 1fr; }
+        .result-col { position: static; }
+        .calculator-card { padding: 24px 18px; }
+        .header { padding: 18px; flex-wrap: wrap; gap: 10px; }
+        .title-block h1 { font-size: 20px; }
+        .seg { grid-template-columns: 1fr; }
+    }
+    /* ===== 부담부증여 계산기 전용 ===== */
+    .seg3 { grid-template-columns: 1fr 1fr; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .two .form-group { margin-bottom: 0; }
+    @media (max-width: 600px) { .two { grid-template-columns: 1fr; } }
+    .step-title { display: flex; align-items: baseline; gap: 8px; font-size: 15px; font-weight: 700; color: #1e293b; margin: 30px 0 14px; padding-bottom: 8px; border-bottom: 1px solid #f1ece2; }
+    .step-title:first-of-type { margin-top: 0; }
+    .step-title .no { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #8a6d3b; color: #fff; font-size: 12px; flex-shrink: 0; }
+    .step-title .who { font-size: 12px; font-weight: 500; color: #a08452; }
+    details.more { margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; background: #fcfcfd; }
+    details.more summary { cursor: pointer; font-size: 13px; font-weight: 600; color: #475569; }
+    details.more[open] summary { margin-bottom: 12px; }
+    details.more .form-group { margin-bottom: 12px; }
+    /* 요약 카드 */
+    .sum-box { background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; padding: 22px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .sum-box h3 { font-size: 16px; margin: 0 0 4px; color: #1e293b; }
+    .sum-box .sum-sub { font-size: 12px; color: #64748b; margin: 0 0 14px; }
+    .verdict { border-radius: 8px; padding: 14px 16px; margin: 14px 0 0; font-size: 14px; line-height: 1.6; }
+    .verdict b { font-size: 18px; display: block; }
+    .verdict.good { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+    .verdict.bad { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+    .cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .cmp th, .cmp td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; text-align: right; white-space: nowrap; }
+    .cmp th:first-child, .cmp td:first-child { text-align: left; white-space: normal; color: #334155; }
+    .cmp thead th { font-size: 12px; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
+    .cmp tfoot td { font-weight: 700; color: #1e293b; border-top: 2px solid #e2e8f0; border-bottom: none; }
+    .cmp .hl { color: #8a6d3b; }
+    /* 리포트 */
+    .report { margin-top: 36px; border-top: 2px solid #f1ece2; padding-top: 28px; }
+    .report-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+    .report-head h2 { margin: 0; font-size: 20px; color: #1e293b; }
+    .report-head p { margin: 4px 0 0; font-size: 13px; color: #64748b; }
+    .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 860px) { .report-grid { grid-template-columns: 1fr; } }
+    .sec { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 22px; }
+    .sec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+    .sec-head h3 { margin: 0; font-size: 16px; color: #1e293b; }
+    .sec-who { font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff4ff; border: 1px solid #c7d6f5; border-radius: 10px; padding: 1px 8px; white-space: nowrap; }
+    .sec-who.donor { color: #8a6d3b; background: #faf7f1; border-color: #eadfc9; }
+    .sec-sub { font-size: 12px; color: #64748b; margin: 0 0 14px; line-height: 1.5; }
+    .result-row.sub span { font-weight: 700 !important; color: #1e293b !important; }
+    .result-row.sub { border-top: 1px dashed #e2e8f0; padding-top: 10px; }
+    .result-row.info span { color: #94a3b8 !important; font-weight: normal !important; }
+    .sec .total-tax { margin-top: 14px; }
+    .sec .total-tax span:last-child { font-size: 18px !important; }
+    .wide { grid-column: 1 / -1; }
+    .deadline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @media (max-width: 700px) { .deadline { grid-template-columns: 1fr; } }
+    .deadline div { border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 8px; padding: 12px 14px; }
+    .deadline b { display: block; font-size: 17px; color: #5b4a2e; margin: 2px 0; }
+    .deadline span { font-size: 12px; color: #64748b; }
+    .caution { margin: 0; padding: 0; list-style: none; }
+    .caution li { position: relative; padding: 0 0 10px 22px; font-size: 13px; color: #334155; line-height: 1.65; }
+    .caution li::before { content: '!'; position: absolute; left: 0; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fef3c7; color: #b45309; font-size: 11px; font-weight: 700; text-align: center; line-height: 16px; }
+    @media print {
+        body { background: #fff; padding: 0; }
+        .header #authButtons, .pagetabs, #taxForm, .filing, .result-col, a[href="/"] { display: none !important; }
+        .calc-layout { display: block; }
+        .calculator-card { border: none; box-shadow: none; padding: 0; }
+        .report { margin-top: 0; border-top: none; }
+        .sec { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+      <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
+      <div class="header">
+        <div class="title-block">
+          <span class="eyebrow">세무회계강남 · 부담부증여 컨설팅 계산기</span>
+          <h1>부담부증여 계산기 <span style="font-size: 15px; font-weight: 500; color: #64748b;">양도세 · 증여세 · 취득세 한 번에</span></h1>
+        </div>
+        <div id="authButtons">
+          <a id="adminLink" href="../양도세계산기/admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
+          <span id="planStatus" style="font-size: 12px; color: #8a6d3b; font-weight: 600; margin-right: 6px;"></span>
+          <button id="loginBtn" class="btn btn-login" onclick="openModal('login')" style="display:none;">로그인</button>
+          <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;">회원가입</button>
+          <button id="logoutBtn" class="btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="calculator-card">
+        <div id="lockOverlay" class="lock-overlay">
+          <div id="lockReady" style="display: none;">
+            <h3>부담부증여 계산기 서비스 준비 중</h3>
+            <p style="color: #666; margin-bottom: 20px;">더 정확한 계산 서비스로 곧 찾아뵙겠습니다.</p>
+            <a href="/" class="btn btn-outline" style="text-decoration: none;">홈으로 가기</a>
+          </div>
+          <div id="lockChecking"><h3>로그인 상태 확인 중...</h3></div>
+          <div id="lockLogin" style="display: none;">
+            <h3>로그인 후 이용 가능합니다</h3>
+            <p style="color: #666; margin-bottom: 20px;">회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.<br><span style="font-size: 13px;">양도세 계산기와 같은 회원 계정을 사용합니다.</span></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button class="btn btn-login" onclick="openModal('login')">로그인</button>
+              <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+            </div>
+          </div>
+          <div id="lockWait" style="display: none;">
+            <div id="applyBefore">
+              <h3>인가 신청 후 이용 가능합니다</h3>
+              <p id="waitInfo" style="color: #666; margin-bottom: 6px;">부담부증여 계산기 이용권을 계좌이체로 결제하시면 확인 후 승인해 드립니다.</p>
+              <p id="applyPlan" style="font-weight: 700; margin-bottom: 18px;"></p>
+              <button class="btn btn-login" onclick="applyAccess()" style="padding: 12px 24px;">인가 신청하기</button>
+            </div>
+            <div id="applyAfter" style="display: none;">
+              <h3>아래 계좌로 입금해 주세요</h3>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 12px auto 12px; max-width: 360px; text-align: left; line-height: 1.8;">
+                <div><span style="color: #64748b;">입금 계좌</span> <strong id="bankLine" style="white-space: nowrap;"></strong></div>
+                <div><span style="color: #64748b;">예금주</span> <strong id="bankHolder"></strong></div>
+                <div><span style="color: #64748b;">금액</span> <strong id="bankAmount"></strong></div>
+              </div>
+              <p style="color: #666; font-size: 14px; margin-bottom: 6px;">입금자명은 가입하신 이름과 같게 해주세요.<br>입금 확인 후 승인되면 바로 이용하실 수 있습니다.</p>
+            </div>
+            <p style="color: #666; font-size: 14px;">문의: <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600;">010-4454-2429</a></p>
+          </div>
+          <div id="lockPay" style="display: none;">
+            <h3>이용권 결제 후 이용 가능합니다</h3>
+            <p id="planInfo" style="color: #666; margin-bottom: 20px;"></p>
+            <button class="btn btn-login" onclick="startPayment()" style="padding: 12px 24px;">카드로 결제하기</button>
+          </div>
+        </div>
+
+        <div class="calc-layout">
+        <form id="taxForm" onsubmit="calculateTax(event)">
+            <div class="amount-guide"><b>부담부증여</b>는 전세보증금·대출금 같은 채무를 함께 넘기는 증여입니다. 채무만큼은 <b>증여자가 판 것(양도세)</b>, 나머지는 <b>수증자가 증여받은 것(증여세)</b>으로 보고, 수증자는 <b>취득세</b>를 유상분·무상분으로 나누어 냅니다.</div>
+
+            <div class="step-title"><span class="no">1</span>누가 누구에게 <span class="who">증여자 → 수증자</span></div>
+            <div class="form-group">
+                <label for="relation">수증자(받는 사람)는 증여자의</label>
+                <select id="relation" onchange="refreshForm()">
+                    <option value="child" selected>자녀 (부모 → 자녀)</option>
+                    <option value="spouse">배우자</option>
+                    <option value="grand">손자녀 (조부모 → 손자녀, 세대생략)</option>
+                    <option value="parent">부모 (자녀 → 부모)</option>
+                    <option value="kin">기타 친족 (사위·며느리 등 6촌 혈족·4촌 인척)</option>
+                    <option value="other">타인</option>
+                </select>
+                <label class="check-line asc-only"><input type="checkbox" id="minor" onchange="refreshForm()"> 수증자가 미성년자 (증여재산공제 2천만 원)</label>
+                <label class="check-line grand-only"><input type="checkbox" id="skipException"> 수증자의 부모(증여자의 자녀)가 사망해 대습으로 받는 경우 <span class="hint">(세대생략 할증 제외)</span></label>
+                <div id="relMsg" class="live-msg" style="font-weight: normal;"></div>
+            </div>
+
+            <div class="step-title"><span class="no">2</span>증여할 주택</div>
+            <div class="form-group">
+                <label>소재지 <span class="hint">(조정대상지역·국민주택채권 판단용)</span></label>
+                <div class="addr-row">
+                    <input type="text" id="address" placeholder="주소 검색 또는 직접 입력 (예: 서울 송파구 잠실동 000)" oninput="refreshForm()" onclick="if (!this.value) searchAddress()">
+                    <button type="button" onclick="searchAddress()">주소 검색</button>
+                </div>
+                <label class="check-line"><input type="checkbox" id="over85"> 전용면적 85㎡ 초과 <span class="hint">(농어촌특별세 과세)</span></label>
+                <div id="addrMsg" class="live-msg"></div>
+            </div>
+            <div class="form-group">
+                <label>증여재산 평가 방법</label>
+                <div class="seg">
+                    <label><input type="radio" name="valuation" value="market" checked onchange="refreshForm()"><b>시가</b><span>아파트 매매사례가액 · 감정가액이 있는 경우 (대부분의 아파트)</span></label>
+                    <label><input type="radio" name="valuation" value="std" onchange="refreshForm()"><b>기준시가</b><span>매매사례가 없는 단독·다가구·빌라 등 (공시가격으로 신고)</span></label>
+                </div>
+            </div>
+            <div class="two">
+                <div class="form-group market-only">
+                    <label for="marketValue">시가 <span class="tot">주택 전체</span> <span class="hint">(매매사례가액·감정가액)</span></label>
+                    <input type="text" id="marketValue" placeholder="예: 1,000,000,000" oninput="formatCurrency(this); refreshForm()">
+                </div>
+                <div class="form-group">
+                    <label for="stdValue">공시가격 <span class="tot">주택 전체</span> <span class="hint">(시가표준액)</span></label>
+                    <input type="text" id="stdValue" placeholder="예: 700,000,000" oninput="formatCurrency(this); refreshForm()" required>
+                </div>
+            </div>
+            <div class="two" style="margin-top: 14px;">
+                <div class="form-group">
+                    <label for="giftShare">증여하는 지분 (%) <span class="hint">(주택 전부 증여 = 100)</span></label>
+                    <input type="text" id="giftShare" value="100" inputmode="decimal" oninput="keepDecimal(this); refreshForm()">
+                </div>
+                <div class="form-group">
+                    <label for="debt">수증자가 떠안는 채무 <span class="hint">(전세보증금·대출금)</span></label>
+                    <input type="text" id="debt" placeholder="예: 400,000,000" oninput="formatCurrency(this); refreshForm()" required>
+                </div>
+            </div>
+            <div id="valueMsg" class="live-msg"></div>
+            <div id="shareSplit" class="split hidden"></div>
+            <label class="check-line"><input type="checkbox" id="debtRecognized" checked> 채무 인수를 서류(임대차계약서·대출 승계)와 수증자 소득으로 입증할 수 있음</label>
+
+            <div class="step-title"><span class="no">3</span>증여자 정보 <span class="who">양도소득세</span></div>
+            <div class="form-group">
+                <label for="donorType">증여자의 주택 보유 상황 <span class="hint">(증여일 현재)</span></label>
+                <select id="donorType" onchange="refreshForm()">
+                    <option value="single">1세대 1주택 (비과세 · 12억 초과분만 과세)</option>
+                    <option value="general" selected>일반 과세 (다주택 중과 아님)</option>
+                    <option value="heavy20">다주택 중과 · 조정대상지역 2주택 (+20%p)</option>
+                    <option value="heavy30">다주택 중과 · 조정대상지역 3주택 이상 (+30%p)</option>
+                </select>
+                <label id="acqRegBox" class="check-line single-only">
+                    <input type="checkbox" id="acqRegulated" onchange="this.dataset.manual = '1'">
+                    취득 당시 조정대상지역 <span class="hint">(2017.8.3 이후 취득 → 2년 이상 거주해야 비과세 · 주소와 취득일로 자동 판단)</span>
+                </label>
+                <div id="heavyMsg" class="live-msg"></div>
+            </div>
+            <div class="form-group">
+                <label>날짜</label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label class="sub-label">증여자 취득일 (잔금일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
+                    </div>
+                    <div class="date-col">
+                        <label class="sub-label">증여일 (증여등기 접수일 예정)</label>
+                        <div class="date-input-wrapper"><input type="text" id="giftDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
+                    </div>
+                </div>
+                <div id="periodMsg" class="live-msg"></div>
+            </div>
+            <div class="form-group single-only">
+                <label>증여자 실제 거주 기간 <span class="hint">[장기보유특별공제 표2 · 거주요건 판정]</span></label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label class="sub-label">거주 시작일 (전입일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="residenceStartDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
+                    <div class="date-col">
+                        <label class="sub-label">거주 종료일 (아직 거주 중이면 증여일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="residenceEndDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
+                </div>
+                <div id="residenceMsg" class="live-msg"></div>
+            </div>
+            <div class="two market-only">
+                <div class="form-group">
+                    <label for="acquisitionPrice">취득가액 <span class="own">증여 지분</span> <span class="hint">(실제 매입가)</span></label>
+                    <input type="text" id="acquisitionPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this)">
+                </div>
+                <div class="form-group">
+                    <label for="expenses">필요경비 <span class="own">증여 지분</span> <span class="hint">(취득세·중개수수료·수리비 등)</span></label>
+                    <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
+                </div>
+            </div>
+            <div class="form-group std-only">
+                <label for="acqStdValue">취득 당시 기준시가 <span class="tot">주택 전체</span> <span class="hint">(취득한 해의 공시가격)</span></label>
+                <input type="text" id="acqStdValue" placeholder="예: 300,000,000" oninput="formatCurrency(this)">
+            </div>
+            <label class="check-line"><input type="checkbox" id="basicUsed"> 올해 다른 부동산을 팔아 양도소득 기본공제(250만 원)를 이미 썼음</label>
+
+            <div class="step-title"><span class="no">4</span>수증자 정보 <span class="who">증여세 · 취득세</span></div>
+            <div class="form-group">
+                <label for="recipientHouses">수증자 세대의 주택 수 <span class="hint">(이번에 받는 주택 포함)</span></label>
+                <select id="recipientHouses" onchange="refreshForm()">
+                    <option value="1">1주택 (이 주택뿐)</option>
+                    <option value="2">2주택</option>
+                    <option value="3">3주택</option>
+                    <option value="4">4주택 이상</option>
+                </select>
+                <label class="check-line" id="tempTwoBox"><input type="checkbox" id="temporaryTwo"> 일시적 2주택 <span class="hint">(종전 주택을 처분 기한 안에 팔 예정)</span></label>
+                <label class="check-line" id="donorSingleBox"><input type="checkbox" id="donorSingleHouse" onchange="this.dataset.manual = '1'"> 증여자가 1세대 1주택자 <span class="hint">(배우자·직계존비속 증여 시 증여 취득세 중과 12% 제외)</span></label>
+                <div id="acqMsg" class="live-msg"></div>
+            </div>
+            <div class="form-group asc-only">
+                <label for="marriageDeduction">혼인·출산 증여재산공제 <span class="hint">(혼인신고 전후 2년·출생 후 2년 이내, 최대 1억 · 쓰지 않으면 0)</span></label>
+                <input type="text" id="marriageDeduction" value="0" oninput="formatCurrency(this)">
+            </div>
+            <details class="more">
+                <summary>10년 안에 같은 사람에게 증여받은 적이 있나요? (선택)</summary>
+                <div class="form-group">
+                    <label for="priorGift">10년 내 증여재산 과세가액 <span class="hint">(증여자의 배우자에게 받은 것 포함)</span></label>
+                    <input type="text" id="priorGift" value="0" oninput="formatCurrency(this)">
+                </div>
+                <div class="two">
+                    <div class="form-group">
+                        <label for="priorDeduction">그때 받은 증여재산공제</label>
+                        <input type="text" id="priorDeduction" value="0" oninput="formatCurrency(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="priorTax">그때 증여세 산출세액</label>
+                        <input type="text" id="priorTax" value="0" oninput="formatCurrency(this)">
+                    </div>
+                </div>
+            </details>
+            <details class="more">
+                <summary>감정평가수수료 · 국민주택채권 할인율 (선택)</summary>
+                <div class="two">
+                    <div class="form-group">
+                        <label for="appraisalFee">감정평가수수료 <span class="hint">(최대 500만 원 공제)</span></label>
+                        <input type="text" id="appraisalFee" value="0" oninput="formatCurrency(this)">
+                    </div>
+                    <div class="form-group">
+                        <label for="bondDiscount">국민주택채권 할인율 (%) <span class="hint">(매일 바뀜)</span></label>
+                        <input type="text" id="bondDiscount" value="13" inputmode="decimal" oninput="keepDecimal(this)">
+                    </div>
+                </div>
+            </details>
+
+            <button type="submit" id="calcBtn" class="calc-action-btn" style="margin-top: 24px;">부담부증여 세금 계산하기</button>
+        </form>
+
+        <div class="result-col">
+            <div id="result" class="sum-box" style="display: none;">
+                <h3>한눈에 보기</h3>
+                <p class="sum-sub" id="sumSub"></p>
+                <table class="cmp">
+                    <thead><tr><th></th><th>부담부증여</th><th>순수 증여</th></tr></thead>
+                    <tbody id="cmpBody"></tbody>
+                    <tfoot><tr><td>세금 합계</td><td id="cmpBurden" class="hl"></td><td id="cmpPure"></td></tr></tfoot>
+                </table>
+                <div id="verdict" class="verdict"></div>
+                <p style="font-size: 12px; color: #64748b; margin: 12px 0 0; line-height: 1.6;">아래 <b>컨설팅 리포트</b>에서 세목별 계산 과정, 등기비용, 신고기한, 주의사항을 확인하세요.</p>
+                <button type="button" class="calc-action-btn" style="margin-top: 12px; font-size: 14px; padding: 12px;" onclick="$('report').scrollIntoView({ behavior: 'smooth' })">컨설팅 리포트 보기 ↓</button>
+            </div>
+            <div class="empty">왼쪽에 <b>관계 · 주택 · 채무 · 날짜</b>를 넣고<br><b>[부담부증여 세금 계산하기]</b>를 누르면<br>양도세 · 증여세 · 취득세와<br>순수 증여 비교가 여기에 나옵니다.</div>
+        </div>
+        </div>
+
+        <section id="report" class="report hidden" aria-label="부담부증여 컨설팅 리포트">
+            <div class="report-head">
+                <div>
+                    <h2>부담부증여 컨설팅 리포트</h2>
+                    <p id="reportSub"></p>
+                </div>
+                <button type="button" class="btn-outline" onclick="window.print()">인쇄 · PDF 저장</button>
+            </div>
+            <div id="reportGrid" class="report-grid"></div>
+            <div class="sec wide" style="margin-top: 20px;">
+                <div class="sec-head"><h3>신고 · 납부 기한</h3></div>
+                <p class="sec-sub">기한 안에 신고해야 신고세액공제(증여세 3%)를 받고 가산세를 피할 수 있습니다.</p>
+                <div id="deadlines" class="deadline"></div>
+            </div>
+            <div class="sec wide" style="margin-top: 20px;">
+                <div class="sec-head"><h3>꼭 확인하세요</h3></div>
+                <ul id="cautions" class="caution" style="margin-top: 12px;"></ul>
+                <div class="notice-text">
+                    <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
+                    <p>※ 산출된 세액과 비용은 참고용 추정치이며, 법적 근거로 사용할 수 없습니다.</p>
+                    <p>※ 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
+                </div>
+                <div class="filing">
+                    <p>양도소득세 · 증여세 신고 대행 수수료는 재산 규모와 검토 범위에 따라 <b>상담 후 안내</b>드립니다.<br>대표세무사가 위 계산을 검토하고 시가 평가·채무 입증까지 함께 봐 드립니다.</p>
+                    <button type="button" class="filing-btn" onclick="openFiling()">상담 · 신고 의뢰하기</button>
+                </div>
+            </div>
+        </section>
+      </div>
+  </div>
+
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 94vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>아이디 (이메일)</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
+      </form>
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 신고 의뢰 팝업 -->
+  <div id="filingModal" class="fmodal" onclick="if (event.target === this) closeFiling()">
+    <div class="fbox" role="dialog" aria-labelledby="filingTitle">
+      <button type="button" class="fclose" onclick="closeFiling()" aria-label="닫기">&times;</button>
+      <form id="filingForm" onsubmit="submitFiling(event)">
+        <h3 id="filingTitle">부담부증여 상담 · 신고 의뢰</h3>
+        <p class="fdesc">성함과 연락받으실 연락처를 남겨 주시면,<br>세무사가 메일을 확인한 뒤 연락드리겠습니다.</p>
+        <div class="form-group">
+          <label for="filingName">성함</label>
+          <input type="text" id="filingName" maxlength="50" autocomplete="name" required>
+        </div>
+        <div class="form-group">
+          <label for="filingPhone">연락받으실 연락처</label>
+          <input type="tel" id="filingPhone" maxlength="30" placeholder="010-0000-0000" autocomplete="tel" required>
+        </div>
+        <div class="form-group">
+          <label for="filingMemo">요청사항 <span class="hint">(선택)</span></label>
+          <textarea id="filingMemo" rows="3" maxlength="1000" placeholder="통화 가능한 시간, 문의하실 내용 등"></textarea>
+        </div>
+        <label class="check-line" style="margin: 0 0 16px;"><input type="checkbox" id="filingAgree" required> 입력한 정보와 계산 내용을 세무회계강남에 전달하는 데 동의합니다.</label>
+        <button type="submit" id="filingSubmit" class="calc-action-btn" style="margin-top: 0;">의뢰 보내기</button>
+      </form>
+      <div id="filingDone" class="hidden" style="text-align: center; padding: 10px 0;">
+        <h3>의뢰가 접수되었습니다</h3>
+        <p class="fdesc">세무사가 메일을 확인한 뒤<br>남겨 주신 연락처로 연락드리겠습니다.</p>
+        <p class="fdesc" style="margin-bottom: 18px;">급하신 경우 아래 번호로 전화 또는 문자 주세요!<br><a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600; font-size: 17px; display: inline-block; margin-top: 6px;">010-4454-2429</a></p>
+        <button type="button" class="btn-outline" onclick="closeFiling()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- login.js가 찾는 결제 팝업 (이 계산기는 계좌이체 인가만 사용) -->
+  <div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
+
+  <script src="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script>window.CALC_PRODUCT = 'gift';</script>
+  <script src="../양도세계산기/js/login.js"></script>
+  <script>
+    // Apps Script가 아직 부담부증여 이용권을 모르는 예전 버전이면 다른 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
+    const baseUpdateUi = updateUi;
+    updateUi = function (user, plan, ...rest) {
+        if (plan && !/부담부증여/.test(plan.name)) { showComingSoon(); return; }
+        const out = baseUpdateUi(user, plan, ...rest);
+        if (!(user && user.paid)) $('report').classList.add('hidden');
+        return out;
+    };
+  </script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const CAL_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+
+    // 달력 버튼: 년·월은 드롭다운으로, 일은 달력에서 선택 (직접 입력도 가능)
+    const pad2 = n => String(n).padStart(2, '0');
+    const THIS_YEAR = new Date().getFullYear();
+    const FIRST_YEAR = 1960, LAST_YEAR = THIS_YEAR + 5;
+    let dpTarget = null, dpYear, dpMonth; // dpMonth: 1~12
+    const dp = document.createElement('div');
+    dp.className = 'dp';
+    dp.setAttribute('role', 'dialog');
+    dp.setAttribute('aria-label', '날짜 선택');
+    dp.innerHTML = `
+        <div class="dp-head">
+            <button type="button" class="dp-nav" data-step="-1" aria-label="이전 달">&#8249;</button>
+            <select class="dp-year" aria-label="년">${Array.from({ length: LAST_YEAR - FIRST_YEAR + 1 }, (_, i) => LAST_YEAR - i).map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
+            <select class="dp-month" aria-label="월">${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+            <button type="button" class="dp-nav" data-step="1" aria-label="다음 달">&#8250;</button>
+        </div>
+        <div class="dp-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div class="dp-days"></div>
+        <div class="dp-foot"><button type="button" class="dp-today">오늘</button><button type="button" class="dp-close">닫기</button></div>`;
+    document.body.appendChild(dp);
+    const dpYearSel = dp.querySelector('.dp-year'), dpMonthSel = dp.querySelector('.dp-month');
+
+    function dpRender() {
+        if (dpYear < FIRST_YEAR) { dpYear = FIRST_YEAR; dpMonth = 1; }
+        if (dpYear > LAST_YEAR) { dpYear = LAST_YEAR; dpMonth = 12; }
+        dpYearSel.value = dpYear;
+        dpMonthSel.value = dpMonth;
+        const first = new Date(dpYear, dpMonth - 1, 1).getDay();
+        const last = new Date(dpYear, dpMonth, 0).getDate();
+        const sel = dpTarget && isDate(dpTarget.value) ? dpTarget.value : '';
+        const t = new Date(), today = `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`;
+        let html = '<span></span>'.repeat(first);
+        for (let d = 1; d <= last; d++) {
+            const v = `${dpYear}-${pad2(dpMonth)}-${pad2(d)}`;
+            const dow = (first + d - 1) % 7;
+            const cls = ['dp-day', v === sel ? 'sel' : '', v === today ? 'today' : '', dow === 0 ? 'sun' : '', dow === 6 ? 'sat' : ''].filter(Boolean).join(' ');
+            html += `<button type="button" class="${cls}" data-v="${v}">${d}</button>`;
+        }
+        dp.querySelector('.dp-days').innerHTML = html;
+    }
+    function dpPlace() {
+        const r = dpTarget.getBoundingClientRect();
+        const w = dp.offsetWidth, h = dp.offsetHeight;
+        let left = r.left + window.scrollX;
+        left = Math.max(8 + window.scrollX, Math.min(left, window.scrollX + document.documentElement.clientWidth - w - 8));
+        let top = r.bottom + window.scrollY + 6;
+        if (r.bottom + h + 6 > window.innerHeight && r.top - h - 6 > 0) top = r.top + window.scrollY - h - 6;
+        dp.style.left = left + 'px';
+        dp.style.top = top + 'px';
+    }
+    function dpOpen(input) {
+        dpTarget = input;
+        const v = isDate(input.value) ? input.value : '';
+        const t = new Date();
+        dpYear = v ? Number(v.slice(0, 4)) : t.getFullYear();
+        dpMonth = v ? Number(v.slice(5, 7)) : t.getMonth() + 1;
+        dpRender();
+        dp.classList.add('open');
+        dpPlace();
+    }
+    function dpClose() { dp.classList.remove('open'); dpTarget = null; }
+    function dpPick(v) {
+        const input = dpTarget;
+        input.value = v;
+        dpClose();
+        input.dispatchEvent(new Event('change'));
+    }
+    dpYearSel.addEventListener('change', () => { dpYear = Number(dpYearSel.value); dpRender(); });
+    dpMonthSel.addEventListener('change', () => { dpMonth = Number(dpMonthSel.value); dpRender(); });
+    dp.addEventListener('click', e => {
+        const nav = e.target.closest('.dp-nav');
+        if (nav) {
+            dpMonth += Number(nav.dataset.step);
+            if (dpMonth < 1) { dpMonth = 12; dpYear--; }
+            if (dpMonth > 12) { dpMonth = 1; dpYear++; }
+            dpRender();
+        } else if (e.target.closest('.dp-day')) {
+            dpPick(e.target.closest('.dp-day').dataset.v);
+        } else if (e.target.closest('.dp-today')) {
+            const t = new Date();
+            dpPick(`${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`);
+        } else if (e.target.closest('.dp-close')) {
+            dpClose();
+        }
+    });
+    document.addEventListener('mousedown', e => {
+        if (dpTarget && !dp.contains(e.target) && !e.target.closest('.cal-btn')) dpClose();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dpTarget) dpClose(); });
+    window.addEventListener('resize', () => { if (dpTarget) dpPlace(); });
+
+    document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
+        const textInput = wrapper.querySelector('input[type="text"]');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cal-btn';
+        btn.innerHTML = CAL_ICON;
+        btn.setAttribute('aria-label', '달력에서 날짜 선택');
+        btn.addEventListener('click', () => {
+            if (dpTarget === textInput) dpClose(); else dpOpen(textInput);
+        });
+        wrapper.append(btn);
+    });
+
+    // 날짜 입력: 년·월·일 칸을 각각 고칠 수 있게 (커서 위치 유지)
+    function formatDateInput(input) {
+        const ev = window.event || {};
+        const prev = input.dataset.prev || '';
+        let v = input.value, caret = input.selectionStart == null ? v.length : input.selectionStart;
+        const dashes = s => (s.match(/-/g) || []).length;
+        // '-'만 지운 경우 → 그 옆 숫자를 지움
+        if (prev.length === v.length + 1 && dashes(prev) === dashes(v) + 1) {
+            let i = 0; while (i < v.length && v[i] === prev[i]) i++;
+            if (prev[i] === '-') {
+                if (ev.inputType === 'deleteContentForward') { v = prev.slice(0, i + 1) + prev.slice(i + 2); caret = i + 1; }
+                else if (i > 0) { v = prev.slice(0, i - 1) + prev.slice(i); caret = i - 1; }
+            }
+        }
+        const before = v.slice(0, caret);
+        const digitsBefore = before.replace(/\D/g, '').length;
+        const afterDash = before.endsWith('-');
+        let out;
+        if (v.indexOf('-') < 0) {
+            const d = v.replace(/\D/g, '').slice(0, 8);
+            out = d.length > 6 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6) : d.length > 4 ? d.slice(0, 4) + '-' + d.slice(4) : d;
+        } else {
+            const raw = v.split('-');
+            const parts = [raw[0], raw[1] || '', raw.slice(2).join('')].map(s => s.replace(/\D/g, ''));
+            const caps = [4, 2, 2], segs = [];
+            let carry = '';
+            for (let i = 0; i < 3; i++) {
+                let s = parts[i];
+                if (carry && !s) s = carry;
+                carry = '';
+                if (s.length > caps[i]) {
+                    if (i < 2 && !parts[i + 1]) carry = s.slice(caps[i]);
+                    s = s.slice(0, caps[i]);
+                }
+                segs.push(s);
+                if (i >= raw.length - 1 && !carry) break;
+            }
+            out = segs.join('-');
+        }
+        // 커서: 같은 개수의 숫자 뒤로
+        let pos = 0, n = 0;
+        while (pos < out.length && n < digitsBefore) { if (/\d/.test(out[pos])) n++; pos++; }
+        if (afterDash && out[pos] === '-') pos++;
+        input.value = out;
+        input.dataset.prev = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
+    }
+    // 키를 누르기 직전 값을 기억 ('-' 삭제 감지용)
+    document.addEventListener('keydown', e => { const t = e.target; if (t && t.tagName === 'INPUT' && t.type === 'text') t.dataset.prev = t.value; }, true);
+    // 숫자·소수점만 남기되 커서는 그 자리에
+    function keepDecimal(input) {
+        const v = input.value, c = input.selectionStart == null ? v.length : input.selectionStart;
+        const clean = s => s.replace(/[^0-9.]/g, '');
+        const out = clean(v);
+        if (out === v) return;
+        const pos = clean(v.slice(0, c)).length;
+        input.value = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
+    }
+    // 금액 입력: 콤마를 넣어도 커서가 고치던 자리에 남게
+    function formatCurrency(input) {
+        const ev = window.event || {};
+        const prev = input.dataset.prev || '';
+        let v = input.value, caret = input.selectionStart == null ? v.length : input.selectionStart;
+        const commas = s => (s.match(/,/g) || []).length;
+        // ','만 지운 경우 → 그 옆 숫자를 지움
+        if (prev.length === v.length + 1 && commas(prev) === commas(v) + 1) {
+            let i = 0; while (i < v.length && v[i] === prev[i]) i++;
+            if (prev[i] === ',') {
+                if (ev.inputType === 'deleteContentForward') { v = prev.slice(0, i + 1) + prev.slice(i + 2); caret = i + 1; }
+                else if (i > 0) { v = prev.slice(0, i - 1) + prev.slice(i); caret = i - 1; }
+            }
+        }
+        const digitsAfter = v.slice(caret).replace(/\D/g, '').length;
+        const d = v.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+        const out = d ? Number(d).toLocaleString('ko-KR') : '';
+        // 커서: 뒤쪽 숫자 개수가 같도록
+        let pos = out.length, n = 0;
+        while (pos > 0 && n < Math.min(digitsAfter, d.length)) { pos--; if (/\d/.test(out[pos])) n++; }
+        input.value = out;
+        input.dataset.prev = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
+    }
+    const num = id => Number($(id).value.replace(/[^0-9]/g, '')) || 0;
+    const won = n => Math.round(n).toLocaleString('ko-KR') + ' 원';
+    const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+
+    // 조정대상지역 (양도세 계산기와 같은 기준: 2025.10.16 지정 서울 전역 + 경기 일부)
+    const REGULATED_AREAS = ['과천시', '광명시', '성남시 분당구', '성남시 수정구', '성남시 중원구',
+        '수원시 영통구', '수원시 장안구', '수원시 팔달구', '안양시 동안구', '용인시 수지구', '의왕시', '하남시',
+        '화성시 동탄구', '용인시 기흥구', '구리시'];
+    const SEOUL_GU = ['강남구', '강동구', '강북구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구',
+        '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중랑구'];
+    function isRegulated(address) {
+        const a = address.replace(/\s+/g, '');
+        if (!a) return false;
+        if (/^서울/.test(a)) return true;
+        if (/^(부산|대구|인천|광주|대전|울산|세종|강원|충북|충남|충청|전북|전남|전라|경북|경남|경상|제주)/.test(a)) return false;
+        if (SEOUL_GU.some(gu => a.startsWith(gu))) return true;
+        return REGULATED_AREAS.some(area => {
+            const gu = area.split(' ')[1];
+            return a.includes(area.replace(/\s+/g, '')) || (gu && a.startsWith(gu));
+        });
+    }
+    function isAcqRegulated(address, acqDate) {
+        if (!isDate(acqDate) || !isRegulated(address)) return false;
+        if (acqDate < '2017-08-03') return false;
+        if (acqDate < '2023-01-05') return true;
+        if (acqDate < '2025-10-16') return /(강남구|서초구|송파구|용산구)/.test(address.replace(/\s+/g, ''));
+        return true;
+    }
+    function searchAddress() {
+        if (window.daum && daum.Postcode) {
+            new daum.Postcode({ oncomplete: d => { $('address').value = d.address; refreshForm(); } }).open();
+        } else {
+            $('address').focus();
+        }
+    }
+
+    // 만 연수와 'n년 n개월' 표시
+    function period(start, end) {
+        if (!isDate(start) || !isDate(end) || end < start) return null;
+        const [sy, sm, sd] = start.split('-').map(Number), [ey, em, ed] = end.split('-').map(Number);
+        let y = ey - sy, m = em - sm;
+        if (ed < sd) m -= 1;
+        if (m < 0) { y -= 1; m += 12; }
+        return { years: y, text: (y ? `${y}년 ` : '') + `${m}개월` };
+    }
+    function twoYearsBefore(d) { const [y, m, dd] = d.split('-'); return `${Number(y) - 2}-${m}-${dd}`; }
+
+    const val = name => document.querySelector(`input[name="${name}"]:checked`).value;
+    function isMetro(address) {
+        const a = address.replace(/\s+/g, '');
+        return /^(서울|부산|대구|인천|광주|대전|울산)/.test(a) || SEOUL_GU.some(gu => a.startsWith(gu));
+    }
+
+    function refreshForm() {
+        const rel = $('relation').value;
+        const asc = rel === 'child' || rel === 'grand';
+        document.querySelectorAll('.asc-only').forEach(el => el.classList.toggle('hidden', !asc));
+        document.querySelectorAll('.grand-only').forEach(el => el.classList.toggle('hidden', rel !== 'grand'));
+        const lim = { spouse: '6억 원', child: $('minor').checked ? '2천만 원 (미성년)' : '5천만 원', grand: $('minor').checked ? '2천만 원 (미성년)' : '5천만 원', parent: '5천만 원', kin: '1천만 원', other: '없음' }[rel];
+        $('relMsg').innerText = `증여재산공제: ${lim} (10년 합산)` + (rel === 'grand' ? ' · 세대생략 할증 30% (미성년자가 20억 초과 받으면 40%)' : '')
+            + (['spouse', 'child', 'grand', 'parent'].includes(rel) ? '\n※ 배우자·직계존비속 간 부담부증여는 채무 인수를 입증해야 인정됩니다.' : '');
+
+        const market = val('valuation') === 'market';
+        document.querySelectorAll('.market-only').forEach(el => el.classList.toggle('hidden', !market));
+        document.querySelectorAll('.std-only').forEach(el => el.classList.toggle('hidden', market));
+
+        const addr = $('address').value.trim();
+        const reg = isRegulated(addr);
+        $('addrMsg').innerText = addr ? (reg ? '조정대상지역 주택 (증여일 현재 기준)' : '조정대상지역이 아닌 주택') + (isMetro(addr) ? ' · 서울·광역시 (국민주택채권 매입률 높음)' : '') : '';
+
+        // 증여자 다주택 중과는 조정대상지역 주택만
+        const noHeavy = !!addr && !reg;
+        document.querySelectorAll('#donorType option[value^="heavy"]').forEach(o => { o.disabled = noHeavy; });
+        let dt = $('donorType').value;
+        if (noHeavy && dt.startsWith('heavy')) { $('donorType').value = dt = 'general'; $('heavyMsg').innerText = '조정대상지역이 아닌 주택은 다주택 중과 대상이 아니어서 일반 과세로 바꿨습니다.'; }
+        else $('heavyMsg').innerText = dt.startsWith('heavy') ? '중과 대상은 장기보유특별공제가 적용되지 않습니다.' + (addr ? '' : ' (소재지를 넣으면 조정대상지역 여부를 확인합니다)') : '';
+        document.querySelectorAll('.single-only').forEach(el => el.classList.toggle('hidden', dt !== 'single'));
+        const acq = $('acquisitionDate').value, gd = $('giftDate').value;
+        if (!$('acqRegulated').dataset.manual) $('acqRegulated').checked = isAcqRegulated(addr, acq);
+        if (!$('donorSingleHouse').dataset.manual) $('donorSingleHouse').checked = dt === 'single';
+
+        const p = period(acq, gd);
+        $('periodMsg').innerText = isDate(acq) && isDate(gd) && !p ? '※ 증여일이 취득일보다 빠를 수 없습니다.' : p ? `보유기간: ${p.text} → 장기보유특별공제 · 비과세 · 세율 판정` : '';
+        $('periodMsg').classList.toggle('warn', isDate(acq) && isDate(gd) && !p);
+        const rp = period($('residenceStartDate').value, $('residenceEndDate').value);
+        $('residenceMsg').innerText = rp ? `거주기간: ${rp.text}` : '';
+
+        // 수증자 취득세 안내
+        const houses = Number($('recipientHouses').value);
+        $('tempTwoBox').classList.toggle('hidden', !(houses === 2 && (reg || !addr)));
+        $('donorSingleBox').classList.toggle('hidden', !['spouse', 'child', 'grand', 'parent'].includes(rel));
+        const std = num('stdValue');
+        $('acqMsg').innerText = reg && std >= 300000000 ? '조정대상지역 공시가격 3억 이상 주택 → 증여(무상)분 취득세 중과 12% 대상 (증여자 1세대 1주택이면 제외)' : '';
+
+        // 증여재산가액 · 채무비율 미리보기
+        const sh = parseFloat($('giftShare').value);
+        const whole = market ? num('marketValue') : std, debt = num('debt');
+        const gv = whole && sh > 0 && sh <= 100 ? Math.round(whole * sh / 100) : 0;
+        const lines = [];
+        let warn = false;
+        if (sh > 100 || sh === 0) { lines.push('※ 지분은 0 초과 100 이하로 넣어주세요.'); warn = true; }
+        if (gv && debt) {
+            if (debt >= gv) { lines.push('※ 채무가 증여재산가액 이상이면 부담부증여가 아닙니다.'); warn = true; }
+            else lines.push(`증여재산가액 ${won(gv)} 중 채무 ${(debt / gv * 100).toFixed(2)}%는 양도, 나머지 ${won(gv - debt)}는 증여`);
+        }
+        $('valueMsg').innerText = lines.join('\n');
+        $('valueMsg').classList.toggle('warn', warn);
+    }
+    refreshForm();
+
+    let lastInput = null;
+    async function calculateTax(event) {
+        event.preventDefault();
+        const acq = $('acquisitionDate').value, gd = $('giftDate').value;
+        if (!isDate(acq) || !isDate(gd)) { alert('증여자 취득일과 증여일을 입력해주세요.'); return; }
+        if (gd < acq) { alert('증여일이 취득일보다 빠를 수 없습니다.'); return; }
+        const sh = parseFloat($('giftShare').value);
+        if (!(sh > 0 && sh <= 100)) { alert('증여 지분은 0 초과 100 이하로 넣어주세요.'); return; }
+        const market = val('valuation') === 'market';
+        if (market && !num('marketValue')) { alert('시가(매매사례가액·감정가액)를 입력해주세요.'); return; }
+        if (market && !num('acquisitionPrice')) { alert('증여자의 취득가액을 입력해주세요.'); return; }
+        if (!market && !num('acqStdValue')) { alert('취득 당시 기준시가를 입력해주세요.'); return; }
+
+        const btn = $('calcBtn');
+        btn.disabled = true;
+        btn.innerText = '계산 중...';
+        let res;
+        const dt = $('donorType').value, rel = $('relation').value, addr = $('address').value.trim();
+        try {
+            lastInput = {
+                relation: rel,
+                minor: (rel === 'child' || rel === 'grand') && $('minor').checked,
+                skipException: rel === 'grand' && $('skipException').checked,
+                marriageDeduction: rel === 'child' || rel === 'grand' ? num('marriageDeduction') : 0,
+                address: addr, regulated: isRegulated(addr), metro: isMetro(addr), over85: $('over85').checked,
+                valuation: market ? 'market' : 'std',
+                marketValue: market ? num('marketValue') : 0, stdValue: num('stdValue'), giftShare: sh, debt: num('debt'),
+                debtRecognized: $('debtRecognized').checked,
+                donorType: dt, acqRegulated: dt === 'single' && $('acqRegulated').checked,
+                acquisitionDate: acq, giftDate: gd,
+                residenceStartDate: dt === 'single' ? $('residenceStartDate').value : '',
+                residenceEndDate: dt === 'single' ? $('residenceEndDate').value : '',
+                acquisitionPrice: market ? num('acquisitionPrice') : 0, expenses: market ? num('expenses') : 0,
+                acqStdValue: market ? 0 : num('acqStdValue'), basicUsed: $('basicUsed').checked,
+                recipientHouses: Number($('recipientHouses').value), temporaryTwo: !$('tempTwoBox').classList.contains('hidden') && $('temporaryTwo').checked,
+                donorSingleHouse: !$('donorSingleBox').classList.contains('hidden') && $('donorSingleHouse').checked,
+                priorGift: num('priorGift'), priorDeduction: num('priorDeduction'), priorTax: num('priorTax'),
+                appraisalFee: num('appraisalFee'), bondDiscount: parseFloat($('bondDiscount').value) || 0
+            };
+            res = await api('/api/calculate', lastInput);
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다.');
+            return;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '부담부증여 세금 계산하기';
+        }
+        if (!res.ok) {
+            alert(res.data.message || '계산에 실패했습니다.');
+            if (res.status === 401 || res.status === 402) refreshUser();
+            return;
+        }
+        render(res.data.result);
+    }
+
+    function render(r) {
+        const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const s = r.summary, c = r.compare;
+        $('sumSub').innerText = `${s.relation}에게 ${s.valuation === 'market' ? '시가' : '기준시가'} ${won(s.V)} 증여 · 채무 ${won(c.debt)} 인수`;
+        $('cmpBody').innerHTML = c.rows.map(x => `<tr><td>${esc(x.label)}</td><td>${won(x.burden)}</td><td>${won(x.pure)}</td></tr>`).join('');
+        $('cmpBurden').innerText = won(c.burdenTotal);
+        $('cmpPure').innerText = won(c.pureTotal);
+        const good = c.saving >= 0;
+        $('verdict').className = 'verdict ' + (good ? 'good' : 'bad');
+        $('verdict').innerHTML = good
+            ? `부담부증여가 순수 증여보다<b>${won(c.saving)} 적습니다</b>수증자가 채무 ${won(c.debt)}을 앞으로 직접 갚는다는 전제입니다.`
+            : `이 경우 부담부증여가 순수 증여보다<b>${won(-c.saving)} 많습니다</b>증여자의 채무인수분 양도세가 증여세 절감액보다 큽니다.`;
+
+        $('reportSub').innerText = `증여재산가액 ${won(s.V)} (${s.valuation === 'market' ? '시가' : '기준시가'} ${won(s.whole)}${s.share < 1 ? ` × 지분 ${+(s.share * 100).toFixed(2)}%` : ''}) · 인수채무 ${won(c.debt)} (채무비율 ${(s.ratio * 100).toFixed(2)}%)`;
+        $('reportGrid').innerHTML = r.sections.map(sec => `
+            <div class="sec">
+                <div class="sec-head"><h3>${esc(sec.title)}</h3><span class="sec-who${sec.who === '증여자' ? ' donor' : ''}">${esc(sec.who)} 부담</span></div>
+                <p class="sec-sub">${esc(sec.sub)}</p>
+                ${sec.rows.map(x => `<div class="result-row${x.kind ? ' ' + x.kind : ''}${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`).join('')}
+                <div class="result-row total-tax"><span>${esc(sec.totalLabel)}</span><span>${won(sec.total)}</span></div>
+                ${sec.notes.length ? `<div class="basis">${sec.notes.map(n => `<div>${esc(n)}</div>`).join('')}</div>` : ''}
+            </div>`).join('');
+        $('deadlines').innerHTML = r.deadlines.map(d => `<div><span>${esc(d.label)}</span><b>${esc(d.date)}</b><span>${esc(d.basis)}</span></div>`).join('');
+        $('cautions').innerHTML = r.cautions.map(t => `<li>${esc(t)}</li>`).join('');
+        $('result').style.display = 'block';
+        $('report').classList.remove('hidden');
+        if (window.matchMedia('(max-width: 860px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ===== 신고 의뢰: 성함·연락처와 마지막 계산 내용을 세무사에게 메일로 전달 =====
+    function openFiling() {
+        if (!lastInput) { alert('먼저 계산 결과를 확인해주세요.'); return; }
+        $('filingForm').classList.remove('hidden');
+        $('filingDone').classList.add('hidden');
+        $('filingModal').classList.add('open');
+        setTimeout(() => $('filingName').focus(), 50);
+    }
+    function closeFiling() { $('filingModal').classList.remove('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFiling(); });
+    async function submitFiling(event) {
+        event.preventDefault();
+        const btn = $('filingSubmit');
+        btn.disabled = true;
+        btn.innerText = '보내는 중...';
+        try {
+            const res = await api('/api/request-filing', {
+                ...lastInput,
+                name: $('filingName').value.trim(),
+                phone: $('filingPhone').value.trim(),
+                memo: $('filingMemo').value.trim()
+            });
+            if (!res.ok) {
+                alert(res.data.message || '의뢰를 보내지 못했습니다. 010-4454-2429로 연락 주세요.');
+                if (res.status === 401) refreshUser();
+                return;
+            }
+            $('filingForm').classList.add('hidden');
+            $('filingDone').classList.remove('hidden');
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다. 010-4454-2429로 연락 주세요.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '의뢰 보내기';
+        }
+    }
+  </script>
+</body>
+</html>

@@ -160,6 +160,7 @@
         /* 양도세 계산기 배너 */
         .calc { background: var(--bg); }
         .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+        .calc-grid.three { grid-template-columns: repeat(3, 1fr); }
         .calc-part + .calc-part { margin-top: 36px; }
         .calc-part-title { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
         .calc-part-title::before { content: ''; width: 4px; height: 18px; background: #b08d57; border-radius: 2px; }
@@ -222,7 +223,7 @@
             .profile .photo { margin: 0; width: 80px; height: 96px; }
             .cat-row { grid-template-columns: repeat(2, 1fr); }
             .cat-label { grid-column: 1 / -1; padding: 6px; }
-            .calc-grid { grid-template-columns: 1fr; }
+            .calc-grid, .calc-grid.three { grid-template-columns: 1fr; }
             .about-grid { grid-template-columns: 1fr; gap: 24px; padding: 24px 18px; }
             .about-history li { font-size: 14px; }
             .topics { grid-template-columns: repeat(2, 1fr); }
@@ -254,7 +255,6 @@
                 <a href="#info">세법정보</a>
                 <a href="양도세계산기/main.html" class="highlight">양도세 계산기</a>
                 <a href="기장료계산기/main.html">기장의무 판정</a>
-                <a href="재개발계산기/house.html">재개발·재건축</a>
                 <a href="https://blog.naver.com/gangnamcta" target="_blank" rel="noopener">블로그</a>
                 <a href="#location">오시는 길</a>
                 <a href="#contact">상담신청</a>
@@ -347,8 +347,8 @@
             <h2>세금 계산기</h2>
             <p class="sub">세무사가 직접 만든 계산기로 미리 확인해 보세요.</p>
             <div class="calc-part">
-                <h3 class="calc-part-title">양도세 계산</h3>
-                <div class="calc-grid">
+                <h3 class="calc-part-title">양도세 · 증여세 계산</h3>
+                <div class="calc-grid three">
                     <a href="양도세계산기/main.html" class="calc-card">
                         <span class="calc-icon">🏠</span>
                         <h3>양도세 계산기</h3>
@@ -374,6 +374,17 @@
                             <a href="재개발계산기/main.html" class="calc-go">청산금 수령액 양도세 계산기 →</a>
                         </div>
                     </div>
+                    <a href="부담부증여계산기/main.html" class="calc-card">
+                        <span class="calc-icon">🎁</span>
+                        <h3>부담부증여 계산기</h3>
+                        <p class="calc-desc">전세보증금·대출을 함께 넘기는 증여, 세금과 비용을 한 번에 확인하세요.</p>
+                        <ul>
+                            <li>증여자 양도세 · 수증자 증여세 · 취득세 한 번에</li>
+                            <li>순수 증여와 총세액 비교 (절세 효과)</li>
+                            <li>등기비용 추정 · 신고기한 · 주의사항 안내</li>
+                        </ul>
+                        <span class="calc-go">계산해보기 →</span>
+                    </a>
                 </div>
             </div>
             <div class="calc-part">
