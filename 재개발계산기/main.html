@@ -371,17 +371,13 @@
             <div id="reductionBox" class="form-group">
                 <label>조특법 제77조 감면 <span class="hint">(재개발 · 정비구역 토지등을 사업시행자에게 양도)</span></label>
                 <div id="reductionPanel" class="panel" style="margin-top: 0;">
-                    <label class="check-line" style="margin: 0 0 12px; font-weight: 600 !important;">
-                        <input type="checkbox" id="reduction" checked onchange="refreshForm()">
-                        감면 적용
-                    </label>
                     <div class="form-group">
-                        <label class="sub-label">사업시행계획인가 고시일 <span class="hint">(사업인정고시일로 봄)</span></label>
+                        <label class="sub-label">사업시행계획인가 고시일 <span class="hint">(사업인정고시일로 봄 · 입력하면 감면 자동 판단)</span></label>
                         <div class="date-input-wrapper"><input type="text" id="projectApprovalDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                         <div id="reductionMsg" class="live-msg"></div>
                     </div>
                     <div class="form-group">
-                        <label class="sub-label" for="reductionMethod">보상 방식 · 감면율</label>
+                        <label class="sub-label" for="reductionMethod">보상 방식 <span class="hint">(선택하면 감면율 자동 적용)</span></label>
                         <select id="reductionMethod">
                             <option value="cash">현금 보상 – 15%</option>
                             <option value="bond">채권 보상 – 20%</option>
@@ -777,10 +773,10 @@
         if (isDate(proj) && isDate(acq)) {
             const limit = twoYearsBefore(proj);
             const ok = acq <= limit;
-            rm.innerText = ok ? `취득일이 고시일부터 소급 2년(${limit}) 이전 → 감면 대상` : `취득일이 소급 2년(${limit})보다 늦어 감면 대상이 아닙니다.`;
+            rm.innerText = ok ? `취득일이 고시일부터 소급 2년(${limit}) 이전 → 감면 자동 적용` : `취득일이 소급 2년(${limit})보다 늦어 감면 대상이 아닙니다.`;
             rm.classList.toggle('warn', !ok);
         } else {
-            rm.innerText = '사업인정고시일(사업시행계획인가 고시일)부터 소급하여 2년 이전에 취득해야 감면됩니다.';
+            rm.innerText = '고시일을 넣으면 취득일이 소급 2년 이전인지 확인해 감면을 자동 적용합니다. (비워두면 감면 없이 계산)';
             rm.classList.remove('warn');
         }
     }
@@ -797,7 +793,6 @@
         if (member && !num('rightsValue')) { alert('권리가액을 입력해주세요.'); return; }
         const shareVal = parseFloat($('share').value);
         if (!(shareVal > 0 && shareVal <= 100)) { alert('지분율은 0 초과 100 이하로 넣어주세요.'); return; }
-        if (currentProject() !== 'rebuild' && $('reduction').checked && !isDate($('projectApprovalDate').value)) { alert('사업시행계획인가 고시일을 입력해주세요.'); return; }
 
         const btn = $('calcBtn');
         btn.disabled = true;
@@ -821,11 +816,11 @@
                 expenses: num('expenses'),
                 share: parseFloat($('share').value) || 100,
                 projectType: currentProject(),
-                reduction: currentProject() !== 'rebuild' && $('reduction').checked,
+                reduction: currentProject() !== 'rebuild' && isDate($('projectApprovalDate').value),
                 reductionMethod: $('reductionMethod').value,
                 priorReductionYear: num('priorReductionYear'),
                 priorReduction4y: num('priorReduction4y'),
-                projectApprovalDate: currentProject() !== 'rebuild' && $('reduction').checked ? $('projectApprovalDate').value : ''
+                projectApprovalDate: currentProject() !== 'rebuild' && isDate($('projectApprovalDate').value) ? $('projectApprovalDate').value : ''
             };
             res = await api('/api/calculate', lastInput);
         } catch (error) {
