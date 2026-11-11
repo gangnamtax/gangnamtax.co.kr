@@ -778,6 +778,9 @@
             : newhouse ? '승계조합원 신축주택: 준공일(사용승인일)에 취득한 것으로 보아 보유·거주·장기보유특별공제를 준공일부터 계산 (단기세율 판정은 입주권 취득일부터)'
             : '승계조합원 입주권: 1세대 1주택 비과세·장기보유특별공제 대상이 아니어서 일반 과세로 계산';
         $('acqDateLabel').innerText = succ ? '입주권 취득일 (잔금일)' : '종전 주택 취득일';
+        // 날짜 순서: 원조합원은 취득일 → 관리처분, 승계조합원은 관리처분 → 입주권 취득일
+        const acqCol = $('acquisitionDate').closest('.date-col'), mgmtCol = $('mgmtApprovalDate').closest('.date-col');
+        if (succ) mgmtCol.after(acqCol); else mgmtCol.before(acqCol);
         $('acqPriceLabel').innerHTML = succ ? '입주권 매입가 <span class="hint">(본인 몫 · 권리가액 + 프리미엄)</span>' : '종전 주택 취득가액 <span class="hint">(본인 지분 몫 매입가)</span>';
         $('expensesLabel').innerHTML = succ ? '입주권 취득 필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료 등)</span>' : '종전 주택 필요경비 <span class="hint">(본인 몫 · 취득세·중개수수료·자본적 지출 등)</span>';
         $('paidBox').classList.toggle('hidden', succ && !newhouse);
