@@ -224,6 +224,7 @@
     .std-table td { padding: 0 0 0 8px; }
     .std-table td input { padding: 10px 12px; font-size: 14px; }
     .std-table td.na { text-align: center; color: #cbd5e1; }
+    .std-table tr.na-row { opacity: .45; }
     .std-table th small { display: block; font-weight: normal; font-size: 11px; color: #94a3b8; }
     .res-sec { margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px 4px; }
     .res-sec h4 { margin: 0 0 10px; font-size: 14px; color: #5b4a2e; display: flex; justify-content: space-between; gap: 8px; }
@@ -238,6 +239,9 @@
     @media (max-width: 640px) {
         .area-grid { grid-template-columns: 1fr 1fr; }
         .std-table th { font-size: 11px; }
+        .bld-table.fixed { min-width: 540px; }
+        .bld-table.alloc { min-width: 380px; }
+        .bld-table.fixed td, .bld-table.alloc td { white-space: nowrap; }
         .floor-legend { display: block; }
         .floor-grid thead { display: none; }
         .floor-grid, .floor-grid tbody { display: block; }
@@ -249,6 +253,34 @@
         .floor-grid tr.floor-card td:nth-child(8) { grid-column: 3 / 6; grid-row: 3; }
         .floor-grid tr.floor-card td:nth-child(9) { grid-column: 5; grid-row: 1; }
     }
+    .bld-box { margin-top: 12px; border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #334155; }
+    .bld-head { font-weight: 700; color: #5b4a2e; margin-bottom: 8px; }
+    .bld-head small, .bld-title small { display: block; font-weight: normal; color: #64748b; font-size: 11px; margin-top: 2px; line-height: 1.5; }
+    .bld-side + .bld-side { border-top: 1px dashed #eadfc9; margin-top: 12px; padding-top: 12px; }
+    .bld-title { font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+    .bld-msg { color: #8a6d3b; font-size: 12px; }
+    .bld-note { font-size: 11px; color: #64748b; padding-top: 4px; }
+    .bld-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 6px; }
+    .bld-table { width: 100%; border-collapse: collapse; font-size: 11px; background: #fff; }
+    .bld-table th { text-align: center !important; white-space: nowrap; background: #f8fafc; border: 1px solid #e2e8f0 !important; padding: 4px 3px !important; line-height: 1.25; }
+    .bld-table td { text-align: right; white-space: nowrap; border: 1px solid #eef2f6 !important; padding: 4px 4px !important; }
+    .bld-table td:first-child, .bld-table td:nth-child(2) { text-align: center; }
+    .bld-table td small, .bld-table th small { display: block; font-size: 10px; color: #94a3b8; font-weight: normal; }
+    .bld-table tr.bsum td { background: #faf7f1; font-weight: 700; color: #5b4a2e; }
+    .bld-table tr.bsum td:first-child { text-align: right; }
+    .bld-table tr.sub td { text-align: left !important; white-space: normal; color: #64748b; }
+    .bld-table.conv td:first-child { text-align: left; }
+    .bld-table.fixed { table-layout: fixed; font-size: 10.5px; letter-spacing: -0.3px; }
+    .bld-table.fixed td, .bld-table.fixed th { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; padding: 3px 2px !important; }
+    .bld-table.fixed td small { font-size: 9px; line-height: 1.2; }
+    .bld-table.alloc { table-layout: fixed; font-size: 10px; letter-spacing: -0.3px; }
+    .bld-table.alloc th, .bld-table.alloc td { white-space: normal; padding: 3px 2px !important; }
+    .bld-table.alloc thead th:first-child, .bld-table.alloc tbody th { width: 58px; }
+    .bld-table.alloc th:first-child { text-align: left !important; }
+    .bld-table.alloc tbody th { background: #f8fafc; font-weight: 600; color: #475569; }
+    .bld-table.alloc td.sum { background: #f8fafc; font-weight: 700; }
+    .alloc-title { font-size: 12px; font-weight: 700; color: #5b4a2e; }
+    .alloc-title small { font-weight: normal; color: #64748b; margin-left: 4px; }
   </style>
 </head>
 <body>
@@ -373,29 +405,29 @@
             <div class="section-title step">3. 기준시가 <small>주택분 · 상가분 안분 (건물 기준시가 자동 계산)</small></div>
             <div id="stdBox" class="form-group">
                 <table class="std-table">
-                    <thead><tr><th></th><th class="col">양도 당시</th><th class="col">취득 당시</th></tr></thead>
+                    <thead><tr><th></th><th class="col">취득 당시</th><th class="col">양도 당시</th></tr></thead>
                     <tbody>
-                        <tr><th>개별공시지가<small>토지 ㎡당</small></th>
-                            <td><input type="text" id="trLandUnit" placeholder="예: 8,000,000" oninput="formatCurrency(this); refreshForm()"></td>
-                            <td><input type="text" id="acqLandUnit" placeholder="예: 3,000,000" oninput="formatCurrency(this); refreshForm()"></td></tr>
                         <tr class="split-row-std"><th>개별주택가격<small>주택 부분 (토지+건물)</small></th>
-                            <td><input type="text" id="trHousePrice" placeholder="예: 900,000,000" oninput="formatCurrency(this)"></td>
-                            <td><input type="text" id="acqHousePrice" placeholder="예: 400,000,000" oninput="formatCurrency(this)"></td></tr>
-                        <tr id="base01Row" class="hidden"><th>2001.1.1. 당시 개별공시지가<small>2000년 이전 취득 · ㎡당</small></th>
-                            <td class="na">-</td>
-                            <td><input type="text" id="base01LandUnit" placeholder="예: 1,500,000" oninput="formatCurrency(this); refreshForm()"></td></tr>
-                        <tr class="first-row hidden"><th>최초 공시 개별주택가격<small>2005.4.30. 공시 · 주택 부분</small></th>
-                            <td class="na">-</td>
-                            <td><input type="text" id="firstHousePrice" placeholder="예: 250,000,000" oninput="formatCurrency(this); refreshForm()"></td></tr>
-                        <tr class="first-row hidden"><th>최초 공시 당시 개별공시지가<small>2005.4.30. 현재 · ㎡당</small></th>
-                            <td class="na">-</td>
-                            <td><input type="text" id="firstLandUnit" placeholder="예: 2,000,000" oninput="formatCurrency(this); refreshForm()"></td></tr>
+                            <td><input type="text" id="acqHousePrice" placeholder="예: 400,000,000" oninput="formatCurrency(this)"></td>
+                            <td><input type="text" id="trHousePrice" placeholder="예: 900,000,000" oninput="formatCurrency(this)"></td></tr>
+                        <tr class="first-row"><th>최초 공시 개별주택가격<small>2005.4.30. 전 취득 시 · 주택 부분</small></th>
+                            <td><input type="text" id="firstHousePrice" placeholder="예: 250,000,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td class="na">-</td></tr>
+                        <tr><th>개별공시지가<small>토지 ㎡당</small></th>
+                            <td><input type="text" id="acqLandUnit" placeholder="예: 3,000,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td><input type="text" id="trLandUnit" placeholder="예: 8,000,000" oninput="formatCurrency(this); refreshForm()"></td></tr>
+                        <tr class="first-row"><th>최초 공시 개별공시지가<small>2005.4.30. 전 취득 시 · ㎡당</small></th>
+                            <td><input type="text" id="firstLandUnit" placeholder="예: 2,000,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td class="na">-</td></tr>
+                        <tr id="base01Row"><th>2001.1.1. 당시 개별공시지가<small>2000년 이전 취득 시 · ㎡당</small></th>
+                            <td><input type="text" id="base01LandUnit" placeholder="예: 1,500,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td class="na">-</td></tr>
                         <tr><th>상가 건물 기준시가<small>국세청 고시 (건물분만)</small></th>
-                            <td><input type="text" id="trShopBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td>
-                            <td><input type="text" id="acqShopBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td></tr>
+                            <td><input type="text" id="acqShopBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td>
+                            <td><input type="text" id="trShopBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td></tr>
                         <tr id="houseBldgRow"><th>주택 건물 기준시가<small>배율 초과 토지 안분용</small></th>
-                            <td><input type="text" id="trHouseBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td>
-                            <td><input type="text" id="acqHouseBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td></tr>
+                            <td><input type="text" id="acqHouseBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td>
+                            <td><input type="text" id="trHouseBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td></tr>
                     </tbody>
                 </table>
                 <div id="stdMsg" class="live-msg" style="font-weight: normal;"></div>
@@ -468,11 +500,19 @@
                 <input type="text" id="transferPrice" placeholder="예: 2,500,000,000" oninput="formatCurrency(this); refreshForm()" required>
             </div>
             <div class="form-group">
+                <label for="acqType">취득가액 종류</label>
+                <select id="acqType" onchange="refreshForm()">
+                    <option value="actual">실지거래가액 (매매계약서 금액)</option>
+                    <option value="converted">환산취득가액 (양도가액 × 취득 기준시가 ÷ 양도 기준시가)</option>
+                </select>
+                <div id="acqTypeMsg" class="live-msg" style="font-weight: normal;"></div>
+            </div>
+            <div class="form-group" id="acqPriceBox">
                 <label for="acquisitionPrice">취득가액 <span class="own">본인 몫</span> <span class="hint">(주택+상가 합계)</span></label>
-                <input type="text" id="acquisitionPrice" placeholder="예: 900,000,000" oninput="formatCurrency(this)" required>
+                <input type="text" id="acquisitionPrice" placeholder="예: 900,000,000" oninput="formatCurrency(this)">
             </div>
             <div class="form-group">
-                <label for="expenses">필요경비 <span class="own">본인 몫</span> <span class="hint">(취득세·자본적지출 등)</span></label>
+                <label for="expenses" id="expensesLabel">필요경비 <span class="own">본인 몫</span> <span class="hint">(취득세·자본적지출 등)</span></label>
                 <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
             </div>
             <div class="form-group">
@@ -494,7 +534,7 @@
             <div id="result" class="result-box" style="display: none;">
                 <h3>상가주택 양도소득세 계산 결과</h3>
                 <div id="resJudge" class="judge"></div>
-                <div id="resSplit" class="judge" style="margin-top: 8px;"></div>
+                <div id="resSplit" style="margin-top: 10px;"></div>
                 <div id="resSections"></div>
                 <div id="resRows" style="margin-top: 16px;"></div>
                 <div class="result-row total-tax">
@@ -1078,53 +1118,66 @@
         return { price, first, landA, landF, bldA: acq.house, bldF: atFirst.house, atFirst, houseLand: j.houseLand };
     }
     const USE_LABEL = Object.fromEntries(USES), STRUCT_LABEL = Object.fromEntries(STRUCTS);
-    function bldDetail(r, side) {
-        return r.rows.map(({ f, p, v }) =>
-            `<tr><td>${f.name}<br><small>${f.kind === 'house' ? '주택' : '상가'} ${m2(f.area)}</small></td>` +
-            `<td>${STRUCT_LABEL[side === 'tr' ? f.trStruct : f.acqStruct]} ${p.s}<br><small>${USE_LABEL[side === 'tr' ? f.trUse : f.acqUse] || '-'} ${p.u}</small></td>` +
-            `<td>위치 ${p.lv}<br><small>${'ⅠⅡⅢⅣ'[p.g - 1]}그룹(${p.life}년) ${p.age}년 경과 ${p.r}</small></td><td>${won(p.per)}/㎡<br><small>${p.rateText ? `× ${p.rate} = ` : ''}${won(v)}</small></td></tr>` +
-            (p.rateText || p.notes.length ? `<tr><td colspan="4" class="bld-note">${[p.rateText ? `산정기준율 ${p.rateText}` : '', ...p.notes].filter(Boolean).join(' · ')}</td></tr>` : '')).join('') +
-            (r.commonText ? `<tr><td colspan="4" class="bld-note">${r.commonText}</td></tr>` : '');
+    const n0 = v => Math.round(v).toLocaleString('ko-KR');
+    // 층별 계산표: 층 · 구분 · 기준금액 · 구조(지수) · 용도(지수) · 위치지수 · 잔가율 · ㎡당 금액 · 면적 · 기준시가
+    function bldTable(r, side) {
+        const hasRate = r.rows.some(x => x.p.rate);
+        const cols = `<colgroup><col style="width: 13%"><col style="width: 7%"><col style="width: 9%"><col style="width: 11%"><col style="width: 11%"><col style="width: 6%"><col style="width: 8%">${hasRate ? '<col style="width: 7%">' : ''}<col style="width: 9%"><col style="width: 8%"><col></colgroup>`;
+        const head = `<tr><th>층</th><th>구분</th><th>기준<br>금액</th><th>구조<br>지수</th><th>용도<br>지수</th><th>위치<br>지수</th><th>잔가율</th>${hasRate ? '<th>산정<br>기준율</th>' : ''}<th>㎡당<br>금액</th><th>면적<br>(㎡)</th><th>기준시가</th></tr>`;
+        const body = r.rows.map(({ f, p, v }) => {
+            const st = side === 'tr' ? f.trStruct : f.acqStruct, us = side === 'tr' ? f.trUse : f.acqUse;
+            return `<tr><td>${f.name}</td><td>${f.kind === 'house' ? '주택' : '상가'}</td><td>${n0(r.base)}</td>` +
+                `<td title="${STRUCT_LABEL[st]}">${p.s}<small>${STRUCT_LABEL[st]}</small></td><td title="${USE_LABEL[us] || ''}">${p.u}<small>${USE_LABEL[us] || '-'}</small></td>` +
+                `<td>${p.lv}</td><td>${p.r}<small>${'ⅠⅡⅢⅣ'[p.g - 1]}·${p.age}년</small></td>${hasRate ? `<td>${p.rate || ''}</td>` : ''}` +
+                `<td>${n0(p.per)}</td><td>${(Math.round(f.area * 100) / 100).toLocaleString('ko-KR')}</td><td>${n0(v)}</td></tr>`;
+        }).join('');
+        const span = hasRate ? 10 : 9;
+        const common = r.commonText ? `<tr class="sub"><td colspan="${span + 1}">${r.commonText}</td></tr>` : '';
+        const foot = `<tr class="bsum"><td colspan="${span}">주택 건물 기준시가 합계</td><td>${n0(r.house)}</td></tr>` +
+            `<tr class="bsum"><td colspan="${span}">상가 건물 기준시가 합계</td><td>${n0(r.shop)}</td></tr>`;
+        return `<div class="bld-scroll"><table class="bld-table fixed">${cols}<thead>${head}</thead><tbody>${body}${common}</tbody><tfoot>${foot}</tfoot></table></div>`;
     }
     function bldBlock(title, r, side) {
-        return `<div class="bld-side"><div class="bld-title">${title} <small>${r.label} · 신축가격기준액 ${won(r.base)}/㎡ · 위치지수 ${r.lv} (공시지가 ${won(r.unit)})</small></div>
-            <div class="bld-sum"><span>상가 건물 기준시가</span><b>${won(r.shop)}</b></div>
-            <div class="bld-sum"><span>주택 건물 기준시가</span><b>${won(r.house)}</b></div>
-            <details><summary>층별 계산 보기</summary><table class="bld-table"><thead><tr><th>층</th><th>구조·용도 지수</th><th>위치·잔가율</th><th>㎡당 · 금액</th></tr></thead><tbody>${bldDetail(r, side)}</tbody></table></details></div>`;
+        return `<div class="bld-side"><div class="bld-title">${title} <small>${r.label} · 위치지수 ${r.lv} (공시지가 ${won(r.unit)}/㎡) · ㎡당 금액 = 기준금액 × 구조지수 × 용도지수 × 위치지수 × 잔가율 (천원 미만 절사)</small></div>${bldTable(r, side)}</div>`;
     }
     function renderBld() {
         const acqDate = $('acquisitionDate').value;
         const pre2001 = isDate(acqDate) && Number(acqDate.slice(0, 4)) < BLD_FIRST;
         const preHouse = isDate(acqDate) && acqDate < HOUSE_FIRST_DATE;
-        $('base01Row').classList.toggle('hidden', !pre2001);
-        document.querySelectorAll('.first-row').forEach(el => el.classList.toggle('hidden', !preHouse));
-        const res = {};
-        const parts = [['tr', '양도 당시'], ['acq', '취득 당시']].map(([side, title]) => {
+        // 취득일이 정해져 해당 없으면 흐리게 (입력칸은 항상 보이게)
+        const known = isDate(acqDate);
+        $('base01Row').classList.toggle('na-row', known && !pre2001);
+        document.querySelectorAll('.first-row').forEach(el => el.classList.toggle('na-row', known && !preHouse));
+        const res = {}, block = {};
+        [['acq', '취득 당시'], ['tr', '양도 당시']].forEach(([side, title]) => {
             const r = res[side] = bldCalc(side);
-            if (r.msg) return `<div class="bld-side"><div class="bld-title">${title}</div><div class="bld-msg">${r.msg}</div></div>`;
+            if (r.msg) { block[side] = `<div class="bld-side"><div class="bld-title">${title}</div><div class="bld-msg">${r.msg}</div></div>`; return; }
             // 직접 고치지 않은 칸만 자동으로 채움
             [['ShopBldg', r.shop], ['HouseBldg', r.house]].forEach(([k, v]) => {
                 const el = $(side + k);
                 if (!el.dataset.manual) el.value = v ? v.toLocaleString('ko-KR') : '';
             });
-            return bldBlock(title, r, side);
+            block[side] = bldBlock(title, r, side);
         });
         // 2005.4.30. 전 취득 주택분: 취득당시 개별주택가격 환산
+        let conv = '';
         if (preHouse) {
             const c = housePriceConvert(res.acq);
-            if (!c || c.msg) parts.push(`<div class="bld-side"><div class="bld-title">취득당시 개별주택가격 환산 <small>소득세법 시행령 제164조⑦</small></div><div class="bld-msg">${c ? c.msg : ''}</div></div>`);
+            if (!c || c.msg) conv = `<div class="bld-side"><div class="bld-title">취득당시 개별주택가격 환산 <small>소득세법 시행령 제164조⑦</small></div><div class="bld-msg">${c ? c.msg : ''}</div></div>`;
             else {
                 const el = $('acqHousePrice');
                 if (!el.dataset.manual) el.value = c.price.toLocaleString('ko-KR');
-                parts.push(bldBlock('개별주택가격 최초 공시일(2005.4.30.) 당시', c.atFirst, 'acq') +
+                conv = bldBlock('개별주택가격 최초 공시일(2005.4.30.) 당시', c.atFirst, 'acq') +
                     `<div class="bld-side"><div class="bld-title">취득당시 개별주택가격 환산 <small>소득세법 시행령 제164조⑦ · 최초 공시 개별주택가격 × 취득당시 (주택 부수토지 + 주택 건물 기준시가) ÷ 최초 공시당시 (같은 합계)</small></div>
-                    <div class="bld-sum"><span>취득당시: 토지 ${won(c.landA)} + 건물 ${won(c.bldA)}</span><b>${won(c.landA + c.bldA)}</b></div>
-                    <div class="bld-sum"><span>최초 공시당시: 토지 ${won(c.landF)} + 건물 ${won(c.bldF)}</span><b>${won(c.landF + c.bldF)}</b></div>
-                    <div class="bld-sum"><span>${won(c.first)} × ${won(c.landA + c.bldA)} ÷ ${won(c.landF + c.bldF)}</span><b>${won(c.price)}</b></div>
-                    <div class="bld-note">주택 부수토지 ${m2(c.houseLand)} × 공시지가로 토지 기준시가 계산. 결과는 취득 당시 개별주택가격 칸에 자동 입력됩니다.</div></div>`);
+                    <div class="bld-scroll"><table class="bld-table conv"><thead><tr><th></th><th>주택 부수토지 기준시가<small>${m2(c.houseLand)} × 공시지가</small></th><th>주택 건물 기준시가</th><th>합계</th></tr></thead><tbody>
+                    <tr><td>취득 당시</td><td>${n0(c.landA)}</td><td>${n0(c.bldA)}</td><td>${n0(c.landA + c.bldA)}</td></tr>
+                    <tr><td>최초 공시 당시</td><td>${n0(c.landF)}</td><td>${n0(c.bldF)}</td><td>${n0(c.landF + c.bldF)}</td></tr></tbody>
+                    <tfoot><tr class="bsum"><td colspan="3">${n0(c.first)} × ${n0(c.landA + c.bldA)} ÷ ${n0(c.landF + c.bldF)} = 취득당시 개별주택가격</td><td>${n0(c.price)}</td></tr></tfoot></table></div>
+                    <div class="bld-note">결과는 취득 당시 개별주택가격 칸에 자동 입력됩니다.</div></div>`;
             }
         }
-        $('bldBox').innerHTML = `<div class="bld-head">건물 기준시가 자동 계산 <small>국세청 건물 기준시가(2001~2026년 고시) · ㎡당 금액 = 신축가격기준액 × 구조지수 × 용도지수 × 위치지수 × 경과연수별잔가율 (천원 미만 절사) · 계산값은 위 칸에 자동 입력되며 직접 고치면 고친 값을 씁니다</small></div>` + parts.join('');
+        $('bldBox').innerHTML = `<div class="bld-head">건물 기준시가 자동 계산 <small>국세청 건물 기준시가(2001~2026년 고시) · 계산값은 위 칸에 자동 입력되며 직접 고치면 고친 값을 씁니다</small></div>` +
+            block.acq + conv + block.tr;
     }
     ['trShopBldg', 'acqShopBldg', 'trHouseBldg', 'acqHouseBldg', 'acqHousePrice'].forEach(id => {
         $(id).addEventListener('input', () => { $(id).dataset.manual = $(id).value ? '1' : ''; });
@@ -1197,7 +1250,11 @@
         $('areaMsg').innerText = lines.join('\n');
         $('areaMsg').classList.toggle('warn', aw);
 
-        const needSplit = !j || !j.allHouse;
+        const converted = $('acqType').value === 'converted';
+        $('acqPriceBox').classList.toggle('hidden', converted);
+        $('expensesLabel').innerHTML = converted ? '자본적지출 <span class="own">본인 몫</span> <span class="hint">(환산 시 필요경비는 개산공제 3% · 자본적지출+양도비용이 더 크면 그 금액)</span>' : '필요경비 <span class="own">본인 몫</span> <span class="hint">(취득세·자본적지출 등)</span>';
+        $('acqTypeMsg').innerText = converted ? '주택 · 상가 토지 · 상가 건물(· 배율 초과 토지)마다 양도가액 × 취득당시 기준시가 ÷ 양도당시 기준시가로 환산하고, 필요경비는 취득당시 기준시가 × 3%(개산공제)로 계산합니다. 3번 기준시가를 모두 넣어 주세요.' : '';
+        const needSplit = !j || !j.allHouse || converted;
         const needBldg = !!(j && j.excess > 0);
         $('houseBldgRow').classList.toggle('hidden', !needBldg);
         document.querySelectorAll('.split-row-std').forEach(el => el.classList.toggle('hidden', !needSplit));
@@ -1205,7 +1262,7 @@
         $('useDirect').closest('label').classList.toggle('hidden', !needSplit);
         $('stdMsg').innerText = !needSplit
             ? (needBldg ? '전부 주택이라 주택·상가 안분은 필요 없고, 배율 초과 토지 안분용으로 공시지가와 건물 기준시가만 넣으면 됩니다.' : '전부 주택이라 기준시가 안분이 필요 없습니다. 비워 두셔도 됩니다.')
-            : '상가분 기준시가 = 공시지가 × 상가 부수토지 면적 + 상가 건물 기준시가 → 주택분(개별주택가격)과의 비율로 양도가액·취득가액을 나눕니다. 홈택스·부동산공시가격알리미에서 확인할 수 있습니다.';
+            : '주택(개별주택가격) · 상가 토지(공시지가 × 상가 부수토지) · 상가 건물(건물 기준시가)의 기준시가 비율로 양도가액·취득가액을 자산별로 나눕니다. 공시가격은 부동산공시가격알리미에서 확인할 수 있습니다.';
 
         const sh = parseFloat($('share').value);
         $('shareMsg').innerText = sh > 0 && sh < 100 ? `본인 지분 양도가액 ${won(num('transferPrice') * sh / 100)} · 12억 판정은 전체(지분 100%) 양도가액 기준` : (sh > 100 || sh === 0 ? '※ 지분율은 0 초과 100 이하로 넣어주세요.' : '');
@@ -1244,7 +1301,7 @@
                 residenceEndDate: tt === 'single' ? ($('residenceEndDate').value || trf) : '',
                 floors: floorRows().filter(f => f.area > 0).slice(0, 40),
                 houseArea: areaNum('houseArea'), shopArea: areaNum('shopArea'), landArea: areaNum('landArea'), footprint: areaNum('footprint'),
-                transferPrice: num('transferPrice'), acquisitionPrice: num('acquisitionPrice'), expenses: num('expenses'), saleExpenses: num('saleExpenses'),
+                transferPrice: num('transferPrice'), acqType: $('acqType').value, acquisitionPrice: $('acqType').value === 'converted' ? 0 : num('acquisitionPrice'), expenses: num('expenses'), saleExpenses: num('saleExpenses'),
                 share: shareVal,
                 trHousePrice: num('trHousePrice'), trLandUnit: num('trLandUnit'), trShopBldg: num('trShopBldg'), trHouseBldg: num('trHouseBldg'),
                 acqHousePrice: num('acqHousePrice'), acqLandUnit: num('acqLandUnit'), acqShopBldg: num('acqShopBldg'), acqHouseBldg: num('acqHouseBldg'),
@@ -1272,8 +1329,28 @@
         const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const row = x => `<div class="result-row${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`;
         $('resJudge').innerHTML = r.judge.map(j => `<div class="${j.label === '판정' ? 'key' : ''}"><span>${esc(j.label)}</span><b>${esc(j.text)}</b></div>`).join('');
-        $('resSplit').innerHTML = r.splitRows.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
-        $('resSplit').classList.toggle('hidden', !r.splitRows.length);
+        // 자산별 안분표 (열 = 자산, 행 = 기준시가·양도가액·취득가액·필요경비)
+        if (r.alloc && r.alloc.cols.length) {
+            const C = r.alloc.cols, conv = r.alloc.acqType === 'converted';
+            const n0 = v => Math.round(v).toLocaleString('ko-KR');
+            const sum = k => C.reduce((s, c) => s + c[k], 0);
+            const pc = (v, t) => (t ? `<small>${(v / t * 100).toFixed(2)}%</small>` : '');
+            const line = (label, k, withPct) => {
+                const t = sum(k);
+                return `<tr><th>${label}</th>${C.map(c => `<td>${n0(c[k])}${withPct ? pc(c[k], t) : ''}</td>`).join('')}<td class="sum">${n0(t)}</td></tr>`;
+            };
+            const rowsA = [line('취득당시 기준시가', 'stdA', true), line('양도당시 기준시가', 'stdT', true),
+                line(r.alloc.share < 1 ? '양도가액 (본인 지분)' : '양도가액', 'T', true),
+                line(conv ? '환산취득가액' : '취득가액', 'A', !conv), line(conv ? '필요경비 (개산공제 3%)' : '필요경비', 'E', false)];
+            if (sum('S')) rowsA.push(line('양도비용', 'S', false));
+            $('resSplit').innerHTML = `<div class="alloc-title">자산별 안분 <small>${conv ? '환산취득가액 = 양도가액 × 취득당시 기준시가 ÷ 양도당시 기준시가' : '기준시가 비율로 안분'}</small></div>` +
+                `<div class="bld-scroll"><table class="bld-table alloc"><thead><tr><th></th>${C.map(c => `<th>${esc(c.name)}</th>`).join('')}<th>합계</th></tr></thead><tbody>${rowsA.join('')}</tbody></table></div>` +
+                (C.some(c => c.alt) ? '<div class="bld-note">일부 자산은 환산취득가액 + 개산공제보다 자본적지출 + 양도비용이 커서 그 금액을 필요경비로 썼습니다 (제97조②2호 단서).</div>' : '');
+            $('resSplit').classList.remove('hidden');
+        } else {
+            $('resSplit').innerHTML = r.splitRows.map(([k, v]) => `<div class="judge"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+            $('resSplit').classList.toggle('hidden', !r.splitRows.length);
+        }
         $('resSections').innerHTML = r.sections.map(s => `<div class="res-sec"><h4>${esc(s.title)} <small>${esc(s.sub)}</small></h4>${s.rows.map(row).join('')}</div>`).join('');
         $('resRows').innerHTML = r.rows.map(row).join('');
         $('resTotalLabel').innerText = r.totalLabel;
