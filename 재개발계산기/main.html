@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>세무회계강남 재개발·재건축 청산금 양도소득세 계산기</title>
-  <meta name="description" content="재개발·재건축 청산금 수령액 양도소득세 예상세액 계산기. 조합원 청산금(권리가액 안분)과 현금청산자, 1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 조특법 제77조 수용 감면까지 계산 - 세무회계강남 김하원 세무사">
+  <meta name="description" content="재개발·재건축 청산금 수령액 양도소득세 예상세액 계산기. 조합원 청산금(권리가액 안분)과 현금청산자, 1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 조특법 제77조 감면까지 계산 - 세무회계강남 김하원 세무사">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -364,17 +364,18 @@
                 <div id="shareSplit" class="split hidden"></div>
             </div>
 
-            <div id="rebuildNote" class="form-group cash-only hidden">
-                <div class="amount-guide" style="margin-bottom: 0;">재건축 현금청산(매도청구)은 공익사업 수용이 아니어서 <b>조특법 제77조 수용 감면</b> 대상이 아닙니다.</div>
-            </div>
-
             <div id="reductionBox" class="form-group cash-only">
-                <label>조특법 제77조 공익사업 수용 감면 <span class="hint">(재개발 현금청산자)</span></label>
+                <label>조특법 제77조 감면 <span class="hint">(현금청산자 · 정비구역 토지등을 사업시행자에게 양도)</span></label>
                 <div id="reductionPanel" class="panel" style="margin-top: 0;">
                     <label class="check-line" style="margin: 0 0 12px; font-weight: 600 !important;">
                         <input type="checkbox" id="reduction" checked onchange="refreshForm()">
-                        수용 감면 적용
+                        감면 적용
                     </label>
+                    <label class="check-line" style="margin: 0 0 12px;">
+                        <input type="checkbox" id="infraOk" checked onchange="refreshForm()">
+                        정비기반시설을 수반하는 정비구역입니다
+                    </label>
+                    <div id="infraMsg" class="live-msg warn hidden" style="margin: -6px 0 12px;">정비기반시설을 수반하지 않는 정비구역은 조특법 제77조 감면 대상에서 제외됩니다.</div>
                     <div class="form-group">
                         <label class="sub-label">사업시행계획인가 고시일 <span class="hint">(사업인정고시일로 봄)</span></label>
                         <div class="date-input-wrapper"><input type="text" id="projectApprovalDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
@@ -697,10 +698,9 @@
         const tt = $('taxType').value;
         document.querySelectorAll('.member-only').forEach(el => el.classList.toggle('hidden', !member));
         document.querySelectorAll('.cash-only').forEach(el => el.classList.toggle('hidden', member));
-        // 재건축 현금청산은 수용 감면 대상 아님 → 감면 칸 숨기고 안내
-        const rebuild = currentProject() === 'rebuild';
-        $('reductionBox').classList.toggle('hidden', member || rebuild);
-        $('rebuildNote').classList.toggle('hidden', member || !rebuild);
+        // 조특법 77①2: 정비구역(정비기반시설 미수반 구역 제외) 토지등을 사업시행자에게 양도 → 재개발·재건축 현금청산자 모두
+        $('reductionBox').classList.toggle('hidden', member);
+        $('infraMsg').classList.toggle('hidden', !$('reduction').checked || $('infraOk').checked);
         $('residenceBox').classList.toggle('hidden', tt !== 'single');
         $('acqRegBox').classList.toggle('hidden', tt !== 'single');
         $('helperBox').classList.toggle('hidden', !$('useHelper').checked);
@@ -813,7 +813,8 @@
                 expenses: num('expenses'),
                 share: parseFloat($('share').value) || 100,
                 projectType: currentProject(),
-                reduction: !member && currentProject() !== 'rebuild' && $('reduction').checked,
+                reduction: !member && $('reduction').checked,
+                infraOk: !member && $('infraOk').checked,
                 reductionMethod: $('reductionMethod').value,
                 projectApprovalDate: !member && $('reduction').checked ? $('projectApprovalDate').value : ''
             };
