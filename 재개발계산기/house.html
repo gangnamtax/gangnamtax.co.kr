@@ -302,23 +302,21 @@
 
             <div id="residenceBox" class="form-group">
                 <label>5. 실제 거주 기간 <span class="hint">[1세대 1주택 전용 · 장기보유특별공제 표2 및 거주요건 판정]</span></label>
-                <div class="date-row">
+                <div class="date-row dates4">
                     <div class="date-col">
-                        <label class="sub-label">종전 주택 거주 시작일</label>
+                        <label class="sub-label" title="종전 주택 거주 시작일">종전 주택 거주 시작</label>
                         <div class="date-input-wrapper"><input type="text" id="residenceStartDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                     </div>
                     <div class="date-col">
-                        <label class="sub-label">종전 주택 거주 종료일 (이주일)</label>
+                        <label class="sub-label" title="종전 주택 거주 종료일 (이주일)">종전 주택 이주일</label>
                         <div class="date-input-wrapper"><input type="text" id="residenceEndDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                     </div>
-                </div>
-                <div class="date-row newhouse-only" style="margin-top: 10px;">
-                    <div class="date-col">
-                        <label class="sub-label">신축주택 거주 시작일 (입주일)</label>
+                    <div class="date-col newhouse-only">
+                        <label class="sub-label" title="신축주택 거주 시작일 (입주일)">신축주택 입주일</label>
                         <div class="date-input-wrapper"><input type="text" id="newResidenceStartDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                     </div>
-                    <div class="date-col">
-                        <label class="sub-label">신축주택 거주 종료일</label>
+                    <div class="date-col newhouse-only">
+                        <label class="sub-label" title="신축주택 거주 종료일">신축주택 거주 종료</label>
                         <div class="date-input-wrapper"><input type="text" id="newResidenceEndDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                     </div>
                 </div>
@@ -792,7 +790,11 @@
         if (isDate(acq) && isDate(mgmt) && !p1) { lines.push('※ 관리처분계획인가일 이후 취득(승계조합원)은 이 계산기에서 계산하지 않습니다. 원조합원만 계산 가능하니 상담해 주세요.'); warn = true; }
         else if (p1) lines.push(`취득일 ~ 관리처분계획인가일: ${p1.text}` + (newhouse ? '' : ' → 장기보유특별공제·비과세 판정'));
         if (isDate(mgmt) && isDate(trf) && !p2) { lines.push('※ 양도일이 관리처분계획인가일보다 빠를 수 없습니다.'); warn = true; }
-        else if (p2 && newhouse) lines.push(`관리처분계획인가일 ~ 양도일: ${p2.text} → 청산금납부분 장기보유특별공제`);
+        else if (p2 && newhouse) {
+            const comp = $('completionDate').value, p4 = period(comp, trf);
+            if (isDate(comp) && (comp < mgmt || !p4)) { lines.push('※ 준공일은 관리처분계획인가일과 양도일 사이여야 합니다.'); warn = true; }
+            else if (p4) lines.push(`준공일 ~ 양도일: ${p4.text} → 청산금납부분 장기보유특별공제`);
+        }
         if (p3 && !warn) lines.push(`취득일 ~ 양도일: ${p3.text}` + (newhouse ? ' → 기존건물분 장기보유특별공제·비과세·세율 판정' : ' → 세율 판정'));
         $('periodMsg').innerText = lines.join('\n');
         $('periodMsg').classList.toggle('warn', warn);
