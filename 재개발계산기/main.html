@@ -336,7 +336,7 @@
                         </div>
                         <div class="date-col" style="max-width: 160px;">
                             <label class="sub-label">비례율 (%)</label>
-                            <input type="text" id="ratio" placeholder="예: 105.3" inputmode="decimal" oninput="applyHelper()">
+                            <input type="text" id="ratio" placeholder="예: 105.3" inputmode="decimal" oninput="keepDecimal(this); applyHelper()">
                         </div>
                     </div>
                 </div>
@@ -360,7 +360,7 @@
 
             <div class="form-group">
                 <label for="share">본인 지분율 (%) <span class="hint">(부부 공동명의 등 공유 시 · 단독 소유는 100)</span></label>
-                <input type="text" id="share" value="100" inputmode="decimal" style="max-width: 160px;" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); refreshForm()">
+                <input type="text" id="share" value="100" inputmode="decimal" style="max-width: 160px;" oninput="keepDecimal(this); refreshForm()">
                 <div id="shareMsg" class="live-msg"></div>
                 <div id="shareSplit" class="split hidden"></div>
             </div>
@@ -678,6 +678,16 @@
     }
     // 키를 누르기 직전 값을 기억 ('-' 삭제 감지용)
     document.addEventListener('keydown', e => { const t = e.target; if (t && t.tagName === 'INPUT' && t.type === 'text') t.dataset.prev = t.value; }, true);
+    // 숫자·소수점만 남기되 커서는 그 자리에
+    function keepDecimal(input) {
+        const v = input.value, c = input.selectionStart == null ? v.length : input.selectionStart;
+        const clean = s => s.replace(/[^0-9.]/g, '');
+        const out = clean(v);
+        if (out === v) return;
+        const pos = clean(v.slice(0, c)).length;
+        input.value = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
+    }
     // 금액 입력: 콤마를 넣어도 커서가 고치던 자리에 남게
     function formatCurrency(input) {
         const ev = window.event || {};
