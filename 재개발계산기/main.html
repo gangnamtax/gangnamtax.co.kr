@@ -266,7 +266,7 @@
             <div class="form-group">
                 <label>2. 종전 주택 소재지 <span class="hint">(선택 · 조정대상지역 자동 판단용)</span></label>
                 <div class="addr-row">
-                    <input type="text" id="address" placeholder="예: 서울 강동구 천호동 000" oninput="refreshForm()">
+                    <input type="text" id="address" placeholder="주소 검색 또는 직접 입력 (예: 서울 강동구 천호동 000)" oninput="refreshForm()" onclick="if (!this.value) searchAddress()">
                     <button type="button" onclick="searchAddress()">주소 검색</button>
                 </div>
             </div>
@@ -510,7 +510,7 @@
   <!-- login.js가 찾는 결제 팝업 (이 계산기는 계좌이체 인가만 사용) -->
   <div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
 
-  <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script src="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   <script>window.CALC_PRODUCT = 'redev';</script>
   <script src="../양도세계산기/js/login.js"></script>
   <script>
