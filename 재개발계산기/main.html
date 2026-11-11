@@ -388,7 +388,15 @@
                             <option value="bond3">채권 보상 (만기 3년 이상) – 35%</option>
                             <option value="bond5">채권 보상 (만기 5년 이상) – 45%</option>
                         </select>
-                        <div class="live-msg" style="font-weight: normal;">감면 한도 연 1억 원 · 감면세액의 20% 농어촌특별세 부과</div>
+                        <div class="live-msg" style="font-weight: normal;">감면 한도: 1개 과세기간 2억 원 · 5개 과세기간 합계 3억 원 · 감면세액의 20% 농어촌특별세 부과</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="sub-label" for="priorReductionYear">올해 이미 받은 감면세액 <span class="hint">(같은 과세기간 다른 양도분 · 없으면 0)</span></label>
+                        <input type="text" id="priorReductionYear" value="0" oninput="formatCurrency(this)">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="sub-label" for="priorReduction4y">직전 4개 과세기간에 받은 감면세액 <span class="hint">(없으면 0)</span></label>
+                        <input type="text" id="priorReduction4y" value="0" oninput="formatCurrency(this)">
                     </div>
                 </div>
             </div>
@@ -815,6 +823,8 @@
                 projectType: currentProject(),
                 reduction: currentProject() !== 'rebuild' && $('reduction').checked,
                 reductionMethod: $('reductionMethod').value,
+                priorReductionYear: num('priorReductionYear'),
+                priorReduction4y: num('priorReduction4y'),
                 projectApprovalDate: currentProject() !== 'rebuild' && $('reduction').checked ? $('projectApprovalDate').value : ''
             };
             res = await api('/api/calculate', lastInput);
