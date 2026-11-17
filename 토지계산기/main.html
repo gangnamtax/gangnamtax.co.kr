@@ -213,6 +213,29 @@
     .pgrid input, .pgrid select { padding: 9px 10px; font-size: 13px; }
     .pgrid .addr-row button { padding: 0 10px; font-size: 12px; }
     .parcel .live-msg { margin: -2px 0 10px; }
+    .prow1 { display: grid; grid-template-columns: 150px minmax(0, 1fr) 96px 104px; gap: 8px; margin-bottom: 10px; }
+    .prow1 label, .prow2 label { font-size: 12px; color: #64748b; margin-bottom: 4px; white-space: nowrap; }
+    .prow1 input, .prow1 select, .prow2 select { padding: 9px 10px; font-size: 13px; }
+    .prow1 .addr-row button { padding: 0 10px; font-size: 12px; }
+    .prow1 .date-input-wrapper input { padding-right: 34px; }
+    .biz-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+    .biz-title { font-size: 12px; font-weight: 700; color: #5b4a2e; margin-bottom: 8px; }
+    .prow2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .biz-qs { margin-top: 4px; }
+    .biz-q { align-items: flex-start !important; margin-top: 8px !important; line-height: 1.45; }
+    .biz-q input { margin-top: 2px !important; flex: 0 0 auto; }
+    .biz-q.q-sub { margin-left: 22px; }
+    .biz-period { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: #334155; margin-top: 8px; }
+    .biz-period .date-input-wrapper { width: 150px; }
+    .biz-period input { padding: 7px 34px 7px 10px; font-size: 13px; }
+    .biz-res { margin-top: 10px; font-size: 13px; font-weight: 700; color: #475569; }
+    .biz-res.ok { color: #1e3a8a; }
+    .biz-res.nb { color: #b45309; }
+    .pvert { margin-bottom: 10px; }
+    .pv-row { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 8px; }
+    .pv-row label { margin: 0; font-size: 13px; color: #334155; }
+    .pv-row label small { display: block; font-size: 11px; font-weight: normal; color: #94a3b8; }
+    .pv-row input, .pv-row select { padding: 9px 10px; font-size: 13px; }
     .p-del { border: 1px solid #e2e8f0; background: #fff; border-radius: 6px; color: #94a3b8; cursor: pointer; font-size: 12px; padding: 4px 10px; font-family: inherit; }
     .p-del:hover { color: #b45309; border-color: #eadfc9; }
     .p-std { border-top: 1px dashed #e2e8f0; padding-top: 10px; }
@@ -246,6 +269,10 @@
     .basis-title { font-size: 12px; font-weight: 700; color: #a08452; margin: 14px 0 0; }
     @media (max-width: 640px) {
         .pgrid, .pgrid.four { grid-template-columns: 1fr 1fr; }
+        .prow1 { grid-template-columns: 1fr 1fr; }
+        .prow1 .p-addr { grid-column: 1 / -1; grid-row: 1; }
+        .prow2 { grid-template-columns: 1fr; }
+        .pv-row { grid-template-columns: 120px minmax(0, 1fr); }
         .pgrid .wide { grid-column: span 2; }
         .mode-box { flex-direction: column; }
         .prior-row { grid-template-columns: 1fr 1fr; padding: 6px; border: 1px solid #e2e8f0; border-radius: 6px; }
@@ -714,36 +741,52 @@
         const box = document.createElement('div');
         box.className = 'parcel';
         box.dataset.id = id;
+        const chk = (f, text, cls = '') => `<label class="check-line biz-q ${cls}"><input type="checkbox" data-f="${f}" onchange="refreshForm()"> <span>${text}</span></label>`;
         box.innerHTML = `
             <div class="parcel-head"><div><b class="p-no"></b><span class="tag"></span></div><button type="button" class="p-del" onclick="delParcel(this)">삭제</button></div>
-            <div class="pgrid">
-                <div class="wide"><label>소재지 (지번)</label><div class="addr-row"><input type="text" data-f="address" placeholder="예: 경기 하남시 감일동 123-4"><button type="button" onclick="searchParcelAddr(this)">검색</button></div></div>
-                <div><label>지목</label><select data-f="jimok">${JIMOK.map(j => `<option${j === (v.jimok || '대') ? ' selected' : ''}>${j}</option>`).join('')}</select></div>
-                <div><label>면적 (㎡) · 본인 지분</label><input type="text" data-f="area" inputmode="decimal" placeholder="예: 330" oninput="keepDecimal(this); refreshForm()"></div>
+            <div class="prow1">
                 <div><label>취득일</label><div class="date-input-wrapper"><input type="text" data-f="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div></div>
-                <div><label>사업용 여부</label><select data-f="nonBiz" onchange="refreshForm()"><option value="">사업용 토지</option><option value="1">비사업용 토지 (+10%p)</option></select></div>
+                <div class="p-addr"><label>소재지 (지번)</label><div class="addr-row"><input type="text" data-f="address" placeholder="클릭하면 주소 검색" onclick="if (!this.value) searchParcelAddr(this)"><button type="button" onclick="searchParcelAddr(this.parentNode.querySelector('input'))">검색</button></div></div>
+                <div><label>지목</label><select data-f="jimok" onchange="refreshForm()">${JIMOK.map(j => `<option${j === (v.jimok || '대') ? ' selected' : ''}>${j}</option>`).join('')}</select></div>
+                <div><label>면적 (㎡)</label><input type="text" data-f="area" inputmode="decimal" placeholder="본인 지분" oninput="keepDecimal(this); refreshForm()"></div>
             </div>
-            <div class="pgrid">
-                <div class="p-tr"><label>양도가액</label><input type="text" data-f="transferPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this); refreshForm()"></div>
-                <div><label>취득가액 종류</label><select data-f="acqType" onchange="refreshForm()"><option value="actual">실지거래가액</option><option value="converted">환산취득가액</option></select></div>
-                <div class="p-acq"><label>취득가액</label><input type="text" data-f="acquisitionPrice" placeholder="예: 200,000,000" oninput="formatCurrency(this)"></div>
+            <div class="biz-box">
+                <div class="biz-title">사업용 토지 판정</div>
+                <div class="prow2">
+                    <div><label>취득원인</label><select data-f="acqCause" onchange="refreshForm()"><option value="buy">매매</option><option value="inherit">상속</option><option value="gift">증여</option><option value="other">기타 (교환·경매 등)</option></select></div>
+                    <div><label>판정 방법</label><select data-f="bizMode" onchange="refreshForm()"><option value="auto">아래 질문으로 자동 판정</option><option value="biz">사업용으로 직접 지정</option><option value="nb">비사업용으로 직접 지정</option></select></div>
+                </div>
+                <div class="biz-qs">
+                    ${chk('qUse', '', 'q-use')}
+                    ${chk('qProtect', '보안림·산림보호구역·채종림 등 공익상 보호 임야이거나, 산림경영계획 인가를 받아 경영 중', 'q-forest')}
+                    ${chk('qUrban', '양도일 현재 도시지역 주거·상업·공업지역 안에 있음', 'q-farm')}
+                    ${chk('qUrbanNew', '그 지역에 편입된 지 3년이 안 됨', 'q-farm q-sub')}
+                    <div class="biz-period"><span>위 용도로 쓴 기간</span><div class="date-input-wrapper"><input type="text" data-f="useStart" placeholder="취득일부터" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div><span>~</span><div class="date-input-wrapper"><input type="text" data-f="useEnd" placeholder="양도일까지" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div></div>
+                    ${chk('q8y', '직계존속(부모 등)·배우자가 8년 이상 재촌·자경(임야는 재촌, 목장은 축산)한 토지를 상속·증여받음 (양도 당시 도시지역 주거·상업·공업지역 밖)', 'q-8y')}
+                    ${chk('qExpro', '공익사업으로 수용·협의매수됨 (사업인정고시일 5년 전 취득, 2021.5.3. 이전 고시는 2년 전)')}
+                </div>
+                <div class="biz-res"></div>
             </div>
-            <div class="pgrid two">
-                <div class="p-exp"><label title="취득세·법무비용·자본적지출 등">필요경비 (취득세·자본적지출)</label><input type="text" data-f="expenses" value="0" oninput="formatCurrency(this)"></div>
-                <div class="p-sale"><label>양도비용 (이 필지만)</label><input type="text" data-f="saleExpenses" value="0" oninput="formatCurrency(this)"></div>
+            <div class="pvert">
+                <div class="pv-row p-tr"><label>양도가액</label><input type="text" data-f="transferPrice" placeholder="예: 500,000,000" oninput="formatCurrency(this); refreshForm()"></div>
+                <div class="pv-row"><label>취득가액 종류</label><select data-f="acqType" onchange="refreshForm()"><option value="actual">실지거래가액 (계약서 금액)</option><option value="converted">환산취득가액 (기준시가 비율)</option></select></div>
+                <div class="pv-row p-acq"><label>취득가액</label><input type="text" data-f="acquisitionPrice" placeholder="예: 200,000,000" oninput="formatCurrency(this)"></div>
+                <div class="pv-row p-exp"><label><span class="p-exp-t">필요경비</span><small>취득세·법무비용·자본적지출</small></label><input type="text" data-f="expenses" value="0" oninput="formatCurrency(this)"></div>
+                <div class="pv-row p-sale"><label>양도비용<small>이 필지에만 든 비용</small></label><input type="text" data-f="saleExpenses" value="0" oninput="formatCurrency(this)"></div>
             </div>
             <div class="p-std">
                 <div class="p-std-title">개별공시지가 (㎡당) · 감정가액 <span class="p-std-need" style="font-weight: normal; color: #64748b;"></span></div>
                 <div class="pgrid four">
-                    <div><label>취득당시 공시지가</label><input type="text" data-f="acqStdUnit" placeholder="원/㎡" oninput="formatCurrency(this); refreshForm()"></div>
                     <div><label>양도당시 공시지가</label><input type="text" data-f="trStdUnit" placeholder="원/㎡" oninput="formatCurrency(this); refreshForm()"></div>
-                    <div class="p-appr-a"><label>취득당시 감정가액</label><input type="text" data-f="acqAppraisal" placeholder="원" oninput="formatCurrency(this); refreshForm()"></div>
+                    <div><label>취득당시 공시지가</label><input type="text" data-f="acqStdUnit" placeholder="원/㎡" oninput="formatCurrency(this); refreshForm()"></div>
                     <div class="p-appr-t"><label>양도당시 감정가액</label><input type="text" data-f="trAppraisal" placeholder="원" oninput="formatCurrency(this); refreshForm()"></div>
+                    <div class="p-appr-a"><label>취득당시 감정가액</label><input type="text" data-f="acqAppraisal" placeholder="원" oninput="formatCurrency(this); refreshForm()"></div>
                 </div>
+                <div class="live-msg p-std-msg" style="font-weight: normal;"></div>
             </div>
             <div class="live-msg p-msg"></div>`;
         $('parcelList').appendChild(box);
-        Object.entries(v).forEach(([k, val]) => { const el = box.querySelector(`[data-f="${k}"]`); if (el) el.value = val; });
+        Object.entries(v).forEach(([k, val]) => { const el = box.querySelector(`[data-f="${k}"]`); if (el) { if (el.type === 'checkbox') el.checked = !!val; else el.value = val; } });
         box.querySelectorAll('.date-input-wrapper').forEach(addCalBtn);
         return box;
     }
@@ -752,21 +795,84 @@
         btn.closest('.parcel').remove();
         refreshForm();
     }
-    function searchParcelAddr(btn) {
-        const input = btn.parentNode.querySelector('input');
-        if (window.daum && daum.Postcode) new daum.Postcode({ oncomplete: d => { input.value = d.jibunAddress || d.autoJibunAddress || d.address; input.focus(); } }).open();
-        else input.focus();
+    // 주소 검색 (카카오 우편번호). 지번이 검색되지 않는 농지·임야는 동·리까지 고른 뒤 번지를 직접 덧붙임
+    function searchParcelAddr(input) {
+        if (window.daum && daum.Postcode) {
+            new daum.Postcode({ oncomplete: d => { input.value = d.jibunAddress || d.autoJibunAddress || d.address; input.focus(); refreshForm(); } }).open();
+        } else input.focus();
     }
     const fv = (box, f) => box.querySelector(`[data-f="${f}"]`).value;
+    const fc = (box, f) => box.querySelector(`[data-f="${f}"]`).checked;
     const fnum = (box, f) => Number(fv(box, f).replace(/[^0-9]/g, '')) || 0;
+
+    // ===== 사업용 토지 판정 (소득세법 제104조의3, 시행령 제168조의6~14 요약) =====
+    const DAY = 86400000;
+    const dms = s => Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10));
+    const addYears = (s, n) => `${+s.slice(0, 4) + n}${s.slice(4)}`;
+    const FARM = ['전', '답', '과수원'];
+    function bizJudge(p, trf) {
+        const biz = text => ({ nonBiz: false, text });
+        const nb = text => ({ nonBiz: true, text });
+        if (p.bizMode === 'biz') return biz('직접 지정');
+        if (p.bizMode === 'nb') return nb('직접 지정');
+        if (!isDate(p.acquisitionDate) || !isDate(trf) || trf < p.acquisitionDate) return { nonBiz: false, text: '양도일·취득일을 넣으면 판정합니다', pending: true };
+        const farm = FARM.includes(p.jimok), forest = p.jimok === '임야', ranch = p.jimok === '목장용지';
+        const rural = farm || forest || ranch;
+        // 무조건 사업용으로 보는 토지 (시행령 제168조의14③)
+        if (rural && p.acqCause === 'inherit' && trf <= addYears(p.acquisitionDate, 5)) return biz('상속개시일부터 5년 이내에 양도하는 상속 농지·임야·목장용지 → 사업용으로 봄');
+        if (rural && (p.acqCause === 'inherit' || p.acqCause === 'gift') && p.q8y) return biz('직계존속·배우자가 8년 이상 재촌·자경한 토지를 상속·증여받음 → 사업용으로 봄');
+        if (p.qExpro) return biz('공익사업 수용·협의매수 (사업인정고시일 5년·2년 전 취득) → 사업용으로 봄');
+        // 지목별 용도 요건
+        let what;
+        if (farm) {
+            if (!p.qUse) return nb('재촌·자경하지 않은 농지');
+            if (p.qUrban && !p.qUrbanNew) return nb('도시지역(주거·상업·공업) 편입 후 3년이 지난 농지');
+            what = '재촌·자경';
+        } else if (forest) {
+            if (!p.qUse && !p.qProtect) return nb('재촌하지 않고 공익·산림경영 임야도 아닌 임야');
+            what = p.qProtect ? '공익·산림경영' : '재촌';
+        } else if (ranch) {
+            if (!p.qUse) return nb('축산업에 쓰지 않은 목장용지');
+            what = '축산업 사용';
+        } else {
+            if (!p.qUse) return nb('건물·사업에 쓰지 않은 토지 (나대지 등)');
+            what = '건물 부속·사업 사용';
+        }
+        // 기간기준 (시행령 제168조의6): 비사업용으로 쓴 기간이 아래에 모두 해당하면 비사업용
+        const A = dms(p.acquisitionDate), T = dms(trf);
+        const us = isDate(p.useStart) ? Math.max(dms(p.useStart), A) : A;
+        const ue = isDate(p.useEnd) ? Math.min(dms(p.useEnd), T) : T;
+        const used = from => Math.max(0, ue - Math.max(us, from)) / DAY;               // [from, 양도일] 중 사업용 일수
+        const nbIn = from => Math.max(0, T - Math.max(A, from)) / DAY - used(from);    // 같은 구간 비사업용 일수
+        const H = (T - A) / DAY;
+        const nbAll = nbIn(A), nb3 = nbIn(dms(addYears(trf, -3))), nb5 = nbIn(dms(addYears(trf, -5)));
+        let isNb;
+        if (trf >= addYears(p.acquisitionDate, 5)) isNb = nb5 > 730 && nb3 > 365 && nbAll > H * 0.2;
+        else if (trf >= addYears(p.acquisitionDate, 3)) isNb = nbAll > 730 && nb3 > 365 && nbAll > H * 0.2;
+        else isNb = nbAll > H - 730 && nbAll > H * 0.2;
+        const y = d => (d / 365).toFixed(1).replace(/\.0$/, '');
+        const usedText = `${what} ${y(used(A))}년 / 보유 ${y(H)}년`;
+        return isNb ? nb(`${usedText} → 기간기준 미충족`) : biz(`${usedText} → 기간기준 충족`);
+    }
     function parcelData() {
-        return [...$('parcelList').children].map(box => ({
-            address: fv(box, 'address').trim(), jimok: fv(box, 'jimok'), area: parseFloat(fv(box, 'area')) || 0,
-            acquisitionDate: fv(box, 'acquisitionDate'), nonBiz: fv(box, 'nonBiz') === '1', acqType: fv(box, 'acqType'),
-            transferPrice: fnum(box, 'transferPrice'), acquisitionPrice: fnum(box, 'acquisitionPrice'),
-            expenses: fnum(box, 'expenses'), saleExpenses: fnum(box, 'saleExpenses'),
-            acqStdUnit: fnum(box, 'acqStdUnit'), trStdUnit: fnum(box, 'trStdUnit'), acqAppraisal: fnum(box, 'acqAppraisal'), trAppraisal: fnum(box, 'trAppraisal')
-        }));
+        const trf = $('transferDate').value;
+        return [...$('parcelList').children].map(box => {
+            const p = {
+                address: fv(box, 'address').trim(), jimok: fv(box, 'jimok'), area: parseFloat(fv(box, 'area')) || 0,
+                acquisitionDate: fv(box, 'acquisitionDate'), acqType: fv(box, 'acqType'),
+                acqCause: fv(box, 'acqCause'), bizMode: fv(box, 'bizMode'),
+                qUse: fc(box, 'qUse'), qProtect: fc(box, 'qProtect'), qUrban: fc(box, 'qUrban'), qUrbanNew: fc(box, 'qUrbanNew'),
+                q8y: fc(box, 'q8y'), qExpro: fc(box, 'qExpro'), useStart: fv(box, 'useStart'), useEnd: fv(box, 'useEnd'),
+                transferPrice: fnum(box, 'transferPrice'), acquisitionPrice: fnum(box, 'acquisitionPrice'),
+                expenses: fnum(box, 'expenses'), saleExpenses: fnum(box, 'saleExpenses'),
+                acqStdUnit: fnum(box, 'acqStdUnit'), trStdUnit: fnum(box, 'trStdUnit'), acqAppraisal: fnum(box, 'acqAppraisal'), trAppraisal: fnum(box, 'trAppraisal')
+            };
+            const j = bizJudge(p, trf);
+            p.nonBiz = j.nonBiz;
+            p.bizNote = j.text;
+            p.bizPending = !!j.pending;
+            return p;
+        });
     }
 
     // ===== 앞선 양도 (올해 예정신고분) =====
@@ -815,11 +921,35 @@
             nb += p.nonBiz ? 1 : 0;
             box.classList.toggle('nb', p.nonBiz);
             box.querySelector('.p-no').innerText = `${i + 1}번 필지`;
-            box.querySelector('.tag').innerText = p.nonBiz ? '비사업용' : '사업용';
+            box.querySelector('.tag').innerText = p.bizPending ? '판정 전' : p.nonBiz ? '비사업용' : '사업용';
+            // 사업용 판정 질문: 지목·취득원인·판정 방법에 맞는 것만 표시
+            const farm = FARM.includes(p.jimok), forest = p.jimok === '임야', ranch = p.jimok === '목장용지', auto = p.bizMode === 'auto';
+            box.querySelector('.q-use span').innerText = farm ? '토지 소재지(같은·연접 시군구 또는 직선 30km 이내)에 살면서 직접 농사지음 (재촌·자경)'
+                : forest ? '토지 소재지(같은·연접 시군구 또는 직선 30km 이내)에 주민등록하고 실제로 거주 (재촌)'
+                : ranch ? '축산업에 사용 (가축별 기준면적 이내)'
+                : '건물 부속토지(주택은 배율 이내)이거나 주차장 등 사업에 써서 재산세 별도합산·분리과세 대상';
+            box.querySelector('.biz-qs').classList.toggle('hidden', !auto);
+            box.querySelector('.q-forest').classList.toggle('hidden', !forest);
+            box.querySelectorAll('.q-farm').forEach(el => el.classList.toggle('hidden', !farm));
+            box.querySelector('.q-sub').classList.toggle('hidden', !farm || !p.qUrban);
+            box.querySelector('.q-8y').classList.toggle('hidden', !((farm || forest || ranch) && (p.acqCause === 'inherit' || p.acqCause === 'gift')));
+            const res = box.querySelector('.biz-res');
+            res.innerText = p.bizPending ? p.bizNote : `${p.nonBiz ? '비사업용 토지 (기본세율 + 10%p)' : '사업용 토지'} · ${p.bizNote}`;
+            res.className = 'biz-res ' + (p.bizPending ? '' : p.nonBiz ? 'nb' : 'ok');
+            // 공시지가: 기준시가 금액 표시, 양도당시가 취득당시보다 낮으면 칸이 바뀌지 않았는지 경고
+            const stdT = Math.floor(p.trStdUnit * p.area), stdA = Math.floor(p.acqStdUnit * p.area);
+            const sm = [];
+            if (stdT) sm.push(`양도당시 기준시가 ${won(stdT)}`);
+            if (stdA) sm.push(`취득당시 기준시가 ${won(stdA)}`);
+            const swapped = p.trStdUnit && p.acqStdUnit && p.trStdUnit < p.acqStdUnit;
+            if (swapped) sm.push('⚠ 양도당시 공시지가가 취득당시보다 낮습니다. 두 칸이 바뀌지 않았는지 확인해 주세요');
+            const stdMsg = box.querySelector('.p-std-msg');
+            stdMsg.innerText = sm.join(' · ');
+            stdMsg.classList.toggle('warn', !!swapped);
             box.querySelector('.p-tr').classList.toggle('hidden', lumpT);
             box.querySelector('.p-acq').classList.toggle('hidden', conv || lumpA);
             box.querySelector('.p-sale').classList.toggle('hidden', false);
-            box.querySelector('.p-exp label').innerText = conv ? '자본적지출 (개산공제와 비교용)' : '필요경비 (취득세·자본적지출)';
+            box.querySelector('.p-exp-t').innerText = conv ? '자본적지출' : '필요경비';
             box.querySelector('.p-appr-t').classList.toggle('hidden', !(lumpT && tBasis === 'appraisal'));
             box.querySelector('.p-appr-a').classList.toggle('hidden', !(lumpA && aBasis === 'appraisal' && !conv));
             const need = [];
@@ -829,6 +959,7 @@
             box.querySelector('.p-std-need').innerText = need.length ? '— ' + need.join(' · ') : '— 안분·환산하지 않으면 비워 두어도 됩니다';
             // 필지별 안내: 보유기간·세율 구분·장특공, 안분 양도가액, 환산취득가액
             const msg = [];
+            if (p.acqCause === 'inherit') msg.push('상속 토지: 단기세율 보유기간은 피상속인 취득일부터, 장기보유특별공제는 상속개시일부터');
             const from = isDate(p.acquisitionDate) && p.acquisitionDate < '1985-01-01' ? '1985-01-01' : p.acquisitionDate;
             const pr = period(from, trf);
             if (pr) {
@@ -873,6 +1004,7 @@
         for (let i = 0; i < P.length; i++) {
             if (!isDate(P[i].acquisitionDate)) { alert(`${i + 1}번 필지의 취득일을 입력해주세요.`); return; }
             if (P[i].acquisitionDate > trf) { alert(`${i + 1}번 필지의 취득일이 양도일보다 늦습니다.`); return; }
+            if (!P[i].area && (P[i].acqType === 'converted' || $('priceMode').value === 'lump')) { alert(`${i + 1}번 필지의 면적을 입력해주세요.`); return; }
         }
         const btn = $('calcBtn');
         btn.disabled = true;
@@ -884,7 +1016,7 @@
                 priceMode: $('priceMode').value, lumpBasis: $('lumpBasis').value, lumpTransferPrice: num('lumpTransferPrice'),
                 acqMode: $('acqMode').value, acqLumpBasis: $('acqLumpBasis').value, lumpAcquisitionPrice: num('lumpAcquisitionPrice'),
                 commonSaleExpenses: num('commonSaleExpenses'),
-                parcels: P.slice(0, 30), prior: priorData(), basicUsed: $('basicUsed').checked
+                parcels: P.slice(0, 30).map(p => ({ ...p, bizNote: (p.nonBiz ? '비사업용: ' : '사업용: ') + p.bizNote })), prior: priorData(), basicUsed: $('basicUsed').checked
             };
             res = await api('/api/calculate', lastInput);
         } catch (error) {
