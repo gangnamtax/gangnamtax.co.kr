@@ -438,6 +438,10 @@
                     <div id="debtMsg" class="live-msg warn"></div>
                 </div>
             </div>
+            <div class="form-group">
+                <label class="check-line" style="margin-top: 0;"><input type="checkbox" id="donorPaysTax" onchange="refreshForm()"> 이번 증여세를 증여자가 대신 내줌 <span class="hint">(대납액도 증여 → 역산해서 계산)</span></label>
+                <div id="paysMsg" class="live-msg" style="font-weight: normal;"></div>
+            </div>
 
             <div class="recip-asc-only">
                 <div class="step-title" style="margin-top: 30px;"><span class="no">4</span>추가 공제 · 혼인 · 출산 <span class="who">부모·조부모에게 받은 경우 · 둘 합쳐 평생 1억</span></div>
@@ -491,6 +495,7 @@
                 <h3>증여세 계산 결과</h3>
                 <div id="resRows"></div>
                 <div class="result-row total-tax"><span id="resTotalLabel">납부할 증여세</span><span id="resTotal">0 원</span></div>
+                <div id="grossUp" class="deadline-box" style="display: none; background: #eff4ff; border-color: #c7d6f5; color: #1e3a8a;"></div>
                 <div id="deadline" class="deadline-box"></div>
                 <div id="histWrap"></div>
                 <div id="resNotes" class="basis"></div>
@@ -981,7 +986,7 @@
                     <input type="text" class="p-amount" placeholder="예: 30,000,000" oninput="formatCurrency(this); refreshForm()">
                 </div>
                 <div class="form-group">
-                    <label class="sub-label">그때 낸 증여세 <span class="hint">(모르면 비워두면 자동 계산)</span></label>
+                    <label class="sub-label">그때 증여세 산출세액 <span class="hint">(신고세액공제 전 · 모르면 비워두면 자동 계산)</span></label>
                     <input type="text" class="p-tax" placeholder="자동 계산" oninput="formatCurrency(this)">
                 </div>
                 <div class="form-group p-marriage-box">
@@ -1100,6 +1105,7 @@
         document.querySelectorAll('.cash-only').forEach(el => el.classList.toggle('hidden', asset === 'realty'));
         document.querySelectorAll('.realty-only').forEach(el => el.classList.toggle('hidden', asset === 'cash'));
         $('realtyHint').innerText = val('valuation') === 'market' ? '(시가 · 매매사례가액·감정가액)' : '(기준시가 · 공시가격)';
+        $('paysMsg').innerText = $('donorPaysTax').checked ? '증여자가 대신 내는 증여세(X)도 증여재산에 더합니다. X는 "받은 재산 + X"로 계산한 납부세액이 X와 같아지는 금액입니다. 예전에 낸 증여세를 증여자가 대신 내줬다면 그 금액은 현금 증여액에 넣으세요.' : '';
         $('debtMsg').innerText = num('realtyDebt') > 0 ? '채무를 함께 넘기면 그 금액만큼 증여자에게 양도소득세가 나옵니다. 부담부증여 계산기에서 양도세·취득세까지 함께 확인하세요.' : '';
 
         // 이전 증여 줄
@@ -1153,7 +1159,7 @@
                 minor: age !== null && age < 19, recipientBirth: rc.birth, recipientMarital: asc ? marital : '',
                 skipException: rc.rel === 'grand' && $('skipException').checked,
                 giftDate: gd, cashAmount: cash, realtyValue: realty, realtyDebt: asset === 'cash' ? 0 : num('realtyDebt'),
-                valuation: val('valuation'),
+                valuation: val('valuation'), donorPaysTax: $('donorPaysTax').checked,
                 marriageDate: asc && marital !== 'single' ? $('marriageDate').value : '',
                 birthDate: asc && $('hasBaby').checked ? $('birthDate').value : '',
                 priorMarriage: asc && $('priorMarriageUsed').checked ? num('priorMarriage') : 0,
@@ -1182,6 +1188,8 @@
             `<div class="result-row${x.kind === 'sub' ? ' sub' : ''}${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`).join('');
         $('resTotalLabel').innerText = r.totalLabel;
         $('resTotal').innerText = won(r.total);
+        $('grossUp').innerHTML = r.summary && r.summary.grossUp ? `대납하지 않을 때 증여세 <b>${won(r.summary.noGrossUpTax)}</b> → 증여자가 대납하면 대납액까지 증여로 보아 <b>${won(r.summary.grossUp)}</b><br><span style="font-size: 12px; color: #64748b;">수증자가 받은 것 = 재산 + 대납 증여세 ${won(r.summary.grossUp)}</span>` : '';
+        $('grossUp').style.display = r.summary && r.summary.grossUp ? 'block' : 'none';
         $('deadline').innerHTML = `신고·납부기한 <b>${esc(r.deadline.date)}</b><br><span style="font-size: 12px; color: #64748b;">${esc(r.deadline.basis)}</span>`;
         const nameOf = h => { const p = pr.find(q => q.date === h.date && q.amount === h.amount); return p && p.giverLabel ? p.giverLabel : h.who; };
         $('histWrap').innerHTML = r.history && r.history.length ? `<table class="hist"><thead><tr><th>증여일</th><th>준 사람</th><th class="num">금액</th><th>이번 계산</th></tr></thead><tbody>` +
