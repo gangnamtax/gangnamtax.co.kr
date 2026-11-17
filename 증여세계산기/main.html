@@ -466,7 +466,7 @@
                     </div>
                 </div>
                 <div id="noMarriageMsg" class="live-msg" style="font-weight: normal;"></div>
-                <label class="check-line"><input type="checkbox" id="priorMarriageUsed" onchange="refreshForm()"> 이전에 혼인 · 출산 공제를 받은 적이 있음</label>
+                <label class="check-line"><input type="checkbox" id="priorMarriageUsed" onchange="refreshForm()"> 이전에 받은 혼인 · 출산 공제액을 직접 입력 <span class="hint">(체크하지 않으면 아래 이전 증여 중 공제 기간 안의 부모·조부모 증여는 그때 공제받은 것으로 자동 계산)</span></label>
                 <div id="priorMarriageBox" class="form-group hidden" style="margin-top: 10px;">
                     <label for="priorMarriage">그때 받은 혼인 · 출산 공제액 합계 <span class="hint">(이번에 남은 한도 = 1억 − 이 금액)</span></label>
                     <input type="text" id="priorMarriage" value="0" oninput="formatCurrency(this); refreshForm()">
@@ -1124,6 +1124,8 @@
                 if (d > gd) { t = '※ 이번 증여일보다 늦은 날짜입니다.'; w = true; }
                 else if (d <= limit10) t = '10년이 지난 증여 → 합산하지 않고 공제 한도도 다시 생깁니다.' + ageTxt;
                 else if (gv.who !== 'other') t = `10년 안 ${gv.who === 'self' ? '같은 사람' : '증여자의 배우자(같은 사람으로 봄)'} 증여 → 이번 증여에 합산합니다.` + ageTxt;
+                if (!w && t && asc && gv.group === 'asc' && !$('priorMarriageUsed').checked && ((marital !== 'single' && isDate(md) && d >= addY(md, -2) && d <= addY(md, 2)) || ($('hasBaby').checked && isDate(bd) && d >= bd && d <= addY(bd, 2))))
+                    t += ' · 혼인·출산 공제 기간 안의 증여 → 그때 남은 혼인·출산 공제를 받은 것으로 보아 기납부세액 계산';
                 else if (gv.group === group && group !== 'other') t = `다른 ${GROUP_INFO[group][0]} 증여 → 합산하지 않지만, 그때 쓴 공제만큼 이번 공제 한도가 줄어듭니다.` + ageTxt;
                 else t = '관계가 달라 이번 계산과 무관합니다 (합산 · 공제 차감 없음).' + ageTxt;
             }
@@ -1163,6 +1165,7 @@
                 marriageDate: asc && marital !== 'single' ? $('marriageDate').value : '',
                 birthDate: asc && $('hasBaby').checked ? $('birthDate').value : '',
                 priorMarriage: asc && $('priorMarriageUsed').checked ? num('priorMarriage') : 0,
+                priorMarriageManual: asc && $('priorMarriageUsed').checked,
                 priors: readPriors(), appraisalFee: num('appraisalFee')
             };
             res = await api('/api/calculate', lastInput);
