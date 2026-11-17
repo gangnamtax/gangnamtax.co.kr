@@ -341,6 +341,22 @@
         <form id="taxForm" onsubmit="calculateTax(event)">
             <div class="step-title"><span class="no">1</span>증여자 가족관계 <span class="who">가족관계증명서 기준으로 입력</span></div>
             <div class="form-group">
+                <label>증여자 본인</label>
+                <div class="prior" style="margin-top: 0;">
+                    <div class="date-row">
+                        <div class="date-col">
+                            <label class="sub-label">이름</label>
+                            <input type="text" id="donorName" maxlength="20" placeholder="예: 김대한" oninput="refreshForm()">
+                        </div>
+                        <div class="date-col">
+                            <label class="sub-label">생년월일</label>
+                            <div class="date-input-wrapper"><input type="text" id="donorBirth" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                        </div>
+                    </div>
+                    <div id="donorMsg" class="live-msg"></div>
+                </div>
+            </div>
+            <div class="form-group">
                 <label>증여자의 혼인 상태</label>
                 <div class="seg">
                     <label><input type="radio" name="donorMarried" value="yes" checked onchange="refreshForm()"><b>배우자 있음</b><span>부모·조부모가 줄 때 배우자 증여도 같은 사람으로 보아 10년 합산</span></label>
@@ -1027,6 +1043,17 @@
         document.querySelectorAll('#priors .p-giver').forEach(s => { const v = s.value; s.innerHTML = giverOptions(v); if (s.value !== v) s.value = 'self'; });
 
         const gd = $('giftDate').value, birth = rc ? rc.birth : '';
+        const dB = $('donorBirth').value;
+        let dMsg = '', dWarn = false;
+        if (isDate(dB)) {
+            const today = new Date().toISOString().slice(0, 10);
+            dMsg = `증여자 만 ${ageAt(dB, isDate(gd) ? gd : today)}세${isDate(gd) ? ' (증여일 기준)' : ''}`;
+            if (rc && isDate(birth) && (REL_GROUP[rc.rel] === 'asc' ? birth <= dB : rc.rel === 'parent' ? birth >= dB : false)) {
+                dMsg += ' · ※ 받는 사람과의 관계와 생년월일이 맞지 않습니다. 확인해주세요.'; dWarn = true;
+            }
+        }
+        $('donorMsg').innerText = dMsg;
+        $('donorMsg').classList.toggle('warn', dWarn);
         const age = isDate(birth) && isDate(gd) ? ageAt(birth, gd) : null;
         const minor = age !== null && age < 19;
         $('ageMsg').innerText = age === null ? (rc && !isDate(birth) ? '수증자 생년월일을 넣으면 미성년 여부를 판단합니다.' : '') : `증여일 현재 수증자 만 ${age}세 → ${minor ? '미성년자' : '성년'}`;
@@ -1055,7 +1082,8 @@
             const useLim = minorLim && minor ? minorLim : lim;
             const who = `${rc.label}${rc.name ? ' ' + rc.name : ''}`;
             const relText = { spouse: '배우자', child: '자녀 (증여자 = 직계존속)', grand: '손자녀 (증여자 = 직계존속, 세대생략)', parent: '부모 (증여자 = 직계비속)', kin: '기타 친족', other: '타인' }[rel];
-            lines.push(`<b>증여자</b>${donorMarried() ? ' (배우자 있음)' : ' (배우자 없음)'} → <b>${esc(who)}</b>${age !== null ? ` (만 ${age}세 · ${minor ? '미성년' : '성년'})` : ''} · ${relText}`);
+            const dn = $('donorName').value.trim(), dAge = isDate($('donorBirth').value) && isDate(gd) ? ageAt($('donorBirth').value, gd) : null;
+            lines.push(`<b>증여자${dn ? ' ' + esc(dn) : ''}</b>${dAge !== null ? ` (만 ${dAge}세` : ' ('}${donorMarried() ? (dAge !== null ? ' · ' : '') + '배우자 있음)' : (dAge !== null ? ' · ' : '') + '배우자 없음)'} → <b>${esc(who)}</b>${age !== null ? ` (만 ${age}세 · ${minor ? '미성년' : '성년'})` : ''} · ${relText}`);
             lines.push(group === 'other' ? '증여재산공제: <b>없음</b> (타인)' : `증여재산공제: <b>${gname} ${won(useLim)}</b>${minorLim && age === null ? ' (미성년이면 2천만 원)' : ''} · 수증자가 ${gname}에게 받은 증여 전체에 10년간 한도`);
             if (asc) {
                 const sp = readFamily().find(f => f.rel === 'spouse');
@@ -1120,7 +1148,7 @@
         let res;
         try {
             lastInput = {
-                relation: rc.rel, donorLabel: `증여자 → ${rc.label}${rc.name ? ' ' + rc.name : ''}`.slice(0, 30), donorMarried: donorMarried(),
+                relation: rc.rel, donorLabel: `${$('donorName').value.trim() || '증여자'} → ${rc.label}${rc.name ? ' ' + rc.name : ''}`.slice(0, 30), donorName: $('donorName').value.trim().slice(0, 20), donorBirth: $('donorBirth').value, donorMarried: donorMarried(),
                 family: readFamily().map(f => ({ rel: FAM[f.rel].label, name: f.name.slice(0, 20), birth: f.birth })).slice(0, 15),
                 minor: age !== null && age < 19, recipientBirth: rc.birth, recipientMarital: asc ? marital : '',
                 skipException: rc.rel === 'grand' && $('skipException').checked,
