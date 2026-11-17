@@ -261,6 +261,20 @@
     .res-sec { margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px 4px; }
     .res-sec h4 { margin: 0 0 10px; font-size: 14px; color: #5b4a2e; }
     .res-sec .result-row { margin-bottom: 8px; }
+    .pcard h4 small { font-weight: normal; color: #64748b; font-size: 12px; }
+    .pcard.nb { border-color: #f5d9b0; background: #fffdf9; }
+    .pcard.nb h4 { color: #b45309; }
+    .paddr { font-size: 12px; color: #64748b; margin: -6px 0 10px; }
+    .result-row small.fx { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; word-break: keep-all; }
+    .result-row.strong span { font-weight: 700; color: #1e293b; }
+    .cmp-opt { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px 2px; margin-bottom: 8px; }
+    .cmp-opt.on { border-color: #b08d57; background: #faf7f1; box-shadow: inset 0 0 0 1px #b08d57; }
+    .cmp-cls { border-top: 1px dashed #e2e8f0; padding: 6px 0 8px; font-size: 12px; color: #334155; position: relative; }
+    .cmp-cls div { display: flex; justify-content: space-between; gap: 8px; }
+    .cmp-cls div span { color: #64748b; }
+    .cmp-cls small { display: block; color: #94a3b8; font-size: 11px; margin-top: 2px; padding-right: 90px; }
+    .cmp-cls em { position: absolute; right: 0; bottom: 8px; font-style: normal; font-weight: 700; color: #475569; }
+    .cmp-note { font-size: 12px; color: #5b4a2e; font-weight: 600; margin: 4px 0 10px; }
     .res-sec .cls-sub { font-size: 11px; color: #64748b; margin: -6px 0 8px; }
     .judge { background: #f8fafc; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #334155; line-height: 1.6; }
     .judge div { display: flex; justify-content: space-between; gap: 10px; }
@@ -1035,24 +1049,76 @@
         render(res.data.result);
     }
 
+    const BRACKETS = [[14000000, 6, 0], [50000000, 15, 1260000], [88000000, 24, 5760000], [150000000, 35, 15440000],
+        [300000000, 38, 19940000], [500000000, 40, 25940000], [1000000000, 42, 35940000], [Infinity, 45, 65940000]];
+    const bracketOf = base => BRACKETS.find(([limit]) => Math.max(0, base) <= limit);
     function render(r) {
         const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const n0 = v => Math.round(v).toLocaleString('ko-KR');
-        const row = x => `<div class="result-row${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`;
+        const line = (label, value, sub, cls = '') => `<div class="result-row ${cls}${value < 0 ? ' minus' : ''}"><span>${esc(label)}${sub ? `<small class="fx">${esc(sub)}</small>` : ''}</span><span>${value < 0 ? '− ' + won(-value) : won(value)}</span></div>`;
+        const row = x => line(x.label, x.value);
         $('resJudge').innerHTML = r.judge.map(j => `<div><span>${esc(j.label)}</span><b>${esc(j.text)}</b></div>`).join('');
-        const sum = k => r.parcels.reduce((s, p) => s + p[k], 0);
-        const cell = (v, neg) => `<td class="${neg && v < 0 ? 'neg' : ''}">${v < 0 ? '−' + n0(-v) : n0(v)}</td>`;
-        $('resParcels').innerHTML = `<div class="alloc-title">필지별 양도차익 <small>금액 단위: 원</small></div><div class="res-scroll"><table class="ptable">
-            <thead><tr><th>필지</th><th>양도가액</th><th>취득가액</th><th>필요경비<small>+양도비용</small></th><th>양도차익</th><th>장기보유<small>특별공제</small></th><th>차손 통산 후<small>소득금액</small></th></tr></thead><tbody>
-            ${r.parcels.map(p => `<tr class="${p.nonBiz ? 'nb' : ''}"><td>${p.no}<small>${esc(p.jimok)} · ${esc(p.periodText)}${p.nonBiz ? ' · 비사업' : ''}</small></td>
-                <td>${n0(p.transferPrice)}</td><td>${n0(p.acquisitionPrice)}${p.conv ? '<small>환산</small>' : ''}</td><td>${n0(p.expenses + p.saleExpenses)}${p.conv ? `<small>${p.alt ? '자본적지출+양도비용' : '개산공제 3%'}</small>` : ''}</td>
-                ${cell(p.gain, true)}<td>${n0(p.longTermDeduction)}<small>${Math.round(p.ltRate * 100)}%</small></td><td>${n0(p.net)}${p.lossIn ? `<small>차손 −${n0(p.lossIn)}</small>` : ''}</td></tr>`).join('')}
-            <tr class="sum"><td>합계</td><td>${n0(sum('transferPrice'))}</td><td>${n0(sum('acquisitionPrice'))}</td><td>${n0(sum('expenses') + sum('saleExpenses'))}</td>${cell(sum('gain'), true)}<td>${n0(sum('longTermDeduction'))}</td><td>${n0(sum('net'))}</td></tr>
-            </tbody></table></div>`;
-        $('resClasses').innerHTML = `<div class="res-sec"><h4>세율 구분별 과세표준</h4>` + r.classes.map(c =>
-            `<div class="result-row"><span>${esc(c.label)}<br><small style="color:#64748b">소득금액 ${n0(c.income)}${c.deduction ? ` − 기본공제 ${n0(c.deduction)}` : ''} · ${esc(c.rate)}</small></span><span>${won(c.base)}${c.tax != null ? `<br><small style="font-weight:normal;color:#64748b">세액 ${n0(c.tax)}</small>` : ''}</span></div>`).join('') +
-            (r.nbBase8 > 0 ? `<div class="cls-sub">비사업용 토지는 과세표준을 합산(${n0(r.nbBase8)}원)해 기본세율 + 10%p → 세액 ${n0(r.nbTax8)}원</div>` : '') + `</div>`;
-        $('resRows').innerHTML = r.rows.map(row).join('');
+
+        // ===== 필지별 안분 계산 =====
+        const inp = lastInput || {};
+        const ip = inp.parcels || [];
+        const lumpT = inp.priceMode === 'lump', lumpA = inp.acqMode === 'lump';
+        const tAppr = inp.lumpBasis === 'appraisal', aAppr = inp.acqLumpBasis === 'appraisal';
+        const wT = r.parcels.map((p, i) => (tAppr ? (ip[i] || {}).trAppraisal || 0 : p.stdT));
+        const wTsum = wT.reduce((s, w) => s + w, 0);
+        const wA = r.parcels.map((p, i) => (p.conv ? 0 : aAppr ? (ip[i] || {}).acqAppraisal || 0 : p.stdA));
+        const wAsum = wA.reduce((s, w) => s + w, 0);
+        $('resParcels').innerHTML = `<div class="alloc-title">필지별 안분 계산</div>` + r.parcels.map((p, i) => {
+            const rows = [];
+            rows.push(line('양도가액', p.transferPrice, lumpT
+                ? `일괄 ${n0(inp.lumpTransferPrice)} × ${tAppr ? '감정가액' : '기준시가'} ${n0(wT[i])} ÷ 합계 ${n0(wTsum)}`
+                : '계약서 필지별 금액'));
+            rows.push(line(p.conv ? '취득가액 (환산)' : '취득가액', p.acquisitionPrice, p.conv
+                ? `양도가액 × 취득당시 기준시가 ${n0(p.stdA)} ÷ 양도당시 기준시가 ${n0(p.stdT)}`
+                : lumpA ? `일괄 ${n0(inp.lumpAcquisitionPrice)} × ${aAppr ? '감정가액' : '취득당시 기준시가'} ${n0(wA[i])} ÷ 합계 ${n0(wAsum)}` : '실지거래가액'));
+            if (p.conv) rows.push(line(p.alt ? '필요경비 (자본적지출 + 양도비용)' : '필요경비 (개산공제)', p.expenses, p.alt ? '환산취득가액 + 개산공제보다 커서 이 금액 적용 (제97조②2호 단서)' : `취득당시 기준시가 ${n0(p.stdA)} × 3%`));
+            else {
+                rows.push(line('필요경비', p.expenses, '취득세·자본적지출 등'));
+                rows.push(line('양도비용', p.saleExpenses, p.saleCommon ? `이 필지 ${n0(p.saleExpenses - p.saleCommon)} + 공통 양도비용 안분 ${n0(p.saleCommon)}` : ''));
+            }
+            rows.push(line('양도차익', p.gain, p.gain < 0 ? '양도차손 → 다른 필지 소득금액에서 통산' : '', 'strong'));
+            if (p.gain > 0) {
+                rows.push(line('장기보유특별공제', -p.longTermDeduction, p.ltRate ? `양도차익 × ${Math.round(p.ltRate * 100)}% (보유 ${p.periodText})` : `보유 ${p.periodText} → 3년 미만 공제 없음`));
+                rows.push(line('양도소득금액', p.income, '', 'strong'));
+                if (p.lossIn) {
+                    rows.push(line('양도차손 통산', -p.lossIn, '같은 세율 필지 → 다른 세율 필지 순 (시행령 제167조의2)'));
+                    rows.push(line('통산 후 양도소득금액', p.net, '', 'strong'));
+                }
+            }
+            return `<div class="res-sec pcard${p.nonBiz ? ' nb' : ''}"><h4>${p.no}번 필지 <small>${esc(p.jimok)} · ${p.area.toLocaleString('ko-KR')}㎡ · ${p.nonBiz ? '비사업용' : '사업용'} · ${esc(p.clsLabel.split(' · ')[1] || '')}</small></h4>` +
+                (p.address ? `<div class="paddr">${esc(p.address)}</div>` : '') + rows.join('') + `</div>`;
+        }).join('');
+
+        // ===== 합산 → 과세표준 =====
+        const isCmp = x => /^(①|②|양도소득 산출세액)/.test(x.label);
+        const cut = r.rows.findIndex(isCmp);
+        $('resClasses').innerHTML = `<div class="res-sec"><h4>합산 과세표준</h4>${r.rows.slice(0, cut).map(row).join('')}</div>`;
+
+        // ===== 비교과세 (제104조⑤): ① 합계 × 기본세율 vs ② 세율 구분별 세액 합계 → 큰 금액 =====
+        const [, rA, dA] = bracketOf(r.taxBase);
+        const clsLines = r.classes.filter(c => c.base > 0 || c.tax).map(c => {
+            const ded = c.deduction ? ` − 기본공제 ${n0(c.deduction)}` : '';
+            let fx;
+            if (c.cls === 'basic') { const [, rt, d] = bracketOf(c.base); fx = `${n0(c.base)} × ${rt}% − 누진공제 ${n0(d)}`; }
+            else if (c.tax != null) fx = `${n0(c.base)} × ${c.rate.match(/\d+%/)[0]}`;
+            else fx = '아래 비사업용 합산 세액에 포함';
+            return `<div class="cmp-cls"><div><b>${esc(c.label)}</b><span>과세표준 ${n0(c.base)}</span></div><small>소득금액 ${n0(c.income)}${ded} · ${esc(fx)}</small>${c.tax != null ? `<em>${won(c.tax)}</em>` : ''}</div>`;
+        });
+        if (r.nbBase8 > 0) {
+            const [, rt, d] = bracketOf(r.nbBase8);
+            clsLines.push(`<div class="cmp-cls"><div><b>비사업용 토지 (과세표준 합산)</b><span>과세표준 ${n0(r.nbBase8)}</span></div><small>${n0(r.nbBase8)} × (${rt}% + 10%) − 누진공제 ${n0(d)}</small><em>${won(r.nbTax8)}</em></div>`);
+        }
+        const pickB = r.taxB >= r.taxA;
+        $('resRows').innerHTML = `<div class="res-sec cmp"><h4>비교과세 <small>소득세법 제104조⑤ · 큰 금액 적용</small></h4>
+            <div class="cmp-opt${pickB ? '' : ' on'}"><div class="result-row"><span>① 과세표준 합계 × 기본세율<small class="fx">${n0(r.taxBase)} × ${rA}% − 누진공제 ${n0(dA)}</small></span><span>${won(r.taxA)}</span></div></div>
+            <div class="cmp-opt${pickB ? ' on' : ''}"><div class="result-row"><span>② 세율 구분별 세액 합계<small class="fx">필지별 세율(사업용 기본세율 · 비사업용 +10%p · 단기 40·50%)로 따로 계산</small></span><span>${won(r.taxB)}</span></div>${clsLines.join('')}</div>
+            <div class="cmp-note">${r.taxA === r.taxB ? '①과 ②가 같습니다 (모든 필지가 같은 세율 구분).' : pickB ? '②가 더 커서 ②를 산출세액으로 합니다.' : '과세표준을 합치면 누진구간이 올라가 ①이 더 커서 ①을 산출세액으로 합니다.'}</div>
+            </div>` + r.rows.slice(cut).filter(x => !/^(①|②)/.test(x.label)).map(row).join('');
         $('resTotalLabel').innerText = r.totalLabel;
         $('resTotal').innerText = won(r.total);
         $('resNotes').innerHTML = r.notes.map(n => `<div>${esc(n)}</div>`).join('');
