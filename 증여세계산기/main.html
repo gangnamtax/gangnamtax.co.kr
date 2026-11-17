@@ -281,7 +281,7 @@
       <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
       <div class="header">
         <div class="title-block">
-          <span class="eyebrow">세무회계강남 · 상속세 · 증여세 계산기</span>
+          <span class="eyebrow">세무회계강남 · 증여세 계산기</span>
           <h1>증여세 계산기 <span style="font-size: 15px; font-weight: 500; color: #64748b;">현금 · 부동산 · 10년 합산</span></h1>
         </div>
         <div id="authButtons">
@@ -292,11 +292,6 @@
           <button id="logoutBtn" class="btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
         </div>
       </div>
-
-      <nav class="pagetabs" aria-label="상속세 · 증여세 계산기 선택">
-        <a href="../상속세계산기/main.html">상속세 계산기</a>
-        <a href="main.html" class="on" aria-current="page">증여세 계산기</a>
-      </nav>
 
       <div class="calculator-card">
         <div id="lockOverlay" class="lock-overlay">
@@ -341,32 +336,50 @@
 
         <div class="calc-layout">
         <form id="taxForm" onsubmit="calculateTax(event)">
+            <div class="step-title"><span class="no">1</span>가족관계 <span class="who">주는 사람 · 받는 사람</span></div>
             <div class="form-group">
-                <label for="relation">1. 받는 사람(수증자)은 주는 사람(증여자)의</label>
-                <select id="relation" onchange="refreshForm()">
-                    <option value="child" selected>자녀 (부모 → 자녀)</option>
-                    <option value="spouse">배우자</option>
-                    <option value="grand">손자녀 (조부모 → 손자녀, 세대생략)</option>
-                    <option value="parent">부모 (자녀 → 부모)</option>
-                    <option value="kin">기타 친족 (사위·며느리 등 6촌 혈족·4촌 인척)</option>
-                    <option value="other">타인</option>
-                </select>
-                <label class="check-line asc-only"><input type="checkbox" id="minor" onchange="refreshForm()"> 수증자가 미성년자 (증여일 현재 만 19세 미만)</label>
-                <label class="check-line grand-only"><input type="checkbox" id="skipException"> 수증자의 부모(증여자의 자녀)가 사망해 대습으로 받는 경우 <span class="hint">(세대생략 할증 제외)</span></label>
-                <div id="dedBadge" class="ded-badge"></div>
+                <label for="donorRole">주는 사람(증여자)은 받는 사람(수증자)의</label>
+                <select id="donorRole" onchange="refreshForm()"></select>
             </div>
-
+            <div class="form-group donor-asc-only">
+                <label>증여자의 혼인 상태</label>
+                <div class="seg">
+                    <label><input type="radio" name="donorMarried" value="yes" checked onchange="refreshForm()"><b>배우자 있음</b><span id="donorSpouseText">배우자에게 받은 증여도 같은 사람으로 보아 10년 합산</span></label>
+                    <label><input type="radio" name="donorMarried" value="no" onchange="refreshForm()"><b>배우자 없음</b><span>미혼 · 이혼 · 사별</span></label>
+                </div>
+                <label class="check-line grand-only"><input type="checkbox" id="skipException"> 수증자의 부모(증여자의 자녀)가 사망해 대습으로 받는 경우 <span class="hint">(세대생략 할증 제외)</span></label>
+            </div>
             <div class="form-group">
-                <label>2. 증여일</label>
+                <label>수증자 생년월일 <span class="hint">(증여일 기준 미성년 여부 자동 판단)</span></label>
+                <div class="date-row">
+                    <div class="date-col" style="max-width: 260px;">
+                        <div class="date-input-wrapper"><input type="text" id="recipientBirth" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>수증자의 혼인 · 자녀</label>
+                <div class="seg seg3">
+                    <label><input type="radio" name="recipientMarital" value="single" checked onchange="refreshForm()"><b>미혼</b><span>혼인 계획 없음</span></label>
+                    <label><input type="radio" name="recipientMarital" value="planned" onchange="refreshForm()"><b>혼인 예정</b><span>혼인신고 예정일이 있음</span></label>
+                    <label><input type="radio" name="recipientMarital" value="married" onchange="refreshForm()"><b>기혼</b><span>혼인신고를 함</span></label>
+                </div>
+                <label class="check-line"><input type="checkbox" id="hasBaby" onchange="refreshForm()"> 자녀를 낳았거나 입양했음 (또는 출산 예정) <span class="hint">(출산 공제 확인용)</span></label>
+            </div>
+            <div id="relSummary" class="ded-badge" style="display: block;"></div>
+
+            <div class="step-title" style="margin-top: 30px;"><span class="no">2</span>증여일 · 증여재산</div>
+            <div class="form-group">
+                <label>증여일</label>
                 <div class="date-row">
                     <div class="date-col" style="max-width: 260px;">
                         <div class="date-input-wrapper"><input type="text" id="giftDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
                     </div>
                 </div>
+                <div id="ageMsg" class="live-msg"></div>
             </div>
-
             <div class="form-group">
-                <label>3. 증여하는 재산</label>
+                <label>증여하는 재산</label>
                 <div class="seg seg3">
                     <label><input type="radio" name="asset" value="cash" checked onchange="refreshForm()"><b>현금</b><span>예금 이체 · 현금</span></label>
                     <label><input type="radio" name="asset" value="realty" onchange="refreshForm()"><b>부동산</b><span>아파트 · 토지 · 건물</span></label>
@@ -396,34 +409,41 @@
                 </div>
             </div>
 
-            <div class="form-group asc-only">
-                <label for="marriageType">4. 추가 공제 · 혼인 · 출산 증여재산공제 <span class="hint">(부모·조부모에게 받은 경우, 평생 1억)</span></label>
-                <select id="marriageType" onchange="refreshForm()">
-                    <option value="">적용하지 않음</option>
-                    <option value="marriage">혼인 공제 (혼인신고일 전후 2년 이내 증여)</option>
-                    <option value="birth">출산 공제 (자녀 출생일·입양신고일부터 2년 이내 증여)</option>
-                </select>
-                <div id="marriageBox" class="helper hidden">
-                    <div class="date-row">
-                        <div class="date-col">
-                            <label class="sub-label" id="marriageDateLabel">혼인신고일</label>
-                            <div class="date-input-wrapper"><input type="text" id="marriageDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+            <div class="donor-asc-only">
+                <div class="step-title" style="margin-top: 30px;"><span class="no">3</span>추가 공제 · 혼인 · 출산 <span class="who">부모·조부모에게 받은 경우 · 둘 합쳐 평생 1억</span></div>
+                <div class="two one">
+                    <div class="form-group marriage-only">
+                        <label id="marriageDateLabel">혼인신고일 <span class="hint">(신고일 전후 2년 안의 증여가 공제)</span></label>
+                        <div class="date-row">
+                            <div class="date-col" style="max-width: 260px;">
+                                <div class="date-input-wrapper"><input type="text" id="marriageDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                            </div>
                         </div>
-                        <div class="date-col">
-                            <label class="sub-label">이전에 받은 혼인·출산 공제액</label>
-                            <input type="text" id="priorMarriage" value="0" oninput="formatCurrency(this)">
-                        </div>
+                        <div id="marriageMsg" class="live-msg"></div>
                     </div>
-                    <div id="marriageMsg" class="live-msg"></div>
+                    <div class="form-group baby-only">
+                        <label>자녀 출생일 (입양신고일) <span class="hint">(출생일부터 2년 안의 증여가 공제)</span></label>
+                        <div class="date-row">
+                            <div class="date-col" style="max-width: 260px;">
+                                <div class="date-input-wrapper"><input type="text" id="birthDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                            </div>
+                        </div>
+                        <div id="babyMsg" class="live-msg"></div>
+                    </div>
+                </div>
+                <div id="noMarriageMsg" class="live-msg" style="font-weight: normal;"></div>
+                <label class="check-line"><input type="checkbox" id="priorMarriageUsed" onchange="refreshForm()"> 이전에 혼인 · 출산 공제를 받은 적이 있음</label>
+                <div id="priorMarriageBox" class="form-group hidden" style="margin-top: 10px;">
+                    <label for="priorMarriage">그때 받은 혼인 · 출산 공제액 합계 <span class="hint">(이번에 남은 한도 = 1억 − 이 금액)</span></label>
+                    <input type="text" id="priorMarriage" value="0" oninput="formatCurrency(this); refreshForm()">
+                    <div id="priorMarriageMsg" class="live-msg"></div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>5. 증여일 전 10년 안에 받은 다른 증여 <span class="hint">(같은 사람 증여는 합산 · 같은 관계 증여는 공제 한도 차감)</span></label>
-                <div id="priors"></div>
-                <button type="button" class="add-btn" onclick="addPrior()">+ 이전 증여 추가</button>
-                <div id="priorMsg" class="live-msg"></div>
-            </div>
+            <div class="step-title" style="margin-top: 30px;"><span class="no" id="priorNo">4</span>증여일 전 10년 안에 받은 다른 증여</div>
+            <div id="priorGuide" class="live-msg" style="font-weight: normal; margin-top: -4px;"></div>
+            <div id="priors"></div>
+            <button type="button" class="add-btn" onclick="addPrior()">+ 이전 증여 추가</button>
 
             <details class="more">
                 <summary>감정평가수수료 (선택)</summary>
@@ -794,12 +814,46 @@
     function twoYearsBefore(d) { const [y, m, dd] = d.split('-'); return `${Number(y) - 2}-${m}-${dd}`; }
 
     const val = name => document.querySelector(`input[name="${name}"]:checked`).value;
-    const DED = { spouse: ['배우자', 600000000], child: ['직계존속', 50000000, 20000000], grand: ['직계존속', 50000000, 20000000],
-        parent: ['직계비속', 50000000], kin: ['기타 친족', 10000000], other: ['타인', 0] };
-    const GROUP_OPTS = [['asc', '직계존속 (부모·조부모 등)'], ['spouse', '배우자'], ['desc', '직계비속 (자녀 등)'], ['kin', '기타 친족'], ['other', '타인']];
+    // 증여자 = 수증자의 OO. rel: 서버 관계 키, group: 증여재산공제 그룹, spouses: 이 사람의 배우자로 보는 역할 (직계존속 합산용)
+    const ROLES = {
+        father: { label: '아버지', rel: 'child', group: 'asc', spouses: ['mother', 'stepmother'] },
+        mother: { label: '어머니', rel: 'child', group: 'asc', spouses: ['father', 'stepfather'] },
+        stepfather: { label: '계부 (어머니의 배우자)', rel: 'child', group: 'asc', spouses: ['mother'] },
+        stepmother: { label: '계모 (아버지의 배우자)', rel: 'child', group: 'asc', spouses: ['father'] },
+        pgf: { label: '친할아버지', rel: 'grand', group: 'asc', spouses: ['pgm'] },
+        pgm: { label: '친할머니', rel: 'grand', group: 'asc', spouses: ['pgf'] },
+        mgf: { label: '외할아버지', rel: 'grand', group: 'asc', spouses: ['mgm'] },
+        mgm: { label: '외할머니', rel: 'grand', group: 'asc', spouses: ['mgf'] },
+        spouse: { label: '배우자', rel: 'spouse', group: 'spouse', spouses: [] },
+        son: { label: '아들', rel: 'parent', group: 'desc', spouses: [] },
+        daughter: { label: '딸', rel: 'parent', group: 'desc', spouses: [] },
+        grandchild: { label: '손자녀', rel: 'parent', group: 'desc', spouses: [] },
+        sonInLaw: { label: '사위', rel: 'kin', group: 'kin', spouses: [] },
+        daughterInLaw: { label: '며느리', rel: 'kin', group: 'kin', spouses: [] },
+        sibling: { label: '형제자매', rel: 'kin', group: 'kin', spouses: [] },
+        kin: { label: '그 밖의 친족 (6촌 이내 혈족 · 4촌 이내 인척)', rel: 'kin', group: 'kin', spouses: [] },
+        other: { label: '타인 (친족 아님)', rel: 'other', group: 'other', spouses: [] }
+    };
+    const GROUP_INFO = { asc: ['직계존속', 50000000, 20000000], spouse: ['배우자', 600000000], desc: ['직계비속', 50000000], kin: ['기타 친족', 10000000], other: ['타인', 0] };
+    const roleOptions = sel => Object.entries(ROLES).map(([k, r]) => `<option value="${k}"${k === sel ? ' selected' : ''}>${r.label}</option>`).join('');
+    $('donorRole').innerHTML = roleOptions('father');
+
+    const addY = (d, n) => `${Number(d.slice(0, 4)) + n}${d.slice(4)}`;
+    const ageAt = (birth, d) => { const p = period(birth, d); return p ? p.years : null; };
+    const donorKey = () => $('donorRole').value;
+    const donorAsc = () => ROLES[donorKey()].group === 'asc';
+    const donorMarried = () => val('donorMarried') === 'yes';
+
+    // 이전 증여 한 줄이 이번 증여자와 같은 사람(또는 직계존속의 배우자)인지
+    function priorWho(role) {
+        const d = donorKey();
+        if (role === d) return 'self';
+        if (donorAsc() && donorMarried() && ROLES[d].spouses.includes(role)) return 'spouse';
+        return 'other';
+    }
 
     let priorSeq = 0;
-    function addPrior(data) {
+    function addPrior() {
         const id = ++priorSeq;
         const box = document.createElement('div');
         box.className = 'prior';
@@ -812,17 +866,9 @@
                     <div class="date-input-wrapper"><input type="text" class="p-date" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                 </div>
                 <div class="date-col">
-                    <label class="sub-label">준 사람</label>
-                    <select class="p-who" onchange="refreshForm()">
-                        <option value="self">이번 증여자와 같은 사람</option>
-                        <option value="spouse" class="asc-opt">이번 증여자의 배우자 (예: 어머니)</option>
-                        <option value="other">다른 사람</option>
-                    </select>
+                    <label class="sub-label">준 사람 (수증자의)</label>
+                    <select class="p-role" onchange="refreshForm()">${roleOptions(donorKey())}</select>
                 </div>
-            </div>
-            <div class="form-group p-group-box hidden" style="margin-top: 10px;">
-                <label class="sub-label">다른 사람과의 관계</label>
-                <select class="p-group" onchange="refreshForm()">${GROUP_OPTS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>
             </div>
             <div class="two one" style="margin-top: 10px;">
                 <div class="form-group">
@@ -834,11 +880,10 @@
                     <input type="text" class="p-tax" placeholder="자동 계산" oninput="formatCurrency(this)">
                 </div>
                 <div class="form-group p-marriage-box">
-                    <label class="sub-label">그때 받은 혼인·출산 공제 <span class="hint">(없으면 0)</span></label>
-                    <input type="text" class="p-marriage" value="0" oninput="formatCurrency(this)">
+                    <label class="sub-label">이 증여에서 받은 혼인 · 출산 공제</label>
+                    <input type="text" class="p-marriage" value="0" oninput="formatCurrency(this); refreshForm()">
                 </div>
             </div>
-            <label class="check-line" style="margin-top: 0;"><input type="checkbox" class="p-minor"> 그때 수증자가 미성년자</label>
             <div class="live-msg p-msg"></div>`;
         $('priors').appendChild(box);
         const w = box.querySelector('.date-input-wrapper'), inp = w.querySelector('input');
@@ -850,27 +895,59 @@
     }
 
     function readPriors() {
-        return [...document.querySelectorAll('#priors .prior')].map(b => ({
-            date: b.querySelector('.p-date').value,
-            who: b.querySelector('.p-who').value,
-            group: b.querySelector('.p-group').value,
-            amount: Number(b.querySelector('.p-amount').value.replace(/[^0-9]/g, '')) || 0,
-            tax: b.querySelector('.p-tax').value.replace(/[^0-9]/g, ''),
-            marriage: Number(b.querySelector('.p-marriage').value.replace(/[^0-9]/g, '')) || 0,
-            minor: b.querySelector('.p-minor').checked
-        }));
+        const birth = $('recipientBirth').value;
+        return [...document.querySelectorAll('#priors .prior')].map(b => {
+            const role = b.querySelector('.p-role').value, d = b.querySelector('.p-date').value;
+            const age = isDate(birth) && isDate(d) ? ageAt(birth, d) : null;
+            return {
+                date: d, role, roleLabel: ROLES[role].label, who: priorWho(role), group: ROLES[role].group,
+                amount: Number(b.querySelector('.p-amount').value.replace(/[^0-9]/g, '')) || 0,
+                tax: b.querySelector('.p-tax').value.replace(/[^0-9]/g, ''),
+                marriage: $('priorMarriageUsed').checked ? Number(b.querySelector('.p-marriage').value.replace(/[^0-9]/g, '')) || 0 : 0,
+                minor: age !== null && age < 19
+            };
+        });
     }
 
     function refreshForm() {
-        const rel = $('relation').value;
-        const asc = rel === 'child' || rel === 'grand';
-        document.querySelectorAll('.asc-only').forEach(el => el.classList.toggle('hidden', !asc));
-        document.querySelectorAll('.grand-only').forEach(el => el.classList.toggle('hidden', rel !== 'grand'));
-        const [gname, lim, minorLim] = DED[rel];
-        const useLim = minorLim && $('minor').checked ? minorLim : lim;
-        $('dedBadge').innerHTML = rel === 'other' ? '타인에게 받은 증여는 증여재산공제가 없습니다.'
-            : `증여재산공제 자동 적용: <b>${gname} ${won(useLim)}</b> (수증자 기준, ${gname}에게 받은 증여 전체 10년 합산 한도)`
-              + (asc ? '<br>혼인·출산 공제를 적용하면 1억 원까지 추가로 공제됩니다.' : '');
+        const dk = donorKey(), role = ROLES[dk], asc = role.group === 'asc';
+        document.querySelectorAll('.donor-asc-only').forEach(el => el.classList.toggle('hidden', !asc));
+        document.querySelectorAll('.grand-only').forEach(el => el.classList.toggle('hidden', role.rel !== 'grand'));
+        const spouseNames = role.spouses.map(s => ROLES[s].label.replace(/ \(.*\)/, '')).join(' 또는 ');
+        $('donorSpouseText').innerText = spouseNames ? `${spouseNames}에게 받은 증여도 같은 사람으로 보아 10년 합산` : '';
+
+        const gd = $('giftDate').value, birth = $('recipientBirth').value;
+        const age = isDate(birth) && isDate(gd) ? ageAt(birth, gd) : null;
+        const minor = age !== null && age < 19;
+        $('ageMsg').innerText = age === null ? '' : `증여일 현재 수증자 만 ${age}세 → ${minor ? '미성년자' : '성년'}`;
+
+        const marital = val('recipientMarital');
+        document.querySelectorAll('.marriage-only').forEach(el => el.classList.toggle('hidden', marital === 'single'));
+        document.querySelectorAll('.baby-only').forEach(el => el.classList.toggle('hidden', !$('hasBaby').checked));
+        $('marriageDateLabel').innerHTML = (marital === 'planned' ? '혼인신고 예정일' : '혼인신고일') + ' <span class="hint">(신고일 전후 2년 안의 증여가 공제)</span>';
+        $('noMarriageMsg').innerText = marital === 'single' && !$('hasBaby').checked ? '수증자가 혼인(예정)이거나 자녀를 낳은 경우에만 공제됩니다. 위 1번에서 혼인 · 자녀를 선택하세요.' : '';
+        const md = $('marriageDate').value, bd = $('birthDate').value;
+        const okM = marital !== 'single' && isDate(md) && isDate(gd) && gd >= addY(md, -2) && gd <= addY(md, 2);
+        const okB = $('hasBaby').checked && isDate(bd) && isDate(gd) && gd >= bd && gd <= addY(bd, 2);
+        const msg = (id, show, ok, text) => { $(id).innerText = show ? (ok ? '공제 대상 (기간 안의 증여)' : text) : ''; $(id).classList.toggle('warn', show && !ok); };
+        msg('marriageMsg', marital !== 'single' && isDate(md) && isDate(gd), okM, '※ 혼인신고일 전후 2년을 벗어난 증여라 혼인 공제가 되지 않습니다.');
+        msg('babyMsg', $('hasBaby').checked && isDate(bd) && isDate(gd), okB, '※ 출생일부터 2년을 벗어난 증여라 출산 공제가 되지 않습니다.');
+        $('priorMarriageBox').classList.toggle('hidden', !$('priorMarriageUsed').checked);
+        const rowsMarriage = $('priorMarriageUsed').checked ? [...document.querySelectorAll('#priors .p-marriage')].reduce((s, i) => s + (Number(i.value.replace(/[^0-9]/g, '')) || 0), 0) : 0;
+        const usedM = $('priorMarriageUsed').checked ? num('priorMarriage') + rowsMarriage : 0;
+        $('priorMarriageMsg').innerText = $('priorMarriageUsed').checked ? `남은 혼인·출산 공제 한도: ${won(Math.max(0, 100000000 - usedM))}` + (rowsMarriage ? ` (아래 이전 증여에 적은 ${won(rowsMarriage)} 포함)` : '') : '';
+
+        // 인적관계 요약
+        const [gname, lim, minorLim] = GROUP_INFO[role.group];
+        const useLim = minorLim && minor ? minorLim : lim;
+        const lines = [];
+        lines.push(`<b>${role.label.replace(/ \(.*\)/, '')}</b>${asc ? (donorMarried() ? ' (배우자 있음)' : ' (배우자 없음)') : ''} → <b>수증자</b>${age !== null ? ` (만 ${age}세 · ${minor ? '미성년' : '성년'})` : ''}${marital === 'planned' ? ' · 혼인 예정' : marital === 'married' ? ' · 기혼' : ''}`);
+        lines.push(role.group === 'other' ? '타인에게 받은 증여는 증여재산공제가 없습니다.' : `증여재산공제: <b>${gname} ${won(useLim)}</b>${minorLim && !minor && age === null ? ' (미성년이면 2천만 원)' : ''} · ${gname}에게 받은 증여 전체에 10년간 한도`);
+        if (asc) lines.push(`10년 합산: ${role.label.replace(/ \(.*\)/, '')}${donorMarried() && spouseNames ? ` · ${spouseNames}` : ''}에게 받은 증여`);
+        else if (role.group !== 'other') lines.push(`10년 합산: ${role.label.replace(/ \(.*\)/, '')}에게 받은 증여`);
+        if (role.rel === 'grand') lines.push('세대생략 할증 30% (미성년자가 20억 초과 받으면 40%)');
+        if (asc) lines.push(okM || okB ? `혼인·출산 공제: <b>대상</b> (최대 ${won(Math.max(0, 100000000 - usedM))})` : marital !== 'single' || $('hasBaby').checked ? '혼인·출산 공제: 아래 3번에 날짜를 넣으면 판정합니다.' : '혼인·출산 공제: 해당 없음 (미혼 · 자녀 없음)');
+        $('relSummary').innerHTML = lines.join('<br>');
 
         const asset = val('asset');
         document.querySelectorAll('.cash-only').forEach(el => el.classList.toggle('hidden', asset === 'realty'));
@@ -878,65 +955,57 @@
         $('realtyHint').innerText = val('valuation') === 'market' ? '(시가 · 매매사례가액·감정가액)' : '(기준시가 · 공시가격)';
         $('debtMsg').innerText = num('realtyDebt') > 0 ? '채무를 함께 넘기면 그 금액만큼 증여자에게 양도소득세가 나옵니다. 부담부증여 계산기에서 양도세·취득세까지 함께 확인하세요.' : '';
 
-        const mt = $('marriageType').value;
-        $('marriageBox').classList.toggle('hidden', !mt || !asc);
-        $('marriageDateLabel').innerText = mt === 'birth' ? '자녀 출생일 (입양신고일)' : '혼인신고일';
-        const gd = $('giftDate').value, ev = $('marriageDate').value;
-        let mmsg = '', mwarn = false;
-        if (mt && isDate(gd) && isDate(ev)) {
-            const addY = (d, n) => `${Number(d.slice(0, 4)) + n}${d.slice(4)}`;
-            const ok = mt === 'marriage' ? gd >= addY(ev, -2) && gd <= addY(ev, 2) : gd >= ev && gd <= addY(ev, 2);
-            mmsg = ok ? '공제 요건 충족 (기간 안의 증여)' : (mt === 'marriage' ? '※ 혼인신고일 전후 2년을 벗어난 증여라 공제되지 않습니다.' : '※ 출생일부터 2년을 벗어난 증여라 공제되지 않습니다.');
-            mwarn = !ok;
-        }
-        $('marriageMsg').innerText = mmsg;
-        $('marriageMsg').classList.toggle('warn', mwarn);
-
-        // 이전 증여 줄: 번호, '배우자' 선택은 직계존속일 때만, 10년 경과 표시
-        const limit10 = isDate(gd) ? `${Number(gd.slice(0, 4)) - 10}${gd.slice(4)}` : '';
+        // 이전 증여 줄
+        $('priorNo').innerText = asc ? '4' : '3';
+        $('priorGuide').innerText = '준 사람을 고르면 같은 사람(합산)인지, 같은 관계라서 공제 한도만 줄어드는지 자동으로 판단합니다.';
+        const limit10 = isDate(gd) ? addY(gd, -10) : '';
         document.querySelectorAll('#priors .prior').forEach((b, i) => {
             b.querySelector('.prior-no').innerText = `이전 증여 ${i + 1}`;
-            const whoSel = b.querySelector('.p-who');
-            whoSel.querySelector('.asc-opt').hidden = !asc;
-            if (!asc && whoSel.value === 'spouse') whoSel.value = 'other';
-            const who = whoSel.value;
-            b.querySelector('.p-group-box').classList.toggle('hidden', who !== 'other');
-            const grp = who === 'other' ? b.querySelector('.p-group').value : (asc ? 'asc' : '');
-            b.querySelector('.p-marriage-box').classList.toggle('hidden', grp !== 'asc');
-            const d = b.querySelector('.p-date').value, msg = b.querySelector('.p-msg');
+            const r = b.querySelector('.p-role').value, who = priorWho(r);
+            b.querySelector('.p-marriage-box').classList.toggle('hidden', !($('priorMarriageUsed').checked && ROLES[r].group === 'asc'));
+            const d = b.querySelector('.p-date').value, m = b.querySelector('.p-msg');
             let t = '', w = false;
             if (isDate(d) && isDate(gd)) {
+                const a = isDate(birth) ? ageAt(birth, d) : null;
+                const ageTxt = a !== null ? ` (그때 만 ${a}세${a < 19 ? ' · 미성년' : ''})` : '';
                 if (d > gd) { t = '※ 이번 증여일보다 늦은 날짜입니다.'; w = true; }
-                else if (d <= limit10) t = '10년이 지난 증여 → 합산하지 않고 공제 한도도 다시 생깁니다.';
-                else if (who !== 'other') t = '10년 안 같은 사람 증여 → 이번 증여에 합산합니다.';
-                else t = '다른 사람 증여 → 합산하지 않지만, 같은 관계(그룹)면 그때 쓴 공제만큼 이번 공제가 줄어듭니다.';
+                else if (d <= limit10) t = '10년이 지난 증여 → 합산하지 않고 공제 한도도 다시 생깁니다.' + ageTxt;
+                else if (who !== 'other') t = `10년 안 ${who === 'self' ? '같은 사람' : '증여자의 배우자(같은 사람으로 봄)'} 증여 → 이번 증여에 합산합니다.` + ageTxt;
+                else if (ROLES[r].group === role.group && role.group !== 'other') t = `다른 ${GROUP_INFO[role.group][0]} 증여 → 합산하지 않지만, 그때 쓴 공제만큼 이번 공제 한도가 줄어듭니다.` + ageTxt;
+                else t = '관계가 달라 이번 계산과 무관합니다 (합산 · 공제 차감 없음).' + ageTxt;
             }
-            msg.innerText = t;
-            msg.classList.toggle('warn', w);
+            m.innerText = t;
+            m.classList.toggle('warn', w);
         });
-        $('priorMsg').innerText = asc ? '부모에게 받은 증여는 아버지·어머니를 같은 사람으로 보아 합산합니다.' : '';
     }
     refreshForm();
 
     let lastInput = null;
     async function calculateTax(event) {
         event.preventDefault();
-        const gd = $('giftDate').value;
+        const gd = $('giftDate').value, birth = $('recipientBirth').value;
+        if (!isDate(birth)) { alert('수증자 생년월일을 입력해주세요.'); return; }
         if (!isDate(gd)) { alert('증여일을 입력해주세요.'); return; }
         const asset = val('asset');
         const cash = asset === 'realty' ? 0 : num('cashAmount'), realty = asset === 'cash' ? 0 : num('realtyValue');
         if (!cash && !realty) { alert('증여하는 현금 또는 부동산 평가액을 입력해주세요.'); return; }
-        const rel = $('relation').value, asc = rel === 'child' || rel === 'grand';
+        const dk = donorKey(), role = ROLES[dk], asc = role.group === 'asc';
+        const age = ageAt(birth, gd);
+        const marital = val('recipientMarital');
         const btn = $('calcBtn');
         btn.disabled = true;
         btn.innerText = '계산 중...';
         let res;
         try {
             lastInput = {
-                relation: rel, minor: asc && $('minor').checked, skipException: rel === 'grand' && $('skipException').checked,
+                relation: role.rel, donorRole: dk, donorLabel: role.label.replace(/ \(.*\)/, ''), donorMarried: asc && donorMarried(),
+                minor: age !== null && age < 19, recipientBirth: birth, recipientMarital: marital,
+                skipException: role.rel === 'grand' && $('skipException').checked,
                 giftDate: gd, cashAmount: cash, realtyValue: realty, realtyDebt: asset === 'cash' ? 0 : num('realtyDebt'),
                 valuation: val('valuation'),
-                marriageType: asc ? $('marriageType').value : '', marriageDate: $('marriageDate').value, priorMarriage: num('priorMarriage'),
+                marriageDate: asc && marital !== 'single' ? $('marriageDate').value : '',
+                birthDate: asc && $('hasBaby').checked ? $('birthDate').value : '',
+                priorMarriage: asc && $('priorMarriageUsed').checked ? num('priorMarriage') : 0,
                 priors: readPriors(), appraisalFee: num('appraisalFee')
             };
             res = await api('/api/calculate', lastInput);
@@ -958,13 +1027,16 @@
 
     function render(r) {
         const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        // 이전 증여 표의 '준 사람'은 화면에서 고른 이름으로
+        const pr = lastInput ? lastInput.priors.filter(p => /^\d{4}-\d{2}-\d{2}$/.test(p.date) && p.amount) : [];
         $('resRows').innerHTML = r.rows.map(x =>
             `<div class="result-row${x.kind === 'sub' ? ' sub' : ''}${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`).join('');
         $('resTotalLabel').innerText = r.totalLabel;
         $('resTotal').innerText = won(r.total);
         $('deadline').innerHTML = `신고·납부기한 <b>${esc(r.deadline.date)}</b><br><span style="font-size: 12px; color: #64748b;">${esc(r.deadline.basis)}</span>`;
+        const nameOf = (h) => { const p = pr.find(q => q.date === h.date && q.amount === h.amount); return p ? p.roleLabel.replace(/ \(.*\)/, '') : h.who; };
         $('histWrap').innerHTML = r.history && r.history.length ? `<table class="hist"><thead><tr><th>증여일</th><th>준 사람</th><th class="num">금액</th><th>이번 계산</th></tr></thead><tbody>` +
-            r.history.map(h => `<tr><td>${esc(h.date)}</td><td>${esc(h.who)}</td><td class="num">${won(h.amount)}</td><td class="${h.aggregated ? 'on' : ''}">${esc(h.status)}</td></tr>`).join('') + '</tbody></table>' : '';
+            r.history.map(h => `<tr><td>${esc(h.date)}</td><td>${esc(nameOf(h))}</td><td class="num">${won(h.amount)}</td><td class="${h.aggregated ? 'on' : ''}">${esc(h.status)}</td></tr>`).join('') + '</tbody></table>' : '';
         $('resNotes').innerHTML = r.notes.map(n => `<div>${esc(n)}</div>`).join('');
         $('result').style.display = 'block';
         if (window.matchMedia('(max-width: 860px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
