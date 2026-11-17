@@ -986,7 +986,7 @@
                     <input type="text" class="p-amount" placeholder="예: 30,000,000" oninput="formatCurrency(this); refreshForm()">
                 </div>
                 <div class="form-group">
-                    <label class="sub-label">그때 증여세 산출세액 <span class="hint">(신고세액공제 전 · 모르면 비워두면 자동 계산)</span></label>
+                    <label class="sub-label">그 신고서의 증여세 산출세액 <span class="hint">(할증 포함 · 신고세액공제 전 · 비우면 세법대로 자동 계산)</span></label>
                     <input type="text" class="p-tax" placeholder="자동 계산" oninput="formatCurrency(this)">
                 </div>
                 <div class="form-group p-marriage-box">
@@ -1110,7 +1110,7 @@
 
         // 이전 증여 줄
         $('priorNo').innerText = asc ? '5' : '4';
-        $('priorGuide').innerText = '준 사람을 고르면 같은 사람(합산)인지, 같은 관계라서 공제 한도만 줄어드는지 자동으로 판단합니다.';
+        $('priorGuide').innerText = '준 사람을 고르면 같은 사람(합산)인지, 같은 관계라서 공제 한도만 줄어드는지 자동으로 판단합니다. 기납부세액은 합산되는 이전 증여 중 가장 최근 신고의 산출세액(신고세액공제 전)이고, 한도는 산출세액 × 그 신고 과세표준 ÷ 이번 과세표준입니다 (상증법 제58조).';
         const limit10 = isDate(gd) ? addY(gd, -10) : '';
         document.querySelectorAll('#priors .prior').forEach((b, i) => {
             b.querySelector('.prior-no').innerText = `이전 증여 ${i + 1}`;
