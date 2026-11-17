@@ -56,6 +56,7 @@ app.use('/' + encodeURIComponent('기장료계산기'), express.static(path.join
 app.use('/' + encodeURIComponent('재개발계산기'), express.static(path.join(__dirname, '재개발계산기')));
 app.use('/' + encodeURIComponent('부담부증여계산기'), express.static(path.join(__dirname, '부담부증여계산기')));
 app.use('/' + encodeURIComponent('상가주택계산기'), express.static(path.join(__dirname, '상가주택계산기')));
+app.use('/' + encodeURIComponent('토지계산기'), express.static(path.join(__dirname, '토지계산기')));
 
 // ==========================================
 // 간단한 파일 저장소 (data/db.json)
