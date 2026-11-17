@@ -178,6 +178,15 @@
         .calc-card.multi:hover .calc-go { background: var(--navy); }
         .calc-go-group { margin-top: auto; display: grid; gap: 8px; }
         .calc-card.multi .calc-go:hover { background: #2e3470; }
+        /* 양도세·증여세 계산기: 작은 카드 5개 한 줄 (모바일은 옆으로 넘겨 보기) */
+        .calc-grid.row5 { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+        .calc-grid.row5 .calc-card { padding: 18px 14px 14px; border-top-width: 3px; border-radius: 12px; }
+        .calc-grid.row5 .calc-icon { width: 40px; height: 40px; font-size: 20px; margin-bottom: 10px; }
+        .calc-grid.row5 .calc-card h3 { font-size: 15.5px; line-height: 1.35; word-break: keep-all; }
+        .calc-grid.row5 .calc-desc { font-size: 12.5px; line-height: 1.5; margin: 6px 0 14px; word-break: keep-all; }
+        .calc-grid.row5 ul { display: none; }
+        .calc-grid.row5 .calc-go { padding: 9px 6px; font-size: 13px; border-radius: 7px; }
+        .calc-grid.row5 .calc-go-group { gap: 6px; }
         .btn-navy { background: var(--navy); color: #fff; padding: 16px 28px; font-size: 16px; }
 
         /* 핵심 칼럼 */
@@ -224,6 +233,9 @@
             .cat-row { grid-template-columns: repeat(2, 1fr); }
             .cat-label { grid-column: 1 / -1; padding: 6px; }
             .calc-grid, .calc-grid.three { grid-template-columns: 1fr; }
+            .calc-grid.row5 { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 172px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 12px; -webkit-overflow-scrolling: touch; }
+            .calc-grid.row5 .calc-card { scroll-snap-align: start; }
+            .calc-grid.row5 .calc-card:hover { transform: none; }
             .about-grid { grid-template-columns: 1fr; gap: 24px; padding: 24px 18px; }
             .about-history li { font-size: 14px; }
             .topics { grid-template-columns: repeat(2, 1fr); }
@@ -349,7 +361,7 @@
             <p class="sub">세무사가 직접 만든 계산기로 미리 확인해 보세요.</p>
             <div class="calc-part">
                 <h3 class="calc-part-title">양도세 · 증여세 계산</h3>
-                <div class="calc-grid">
+                <div class="calc-grid row5">
                     <a href="양도세계산기/main.html" class="calc-card">
                         <span class="calc-icon">🏠</span>
                         <h3>양도세 계산기</h3>
@@ -371,8 +383,8 @@
                             <li>1세대 1주택 비과세 · 12억 초과분 · 공동명의 지분</li>
                         </ul>
                         <div class="calc-go-group">
-                            <a href="재개발계산기/house.html" class="calc-go">재개발·재건축 주택 양도세 계산기 →</a>
-                            <a href="재개발계산기/main.html" class="calc-go">청산금 수령액 양도세 계산기 →</a>
+                            <a href="재개발계산기/house.html" class="calc-go">주택(입주권·신축) →</a>
+                            <a href="재개발계산기/main.html" class="calc-go">청산금 수령액 →</a>
                         </div>
                     </div>
                     <a href="부담부증여계산기/main.html" class="calc-card">
