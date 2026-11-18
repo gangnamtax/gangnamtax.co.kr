@@ -248,7 +248,8 @@
             <label class="check-line"><input type="checkbox" id="realStartup" checked> 실질 창업 (승계·법인전환·재개업·업종 추가 아님)</label>
 
             <div class="sec">5. 기장료 산정</div>
-            <div class="f"><label for="employees">직원 수 <small>원천세 신고 인원</small></label><input type="text" id="employees" class="num money" inputmode="numeric" value="0"></div>
+            <div class="f"><label for="employees">직원 수 <small>5인 이상이면 1.3배</small></label><input type="text" id="employees" class="num money" inputmode="numeric" value="0"></div>
+            <label class="check-line"><input type="checkbox" id="premium"> 고급기장 (제조·건설 원가계산, 월·분기 결산·방문상담) 1.3배</label>
             <div class="f"><label for="discount">보수 할인율 (%)</label><input type="text" id="discount" class="num" inputmode="numeric" value="0" maxlength="3"></div>
             <button type="button" class="show-result" id="showResult">결과 보기</button>
           </form>
@@ -586,7 +587,7 @@
             purchase: amt('purchase'), rent: amt('rent'), labor: amt('labor'), bookExpense: amt('bookExpense'), deduction: amt('deduction'),
             ksic: ksicAc.code, birth: val('birth'), enlist: val('enlist'), discharge: val('discharge'), startDate: val('startDate'),
             region: val('region'), firstIncomeYear: val('firstIncomeYear'), realStartup: document.getElementById('realStartup').checked,
-            employees: amt('employees'), discount: Math.min(100, Number(val('discount').replace(/[^0-9.]/g, '')) || 0) / 100
+            employees: amt('employees'), premium: document.getElementById('premium').checked, discount: Math.min(100, Number(val('discount').replace(/[^0-9.]/g, '')) || 0) / 100
         };
     }
     // 아직 계산할 수 없으면 안내 문구, 계산은 되지만 확인할 점이 있으면 warns

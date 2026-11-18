@@ -44,15 +44,31 @@
     ['수도권 외 지역', [1, 0.5, 1, 0.5]]
   ];
 
-  // ===== 보수표 (세무회계강남, 부가세 별도) =====
+  // ===== 보수표 (세무회계강남 기장수수료테이블_수정.xlsx 개인 기준, 부가세 별도) =====
   const FEE = {
-    monthly: [[0, 100000], [100000000, 120000], [200000000, 150000], [300000000, 180000],
-      [500000000, 220000], [1000000000, 300000], [2000000000, 400000]],
-    // [수입금액 하한, 기본료, 초과분 요율]
-    adjust: [[0, 300000, 0.002], [100000000, 500000, 0.0015], [300000000, 800000, 0.001],
-      [500000000, 1000000, 0.0008], [1000000000, 1400000, 0.0005], [3000000000, 2400000, 0.0003]],
-    perEmployee: 10000,     // 직원 1인당 월 기장료 가산
-    minAdjust: 300000,      // 최저 조정료
+    // 월 기장료: [연 매출액 하한(이상), 월 기장료]
+    monthly: [[0, 100000], [100000000, 150000], [300000000, 200000], [500000000, 250000],
+      [1000000000, 300000], [2000000000, 400000], [3000000000, 500000], [4000000000, 600000],
+      [5000000000, 700000], [8000000000, 800000], [10000000000, 1000000]],
+    over100Step: 5000000000, over100Add: 500000, // 100억원 초과 시 50억원마다 월 50만원 추가 (엑셀 계산식 그대로)
+    premium: 1.3,           // 고급기장 (제조·건설 원가계산, 직원 5인 이상, 월·분기 결산·방문상담)
+    premiumStaff: 5,
+    // 종합소득세 조정료: [수입금액 하한, 초과액 기준점, 요율, 이전구간가산액, 계산식]
+    // ※ 500억~1,000억 구간은 엑셀 원본의 시작점 오류(1,000억)를 계산식 문구대로 500억으로 바로잡음
+    adjust: [
+      [0, 0, 0.004, 0, '40만원'],
+      [100000000, 100000000, 0.0019, 400000, '40만원 + 1억원 초과액 × 0.19%'],
+      [300000000, 300000000, 0.001, 780000, '78만원 + 3억원 초과액 × 0.10%'],
+      [500000000, 500000000, 0.0007, 980000, '98만원 + 5억원 초과액 × 0.07%'],
+      [1000000000, 1000000000, 0.0006, 1330000, '133만원 + 10억원 초과액 × 0.06%'],
+      [3000000000, 3000000000, 0.0005, 2530000, '253만원 + 30억원 초과액 × 0.05%'],
+      [5000000000, 5000000000, 0.0004, 3530000, '353만원 + 50억원 초과액 × 0.04%'],
+      [7500000000, 7500000000, 0.0003, 4530000, '453만원 + 75억원 초과액 × 0.03%'],
+      [10000000000, 10000000000, 0.0002, 5280000, '528만원 + 100억원 초과액 × 0.02%'],
+      [50000000000, 50000000000, 0.0001, 13280000, '1,328만원 + 500억원 초과액 × 0.01%'],
+      [100000000001, 100000000000, 0.00005, 18200000, '1,820만원 + 1,000억원 초과액 × 0.005%']
+    ],
+    minAdjust: 400000,      // 최저 조정료
     simpleAdjustRatio: 0.7, // 간편장부 조정료 계수
     externalExtra: 0,       // 외부조정 대상 가산율
     faithfulMultiple: 1.5,  // 성실신고확인 수수료 (조정료 대비 배수)
@@ -134,7 +150,7 @@
    *   ksic,                                     // 감면 판단 표준산업분류(5자리, 비우면 주업종 기준)
    *   birth, enlist, discharge, startDate,      // 생년월일 · 입대일 · 전역일 · 창업일 (YYYYMMDD)
    *   region, firstIncomeYear, realStartup,     // 창업 당시 소재지, 최초 소득 발생 연도, 실질 창업 (true/false)
-   *   employees, discount                       // 직원 수, 보수 할인율 (0.1 = 10%)
+   *   employees, premium, discount              // 직원 수(5인 이상 1.3배), 고급기장, 보수 할인율 (0.1 = 10%)
    * }
    */
   function compute(input, data) {
@@ -292,12 +308,14 @@
     // --- ⑤ 보수 ---
     const emp = num(input.employees), disc = num(input.discount);
     const mRow = lookup(FEE.monthly, rev);
-    const monthlyBase = rev <= 0 ? 0 : mRow[1];
+    const over100 = rev > 10000000000 ? Math.floor((rev - 10000000001) / FEE.over100Step + 1) * FEE.over100Add : 0;
+    const monthlyBase = rev <= 0 ? 0 : mRow[1] + over100;
+    const premium = !!input.premium || emp >= FEE.premiumStaff;
+    const monthlyFull = monthlyBase * (premium ? FEE.premium : 1);
     const aRow = lookup(FEE.adjust, rev);
-    const adjustBase = Math.max(FEE.minAdjust, aRow[1] + (rev - aRow[0]) * aRow[2]);
+    const adjustBase = Math.max(FEE.minAdjust, (rev - aRow[1]) * aRow[2] + aRow[3]);
     const isExternal = external === '외부조정 대상';
-    const monthly = [0, xround((monthlyBase + emp * FEE.perEmployee) * FEE.simpleBookRatio * (1 - disc), -3),
-      xround((monthlyBase + emp * FEE.perEmployee) * (1 - disc), -3)];
+    const monthly = [0, xround(monthlyFull * FEE.simpleBookRatio * (1 - disc), -3), xround(monthlyFull * (1 - disc), -3)];
     const adjust = [xround(adjustBase * FEE.estimateRatio * (1 - disc), -3), xround(adjustBase * FEE.simpleAdjustRatio * (1 - disc), -3),
       xround(adjustBase * (isExternal ? 1 + FEE.externalExtra : 1) * (1 - disc), -3)];
     const faithFee = [0, 0, faithful === '성실신고확인대상' ? xround(Math.max(FEE.faithfulMin, adjustBase * FEE.faithfulMultiple) * (1 - disc), -3) : 0];
@@ -310,8 +328,11 @@
     const bestWithFee = `${fees.find(f => f.grand === minGrand).name} (세금+보수 ${fmt(minGrand)}원)`;
     const mIdx = FEE.monthly.indexOf(mRow), aIdx = FEE.adjust.indexOf(aRow);
     const range = (t, i) => `연 매출 ${fmt(t[i][0])}원 이상${t[i + 1] ? ' ~ ' + fmt(t[i + 1][0]) + '원 미만' : ''} 구간`;
-    const monthlyNote = `${range(FEE.monthly, mIdx)} → 월 ${fmt(monthlyBase)}원 + 직원 ${emp}명 × ${fmt(FEE.perEmployee)}원 / 간편장부 × ${pct(FEE.simpleBookRatio, 0)}${disc > 0 ? ' / 할인 ' + pct(disc, 0) : ''} (천 원 단위)`;
-    const adjustNote = `${range(FEE.adjust, aIdx)}: 기본료 ${fmt(aRow[1])}원 + 초과분 ${fmt(rev - aRow[0])}원 × ${pct(aRow[2], 2)} = 기준 조정료 ${fmt(adjustBase)}원 → 추계 × ${pct(FEE.estimateRatio, 0)} / 간편 × ${pct(FEE.simpleAdjustRatio, 0)} / 복식 × ${pct(isExternal ? 1 + FEE.externalExtra : 1, 0)}${isExternal ? ' (외부조정)' : ''}`;
+    const monthlyNote = `${range(FEE.monthly, mIdx)} → 월 ${fmt(monthlyBase - over100)}원` +
+      (over100 ? ` + 100억원 초과 가산 ${fmt(over100)}원` : '') +
+      (premium ? ` × 1.3 (고급기장${emp >= FEE.premiumStaff ? `, 직원 ${emp}명` : ''}) = ${fmt(monthlyFull)}원` : '') +
+      ` / 간편장부 × ${pct(FEE.simpleBookRatio, 0)}${disc > 0 ? ' / 할인 ' + pct(disc, 0) : ''} (천 원 단위)`;
+    const adjustNote = `${aRow[4]} = 기준 조정료 ${fmt(adjustBase)}원 (최저 40만원) → 추계 × ${pct(FEE.estimateRatio, 0)} / 간편 × ${pct(FEE.simpleAdjustRatio, 0)} / 복식 × ${pct(isExternal ? 1 + FEE.externalExtra : 1, 0)}${isExternal ? ' (외부조정)' : ''}`;
 
     return {
       rows: rows.map(r => ({ code: r.code, found: r.found, info: r.info, prev: r.F, cur: r.G, simple: r.Q, simpleOver: r.R, standard: r.S })),
