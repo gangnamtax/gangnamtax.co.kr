@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>법인 기장료 계산기 - 세무회계강남</title>
+  <meta name="description" content="법인 월 기장료, 고급기장, 법인세 세무조정료와 1년 총 보수를 매출액으로 계산 - 세무회계강남 김하원 세무사">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <link rel="stylesheet" href="../양도세계산기/css/login.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f8fafc; font-family: 'Malgun Gothic', sans-serif; margin: 0; min-height: 100vh;
+        display: flex; justify-content: center; align-items: flex-start; padding: 32px 20px;
+    }
+    .wrapper { width: 100%; max-width: 1180px; display: flex; flex-direction: column; }
+    .header {
+        display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+        width: 100%; margin-bottom: 16px; background: white; padding: 18px 28px;
+        border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .header h2 { margin: 0; }
+    .header p { margin: 0; color: #64748b; font-size: 14px; }
+    .kind-tabs { display: inline-flex; margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
+    .kind-tabs a { padding: 6px 16px; font-size: 13px; font-weight: 700; color: #475569; text-decoration: none; background: #fff; }
+    .kind-tabs a + a { border-left: 1px solid #cbd5e1; }
+    .kind-tabs a.on { background: #2563eb; color: #fff; }
+    .kind-tabs a:not(.on):hover { background: #eff6ff; color: #2563eb; }
+    .calculator-card {
+        width: 100%; background: white; padding: 28px; border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; border: none; min-height: 480px;
+    }
+    .lock-overlay {
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.95); border-radius: 12px; z-index: 10; text-align: center; padding: 80px 20px 20px;
+    }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; }
+    .tab-btn.active { color: #2563eb; border-bottom: 2px solid #2563eb; margin-bottom: -2px; }
+    .btn-login { background-color: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-login:hover { background-color: #1d4ed8; }
+    .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-outline:hover { background-color: #f1f5f9; }
+    .btn-logout { background-color: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-logout:hover { background-color: #dc2626; }
+
+    /* 왼쪽 입력 · 오른쪽 결과 */
+    .layout { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 28px; align-items: start; }
+    .result-col { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+
+    /* 입력: 한 줄에 한 칸씩, 위에서 아래로 */
+    .sec { font-size: 13px; font-weight: 700; color: #1e3a8a; margin: 22px 0 8px; padding: 6px 10px; background: #eff6ff; border-radius: 6px; }
+    .sec:first-child { margin-top: 0; }
+    .sec .hint { color: #64748b; }
+    .f { display: grid; grid-template-columns: 132px minmax(0, 1fr); align-items: center; gap: 10px; margin-bottom: 8px; }
+    .f > label { font-size: 13px; font-weight: 600; color: #334155; margin: 0; line-height: 1.3; }
+    .f > label small { display: block; font-weight: normal; color: #94a3b8; font-size: 11px; }
+    .hint { font-size: 12px; color: #64748b; font-weight: normal; }
+    input, select {
+        width: 100%; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 7px; font-size: 14px;
+        outline: none; background-color: #fff; font-family: inherit;
+    }
+    input.num { text-align: right; }
+    input:focus, select:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+    .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #334155; cursor: pointer; margin: 0 0 8px; }
+    .check-line input { width: auto; margin: 0; padding: 0; box-shadow: none; }
+    .biz-box { border-left: 3px solid #bfdbfe; padding: 4px 0 2px 10px; margin-bottom: 10px; }
+    .biz-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 6px; }
+    .biz-head button { background: none; border: none; color: #94a3b8; font-size: 12px; cursor: pointer; }
+    .biz-info { font-size: 12px; color: #2563eb; line-height: 1.5; margin: -2px 0 8px 142px; }
+    .biz-info.warn { color: #b91c1c; }
+    .add-btn { background: #fff; border: 1px dashed #94a3b8; color: #475569; border-radius: 7px; padding: 8px; width: 100%; font-size: 13px; cursor: pointer; }
+    .add-btn:hover { border-color: #2563eb; color: #2563eb; }
+    .show-result {
+        width: 100%; margin-top: 18px; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 8px;
+        font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .show-result:hover { background: #1d4ed8; }
+    .show-result:disabled { background: #93c5fd; cursor: default; }
+    @keyframes flash { from { box-shadow: 0 0 0 4px rgba(37,99,235,.35); } to { box-shadow: 0 0 0 4px rgba(37,99,235,0); } }
+    .result-col.flash { animation: flash 1.2s ease-out; border-radius: 10px; }
+    .result-col.stale > :not(.stale-note) { opacity: .4; }
+    .stale-note { position: sticky; top: 0; z-index: 2; margin-bottom: 10px; padding: 10px 12px; background: #fef9c3; border: 1px solid #fde047; border-radius: 8px; font-size: 13px; color: #854d0e; }
+
+    /* 업종 검색 목록 */
+    .ac { position: relative; }
+    .ac input { padding-right: 30px; }
+    .ac .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; display: none; }
+    .ac.has .clear { display: block; }
+    .ac-list {
+        display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; background: #fff;
+        border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 24px rgba(15,23,42,.15); max-height: 320px; overflow-y: auto;
+    }
+    .ac.open .ac-list { display: block; }
+    .ac-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 13px; line-height: 1.35; }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item b { color: #1e3a8a; }
+    .ac-item small { display: block; color: #64748b; font-size: 11px; }
+    .ac-item.on, .ac-item:hover { background: #eff6ff; }
+    .ac-item mark { background: #fef08a; color: inherit; padding: 0; }
+    .ac-more { padding: 7px 10px; font-size: 11px; color: #64748b; background: #f8fafc; }
+
+    /* 결과 */
+    .result-col h3 { font-size: 15px; margin: 18px 0 8px; color: #0f172a; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .result-col h3:first-child { margin-top: 0; }
+    .result-col h3 small { font-size: 11px; color: #64748b; font-weight: normal; }
+    .empty { padding: 40px 20px; text-align: center; color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; font-size: 14px; line-height: 1.7; }
+    .main-biz { font-size: 12px; color: #475569; background: #f8fafc; border-radius: 8px; padding: 8px 10px; line-height: 1.6; }
+    .jgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .jcard { border: 1px solid #e2e8f0; border-radius: 9px; padding: 9px 11px; background: #fff; }
+    .jcard .t { font-size: 12px; color: #64748b; }
+    .jcard .v { font-size: 15px; font-weight: 700; margin: 2px 0; color: #0f172a; }
+    .jcard .v.on { color: #b91c1c; }
+    .jcard .v.ok { color: #166534; }
+    .jcard .d { font-size: 11px; color: #94a3b8; line-height: 1.4; }
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table.rt { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; }
+    table.rt th, table.rt td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; word-break: keep-all; }
+    table.rt th { background: #f1f5f9; color: #334155; font-weight: 700; white-space: nowrap; font-size: 12px; }
+    table.rt th.n, table.rt td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    table.rt td.k { color: #475569; white-space: nowrap; }
+    table.rt tr.em td { font-weight: 700; color: #1e3a8a; background: #eff6ff; }
+    table.rt tr.total td { font-weight: 700; color: #dc2626; background: #fef2f2; }
+    table.rt td.bestcol, table.rt th.bestcol { box-shadow: inset 0 0 0 9999px rgba(250, 204, 21, .12); }
+    .best { margin-top: 8px; padding: 9px 12px; background: #fff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 700; color: #1e3a8a; }
+    .relief { border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 12px; font-size: 13px; }
+    .relief .rate { font-size: 18px; font-weight: 800; color: #166534; }
+    .relief .rate.zero { color: #64748b; }
+    details { margin-top: 6px; }
+    details summary { cursor: pointer; font-size: 12px; color: #2563eb; padding: 4px 0; }
+    .calc-note { font-size: 11.5px; color: #64748b; margin: 6px 0 0; line-height: 1.6; }
+    .notice-text { font-size: 11px; color: #64748b; margin-top: 16px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    .notice-text p { margin: 0; padding-left: 1.2em; text-indent: -1.2em; }
+    .warn-box { margin-top: 10px; padding: 9px 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; font-size: 12px; color: #9a3412; line-height: 1.6; }
+
+    @media (max-width: 900px) {
+        body { padding: 16px 10px; }
+        .header { padding: 14px 16px; }
+        .calculator-card { padding: 18px 14px; }
+        .layout { grid-template-columns: 1fr; }
+        .result-col { position: static; max-height: none; overflow: visible; border-top: 2px solid #e2e8f0; padding-top: 18px; }
+    }
+    @media (max-width: 420px) {
+        .f { grid-template-columns: 1fr; gap: 4px; }
+        .biz-info { margin-left: 0; }
+        .jgrid { grid-template-columns: 1fr; }
+        table.rt th, table.rt td { padding: 6px 5px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+      <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
+      <div class="header">
+        <div>
+          <h2>🏢 법인 기장료 계산기</h2>
+          <p>매출액으로 보는 월 기장료 · 법인세 조정료 · 1년 총 보수</p>
+          <div class="kind-tabs"><a href="main.html">개인사업자</a><a class="on">법인</a></div>
+        </div>
+        <div id="authButtons">
+          <a id="adminLink" href="../양도세계산기/admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
+          <span id="planStatus" style="font-size: 12px; color: #2563eb; font-weight: 600; margin-right: 6px;"></span>
+          <button id="loginBtn" class="btn btn-login" onclick="openModal('login')" style="display:none;">로그인</button>
+          <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;">회원가입</button>
+          <button id="logoutBtn" class="btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="calculator-card">
+        <!-- 비회원 / 인가 전 잠금 화면 -->
+        <div id="lockOverlay" class="lock-overlay">
+          <div id="lockReady" style="display: none;">
+            <h3>🚧 계산기 서비스 준비 중</h3>
+            <p style="color: #666; margin-bottom: 20px;">더 정확한 계산 서비스로 곧 찾아뵙겠습니다.</p>
+            <a href="/" class="btn btn-outline" style="text-decoration: none;">홈으로 가기</a>
+          </div>
+          <div id="lockChecking">
+            <h3>⏳ 로그인 상태 확인 중...</h3>
+          </div>
+          <div id="lockLogin" style="display: none;">
+            <h3>🔒 로그인 후 이용 가능합니다</h3>
+            <p style="color: #666; margin-bottom: 20px;">회원가입 후 로그인하시면 판정·세액 비교를 하실 수 있습니다.<br>양도세 계산기 회원이시면 같은 아이디로 로그인하세요.</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button class="btn btn-login" onclick="openModal('login')">로그인</button>
+              <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+            </div>
+          </div>
+          <div id="lockWait" style="display: none;">
+            <div id="applyBefore">
+              <h3>📝 인가 신청 후 이용 가능합니다</h3>
+              <p id="waitInfo" style="color: #666; margin-bottom: 6px;">이용권을 계좌이체로 결제하시면 확인 후 승인해 드립니다.<br>(양도세 계산기 이용권과는 별도입니다)</p>
+              <p id="applyPlan" style="font-weight: 700; margin-bottom: 18px;"></p>
+              <button class="btn btn-login" onclick="applyAccess()" style="padding: 12px 24px;">인가 신청하기</button>
+            </div>
+            <div id="applyAfter" style="display: none;">
+              <h3>🏦 아래 계좌로 입금해 주세요</h3>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 12px auto 12px; max-width: 360px; text-align: left; line-height: 1.8;">
+                <div><span style="color: #64748b;">입금 계좌</span> <strong id="bankLine" style="white-space: nowrap;"></strong></div>
+                <div><span style="color: #64748b;">예금주</span> <strong id="bankHolder"></strong></div>
+                <div><span style="color: #64748b;">금액</span> <strong id="bankAmount"></strong></div>
+              </div>
+              <p style="color: #666; font-size: 14px; margin-bottom: 6px;">입금자명은 가입하신 이름과 같게 해주세요.<br>입금 확인 후 승인되면 그때부터 24시간 이용하실 수 있습니다.</p>
+            </div>
+            <p style="color: #666; font-size: 14px;">문의: <a href="tel:010-4454-2429" style="color: #2563eb; font-weight: 600;">010-4454-2429</a></p>
+          </div>
+          <div id="lockPay" style="display: none;">
+            <h3>💳 이용권 결제 후 이용 가능합니다</h3>
+            <p id="planInfo" style="color: #666; margin-bottom: 20px;"></p>
+            <button class="btn btn-login" onclick="startPayment()" style="padding: 12px 24px;">카드로 결제하기</button>
+          </div>
+        </div>
+
+        <div class="layout">
+          <form id="taxForm" autocomplete="off" onsubmit="event.preventDefault()">
+            <div class="sec">1. 법인 정보</div>
+            <div class="f"><label for="bizName">법인명 <small>선택</small></label><input type="text" id="bizName" maxlength="50" placeholder="예: (주)세무회계강남"></div>
+            <label class="check-line"><input type="checkbox" id="isNew"> 올해 설립한 신규 법인</label>
+
+            <div class="sec">2. 매출액</div>
+            <div class="f"><label for="revenue">연 매출액 <small>수입금액 (예상)</small></label><input type="text" id="revenue" class="num money" inputmode="numeric" placeholder="0"></div>
+            <div id="revenueHint" class="biz-info"></div>
+
+            <div class="sec">3. 고급기장 <span class="hint">하나라도 해당하면 기장료 1.3배</span></div>
+            <label class="check-line"><input type="checkbox" class="premium" id="pCost"> 제조업 · 건설업 등 원가계산</label>
+            <label class="check-line"><input type="checkbox" class="premium" id="pStaff"> 직원 5인 이상</label>
+            <label class="check-line"><input type="checkbox" class="premium" id="pReport"> 분석자료 제공 · 월(분기) 결산 · 방문상담</label>
+
+            <button type="button" class="show-result" id="showResult">결과 보기</button>
+          </form>
+
+          <div class="result-col" id="resultPanel">
+            <div class="empty">왼쪽에 <b>연 매출액</b>을 넣고<br>맨 아래 <b>[결과 보기]</b>를 누르면<br>월 기장료 · 법인세 조정료 · 1년 총 보수가 여기에 나옵니다.</div>
+          </div>
+        </div>
+        <div id="result" style="display: none;"></div>
+      </div>
+  </div>
+
+  <!-- 회원가입/로그인 팝업 모달 -->
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 95vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="font-size:14px; font-weight:bold; display:block; margin-bottom:5px;">아이디 (이메일)</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="font-size:14px; font-weight:bold; display:block; margin-bottom:5px;">비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
+      </form>
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- login.js가 찾는 결제 팝업 (이 계산기는 계좌이체 인가만 사용) -->
+  <div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
+
+  <script>window.CALC_PRODUCT = 'gijang';</script>
+  <script src="../양도세계산기/js/login.js"></script>
+  <script>
+    // 구글 Apps Script가 아직 이 계산기(24시간 이용권)를 모르는 예전 버전이면, 양도세 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
+    const baseUpdateUi = updateUi;
+    updateUi = function (user, plan, ...rest) {
+        if (plan && !plan.hours) { showComingSoon(); return; }
+        return baseUpdateUi(user, plan, ...rest);
+    };
+  </script>
+  <script src="js/corp-fee.js"></script>
+  <script>
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const won = n => Math.round(n).toLocaleString('ko-KR');
+    const eok = n => n >= 100000000 ? (Math.round(n / 1000000) / 100).toLocaleString('ko-KR') + '억' : n >= 10000 ? Math.round(n / 10000).toLocaleString('ko-KR') + '만' : won(n);
+    const form = document.getElementById('taxForm');
+    const revenueInput = document.getElementById('revenue');
+
+    function formatMoney(input) {
+        const v = input.value.replace(/[^0-9]/g, '');
+        input.value = v ? Number(v).toLocaleString('ko-KR') : '';
+    }
+    function focusNext(el) {
+        const all = [...form.querySelectorAll('input, select')].filter(x => x.offsetParent !== null);
+        const next = all[all.indexOf(el) + 1];
+        (next || document.getElementById('showResult')).focus();
+    }
+    function readInput() {
+        return {
+            bizName: document.getElementById('bizName').value.trim(),
+            revenue: Number(revenueInput.value.replace(/[^0-9]/g, '')) || 0,
+            isNew: document.getElementById('isNew').checked,
+            premium: [...form.querySelectorAll('.premium')].some(x => x.checked),
+            premiumWhy: [...form.querySelectorAll('.premium')].filter(x => x.checked).map(x => x.parentElement.textContent.trim())
+        };
+    }
+
+    // 결과를 본 뒤 입력을 바꾸면 '다시 눌러 주세요'
+    let current = null, lastLogged = '';
+    function markStale() {
+        const v = readInput().revenue;
+        document.getElementById('revenueHint').textContent = v ? `= ${eok(v)}원` : '';
+        const panel = document.getElementById('resultPanel');
+        if (current && !panel.classList.contains('stale')) {
+            panel.classList.add('stale');
+            panel.insertAdjacentHTML('afterbegin', '<div class="stale-note">입력이 바뀌었습니다. 아래 <b>[결과 보기]</b>를 다시 눌러 주세요.</div>');
+        }
+    }
+    form.addEventListener('input', e => { if (e.target.classList.contains('money')) formatMoney(e.target); markStale(); });
+    form.addEventListener('change', markStale);
+    form.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        if (e.target.id === 'showResult') { e.preventDefault(); e.target.click(); }
+        else if (e.target.matches('input:not([type=checkbox])')) { e.preventDefault(); focusNext(e.target); }
+    });
+
+    function render(input) {
+        const panel = document.getElementById('resultPanel');
+        panel.classList.remove('stale');
+        if (!input.revenue && !input.isNew) {
+            current = null;
+            panel.innerHTML = '<div class="empty">연 매출액을 넣어 주세요.<br><br>왼쪽에 <b>연 매출액</b>을 넣고 맨 아래 <b>[결과 보기]</b>를 누르면<br>월 기장료 · 법인세 조정료 · 1년 총 보수가 여기에 나옵니다.</div>';
+            return null;
+        }
+        const r = CorpFee.compute(input);
+        current = { r, input };
+        const steps = [`매출 구간: ${esc(r.bracket)} → 월 ${won(r.monthlyBase - r.over100)}원`];
+        if (r.over100) steps.push(`100억원 초과 가산: 50억원마다 월 50만원 → +${won(r.over100)}원`);
+        if (input.premium) steps.push(`고급기장 × 1.3 (${input.premiumWhy.map(esc).join(', ')}) → 월 ${won(r.monthly)}원`);
+        panel.innerHTML = `
+          <h3>🏢 1년 예상 보수${input.bizName ? ' <small>' + esc(input.bizName) + '</small>' : ''}</h3>
+          <div class="jgrid">
+            <div class="jcard"><div class="t">월 기장료 (부가세 포함)</div><div class="v">${won(r.monthlyWithVat)}원</div><div class="d">공급가액 ${won(r.monthly)}원 + 부가세 ${won(r.monthlyVat)}원</div></div>
+            <div class="jcard"><div class="t">법인세 조정료 (연 1회, 부가세 포함)</div><div class="v">${won(r.adjustWithVat)}원</div><div class="d">공급가액 ${won(r.adjust)}원 + 부가세 ${won(r.adjustVat)}원</div></div>
+          </div>
+          <div class="best" style="font-size: 15px;">👉 1년 총 보수 <span style="color:#dc2626;">${won(r.total)}원</span> <span style="font-weight: normal; color: #475569;">(월 평균 ${won(r.perMonth)}원, 부가세 포함)</span></div>
+
+          <h3>📋 내역 <small>매출 ${eok(r.revenue)}원${r.isNew ? ' · 신규법인' : ''}</small></h3>
+          <div class="table-wrap"><table class="rt">
+            <tr><th>항목</th><th class="n">공급가액</th><th class="n">부가세</th><th class="n">합계</th></tr>
+            <tr><td class="k">월 기장료</td><td class="n">${won(r.monthly)}</td><td class="n">${won(r.monthlyVat)}</td><td class="n">${won(r.monthlyWithVat)}</td></tr>
+            <tr><td class="k">연 기장료 (12개월)</td><td class="n">${won(r.monthly * 12)}</td><td class="n">${won(r.monthlyVat * 12)}</td><td class="n">${won(r.yearlyBookkeeping)}</td></tr>
+            <tr><td class="k">법인세 조정료</td><td class="n">${won(r.adjust)}</td><td class="n">${won(r.adjustVat)}</td><td class="n">${won(r.adjustWithVat)}</td></tr>
+            <tr class="total"><td class="k">1년 총 보수</td><td class="n">${won(r.monthly * 12 + r.adjust)}</td><td class="n">${won(r.monthlyVat * 12 + r.adjustVat)}</td><td class="n">${won(r.total)}</td></tr>
+          </table></div>
+          <details open><summary>계산 과정</summary>
+            <p class="calc-note">· ${steps.join('<br>· ')}<br>
+              · 법인세 조정료: ${esc(r.adjustFormula)} = ${won(r.adjust)}원 (최저 40만원)</p>
+          </details>
+
+          <h3>✅ 월 기장료에 포함된 업무</h3>
+          <p class="calc-note" style="font-size: 12.5px; color: #334155;">① 장부작성(기장) ② 매월 급여 등 원천세 신고 ③ 부가가치세 신고 (연 4회) ④ 세무자문 ⑤ 각종 증명서 발급</p>
+          <p class="calc-note">※ 법인세 조정료는 결산 시 매출액(자산총액)에 따라 별도로 청구됩니다.<br>※ 소모품비는 매년 월 기장료 범위 내에서 1회 청구됩니다 (법인 3월).</p>
+
+          <div class="notice-text">
+            <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
+            <p>※ 산출된 금액은 참고용 예상 보수이며, 실제 보수는 업무 범위와 상담 내용에 따라 달라질 수 있습니다.</p>
+            <p>※ 문의: <a href="tel:010-4454-2429" style="color:#2563eb;">010-4454-2429</a></p>
+          </div>`;
+        return r;
+    }
+
+    async function logResult(r, input) {
+        const body = {
+            product: 'gijang',
+            bizName: '[법인] ' + (input.bizName || ''), year: new Date().getFullYear(), biz: [], isNew: input.isNew, isPro: false,
+            result: {
+                revenue: r.revenue, book: '법인', rate: input.premium ? '고급기장 (1.3배)' : '일반기장',
+                external: '', faithful: '', relief: '',
+                best: `월 기장료 ${won(r.monthly)} · 조정료 ${won(r.adjust)} (공급가액)`,
+                doubleFee: Math.round(r.total), bestWithFee: '법인 기장료 계산기'
+            }
+        };
+        const key = JSON.stringify(body);
+        if (key === lastLogged) return;
+        try {
+            const res = await api('/api/calculate', body);
+            if (res.ok) lastLogged = key;
+            else if (res.status === 401 || res.status === 402) { alert(res.data.message || '이용 기간을 확인해 주세요.'); refreshUser(); }
+        } catch (e) { console.error('기록 저장 실패:', e); }
+    }
+
+    document.getElementById('showResult').addEventListener('click', async () => {
+        const input = readInput();
+        const r = render(input);
+        const panel = document.getElementById('resultPanel');
+        if (window.matchMedia('(max-width: 900px)').matches) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        panel.classList.remove('flash'); void panel.offsetWidth; panel.classList.add('flash');
+        if (!r) return;
+        const btn = document.getElementById('showResult');
+        btn.disabled = true;
+        try { await logResult(r, input); } finally { btn.disabled = false; }
+    });
+  </script>
+</body>
+</html>

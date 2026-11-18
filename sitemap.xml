@@ -7,7 +7,12 @@
     </url>
     <url>
         <loc>https://gangnamtax.co.kr/%EA%B8%B0%EC%9E%A5%EB%A3%8C%EA%B3%84%EC%82%B0%EA%B8%B0/main.html</loc>
-        <lastmod>2026-11-06</lastmod>
+        <lastmod>2026-11-18</lastmod>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://gangnamtax.co.kr/%EA%B8%B0%EC%9E%A5%EB%A3%8C%EA%B3%84%EC%82%B0%EA%B8%B0/corp.html</loc>
+        <lastmod>2026-11-18</lastmod>
         <priority>0.8</priority>
     </url>
     <url>
