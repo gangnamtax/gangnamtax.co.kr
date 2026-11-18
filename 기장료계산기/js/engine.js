@@ -141,6 +141,49 @@
     return INDEX;
   }
 
+  // ===== 창업중소기업 세액감면 판정 (조특법 제6조) — 개인 · 법인 공통 =====
+  // p = { year, revenue, startupKind, startupNote, birth, startDate, enlist, discharge, region, firstIncomeYear, realStartup, youthAllowed }
+  function startupRelief(p) {
+    const year = num(p.year);
+    const birth = toDay(p.birth), start = toDay(p.startDate);
+    const enlist = toDay(p.enlist), discharge = toDay(p.discharge);
+    const milDays = enlist != null && discharge != null
+      ? Math.max(0, Math.min(discharge - enlist + 1, edate(enlist, 12 * LAW.militaryMaxYears) - enlist)) : 0;
+    const milActual = enlist != null && discharge != null ? Math.max(0, discharge - enlist + 1) : 0;
+    let milText = '';
+    if (milActual > 0) {
+      milText = discharge < enlist ? '전역일 확인'
+        : `${datedif(enlist, discharge + 1, 'y')}년 ${datedif(enlist, discharge + 1, 'ym')}개월 ${datedif(enlist, discharge + 1, 'md')}일` +
+          (milActual > milDays ? ' (6년 한도 적용)' : '');
+    }
+    const adjStart = start != null ? start - milDays : null;
+    const age = birth != null && adjStart != null && adjStart >= birth ? datedif(birth, adjStart, 'y') : null;
+    const youthAge = age != null && age >= 15 && age <= LAW.youthMaxAge;
+    const ageText = age == null ? '입력 필요' : !youthAge ? '일반 (35세 이상)' : p.youthAllowed === false ? '일반 (대표자가 최대주주 아님)' : '청년';
+    const livelihood = num(p.revenue) <= LAW.livelihoodLimit;
+    const livelihoodText = livelihood ? '해당 (8천만 원 이하)' : '해당 없음';
+    const startupKind = p.startupKind || '', startupNote = p.startupNote || '';
+    const industryText = startupKind + (startupNote ? ' : ' + startupNote : '');
+    const industryOk = startupKind === '대상' ? '충족' : startupKind === '일부 대상' ? '충족 (세부 업종 확인)' : '미충족';
+    const realOk = p.realStartup ? '충족' : '미충족';
+    const fy = p.firstIncomeYear ? num(p.firstIncomeYear) : null;
+    const periodText = fy ? `${fy}년 ~ ${fy + 4}년` : '';
+    const periodOk = !fy ? '입력 필요' : (year >= fy && year <= fy + 4 ? `기간 내 (${year - fy + 1}년차)` : '기간 경과');
+    const ruleText = start == null ? '' : (start < fromYmd(2026, 1, 1) ? '2025.12.31 이전 창업' : '2026.1.1 이후 창업');
+    // ※ 엑셀 원본은 LEFT(생계형,2)="해당" 으로 비교해 '해당 없음'도 생계형으로 보는 오류가 있어 바로잡음
+    const rateGroup = ageText === '입력 필요' || !ruleText ? '' : (ageText === '청년' || livelihood ? '청년·생계형' : '일반');
+    const region = REGIONS.find(r => r[0] === p.region);
+    const regionRate = region ? region[1][(ruleText === '2025.12.31 이전 창업' ? 0 : 2) + (rateGroup === '청년·생계형' ? 0 : 1)] : 0;
+    const eligible = industryOk.startsWith('충족') && realOk === '충족' && periodOk.startsWith('기간 내');
+    const reliefRate = eligible ? regionRate : 0;
+    const reliefText = reliefRate > 0 ? `감면 대상 (${pct(reliefRate, 0)}, 5년)`
+      : !industryOk.startsWith('충족') ? '감면 제외: 업종 요건 미충족'
+      : realOk !== '충족' ? '감면 제외: 실질 창업 아님'
+      : !periodOk.startsWith('기간 내') ? '감면 제외: 감면기간 아님'
+      : '감면 제외: 지역·연령 요건 (과밀억제권역 일반창업)';
+    return { age, ageText, milText, livelihood, livelihoodText, industryText, industryOk, realOk, periodText, periodOk, ruleText, rateGroup, regionRate, reliefRate, reliefText };
+  }
+
   /**
    * input = {
    *   year, isNew, isPro,                       // 귀속연도, 신규 사업자, 전문직 (true/false)
@@ -228,40 +271,10 @@
     const ksicMatch = !ksicCode ? '주업종 기준'
       : (k && k.taxCode && mainTaxCode && k.taxCode.indexOf(mainTaxCode) >= 0) ? '주업종 코드와 일치' : '주업종 코드와 다름 - 확인';
 
-    const birth = toDay(input.birth), start = toDay(input.startDate);
-    const enlist = toDay(input.enlist), discharge = toDay(input.discharge);
-    const milDays = enlist != null && discharge != null
-      ? Math.max(0, Math.min(discharge - enlist + 1, edate(enlist, 12 * LAW.militaryMaxYears) - enlist)) : 0;
-    const milActual = enlist != null && discharge != null ? Math.max(0, discharge - enlist + 1) : 0;
-    let milText = '';
-    if (milActual > 0) {
-      milText = discharge < enlist ? '전역일 확인'
-        : `${datedif(enlist, discharge + 1, 'y')}년 ${datedif(enlist, discharge + 1, 'ym')}개월 ${datedif(enlist, discharge + 1, 'md')}일` +
-          (milActual > milDays ? ' (6년 한도 적용)' : '');
-    }
-    const adjStart = start != null ? start - milDays : null;
-    const age = birth != null && adjStart != null && adjStart >= birth ? datedif(birth, adjStart, 'y') : null;
-    const ageText = age == null ? '입력 필요' : (age >= 15 && age <= LAW.youthMaxAge ? '청년' : '일반 (35세 이상)');
-    const livelihood = rev <= LAW.livelihoodLimit;
-    const livelihoodText = livelihood ? '해당 (8천만 원 이하)' : '해당 없음';
-    const industryText = startupKind + (startupNote ? ' : ' + startupNote : '');
-    const industryOk = startupKind === '대상' ? '충족' : startupKind === '일부 대상' ? '충족 (세부 업종 확인)' : '미충족';
-    const realOk = input.realStartup ? '충족' : '미충족';
-    const fy = input.firstIncomeYear ? num(input.firstIncomeYear) : null;
-    const periodText = fy ? `${fy}년 ~ ${fy + 4}년` : '';
-    const periodOk = !fy ? '입력 필요' : (year >= fy && year <= fy + 4 ? `기간 내 (${year - fy + 1}년차)` : '기간 경과');
-    const ruleText = start == null ? '' : (start < fromYmd(2026, 1, 1) ? '2025.12.31 이전 창업' : '2026.1.1 이후 창업');
-    // ※ 엑셀 원본은 LEFT(생계형,2)="해당" 으로 비교해 '해당 없음'도 생계형으로 보는 오류가 있어 바로잡음
-    const rateGroup = ageText === '입력 필요' || !ruleText ? '' : (ageText === '청년' || livelihood ? '청년·생계형' : '일반');
-    const region = REGIONS.find(r => r[0] === input.region);
-    const regionRate = region ? region[1][(ruleText === '2025.12.31 이전 창업' ? 0 : 2) + (rateGroup === '청년·생계형' ? 0 : 1)] : 0;
-    const eligible = industryOk.startsWith('충족') && realOk === '충족' && periodOk.startsWith('기간 내');
-    const reliefRate = eligible ? regionRate : 0;
-    const reliefText = reliefRate > 0 ? `감면 대상 (${pct(reliefRate, 0)}, 5년)`
-      : !industryOk.startsWith('충족') ? '감면 제외: 업종 요건 미충족'
-      : realOk !== '충족' ? '감면 제외: 실질 창업 아님'
-      : !periodOk.startsWith('기간 내') ? '감면 제외: 감면기간 아님'
-      : '감면 제외: 지역·연령 요건 (과밀억제권역 일반창업)';
+    const { age, ageText, milText, livelihood, livelihoodText, industryText, industryOk, realOk, periodText, periodOk, ruleText, rateGroup, regionRate, reliefRate, reliefText } = startupRelief({
+      year, revenue: rev, startupKind, startupNote, birth: input.birth, startDate: input.startDate, enlist: input.enlist,
+      discharge: input.discharge, region: input.region, firstIncomeYear: input.firstIncomeYear, realStartup: input.realStartup
+    });
 
     // --- ④ 추계 vs 장부 ---
     const purchase = num(input.purchase), rent = num(input.rent), labor = num(input.labor);
@@ -357,5 +370,5 @@
     };
   }
 
-  return { compute, GROUPS, LAW, BRACKETS, REGIONS, FEE, toDay };
+  return { compute, startupRelief, GROUPS, LAW, BRACKETS, REGIONS, FEE, toDay };
 });

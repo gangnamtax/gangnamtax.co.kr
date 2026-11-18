@@ -202,6 +202,24 @@
     .fbox .send-btn:disabled { background: #93c5fd; }
     .fbox .close-btn2 { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 9px 18px; font-weight: 700; cursor: pointer; }
     @media print { .filing, .fmodal { display: none !important; } }
+    /* 업종 검색 목록 */
+    .ac { position: relative; }
+    .ac input { padding-right: 30px; }
+    .ac .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; font-size: 16px; cursor: pointer; display: none; }
+    .ac.has .clear { display: block; }
+    .ac-list {
+        display: none; position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; background: #fff;
+        border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 10px 24px rgba(15,23,42,.15); max-height: 320px; overflow-y: auto;
+    }
+    .ac.open .ac-list { display: block; }
+    .ac-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 13px; line-height: 1.35; }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item b { color: #1e3a8a; }
+    .ac-item small { display: block; color: #64748b; font-size: 11px; }
+    .ac-item.on, .ac-item:hover { background: #eff6ff; }
+    .ac-item mark { background: #fef08a; color: inherit; padding: 0; }
+    .ac-more { padding: 7px 10px; font-size: 11px; color: #64748b; background: #f8fafc; }
+
   </style>
 </head>
 <body>
@@ -282,7 +300,21 @@
             <div class="f"><label for="taxYear">사업연도</label><select id="taxYear"><option value="2026">2026년 이후 (10~25%)</option><option value="2025">2025년 이전 (9~24%)</option></select></div>
             <label class="check-line"><input type="checkbox" id="smallCorp"> 부동산임대업 주업 등 성실신고확인대상 소규모 법인</label>
 
-            <div class="sec">4. 고급기장 <span class="hint">하나라도 해당하면 기장료 1.3배</span></div>
+            <div class="sec">4. 창업감면 <span class="hint">해당 없으면 비워두세요</span></div>
+            <div class="f"><label for="ksicInput">감면 판단 업종 <small>표준산업분류</small></label>
+              <div class="ac" id="ksicAc"><input type="text" id="ksicInput" placeholder="예: 소프트웨어, 제조, 62010"><button type="button" class="clear" aria-label="지우기">×</button><div class="ac-list"></div></div>
+            </div>
+            <div id="ksicInfo" class="biz-info"></div>
+            <div class="f"><label for="startDate">창업일 <small>법인 설립일</small></label><input type="text" id="startDate" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="birth">대표자 생년월일</label><input type="text" id="birth" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="enlist">입대일 <small>병역 없으면 빈칸</small></label><input type="text" id="enlist" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="discharge">전역일</label><input type="text" id="discharge" class="date" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric"></div>
+            <div class="f"><label for="region">창업 당시 소재지 <small>서울 전역은 과밀억제권역</small></label><select id="region"></select></div>
+            <div class="f"><label for="firstIncomeYear">최초 소득 연도 <small>감면 5년의 시작</small></label><input type="text" id="firstIncomeYear" class="num" inputmode="numeric" maxlength="4" placeholder="예: 2024"></div>
+            <label class="check-line"><input type="checkbox" id="majorHolder" checked> 대표자가 최대주주 (청년창업 요건)</label>
+            <label class="check-line"><input type="checkbox" id="realStartup" checked> 실질 창업 (승계·법인전환·재개업·업종 추가 아님)</label>
+
+            <div class="sec">5. 고급기장 <span class="hint">하나라도 해당하면 기장료 1.3배</span></div>
             <label class="check-line"><input type="checkbox" class="premium" id="pCost"> 제조업 · 건설업 등 원가계산</label>
             <label class="check-line"><input type="checkbox" class="premium" id="pStaff"> 직원 5인 이상</label>
             <label class="check-line"><input type="checkbox" class="premium" id="pReport"> 분석자료 제공 · 월(분기) 결산 · 방문상담</label>
@@ -386,6 +418,8 @@
         return baseUpdateUi(user, plan, ...rest);
     };
   </script>
+  <script src="js/data.js"></script>
+  <script src="js/engine.js"></script>
   <script src="js/corp-fee.js"></script>
   <script>
 
@@ -395,6 +429,10 @@
         document.querySelectorAll('#resultPanel details').forEach(d => { d.open = true; });
         window.print();
     }
+    const DATA = window.GIJANG_DATA;
+    const KSIC = DATA.ksic.map(r => ({ code: r[0], name: r[1], sebun: r[2], jungbun: r[3], startup: r[4], note: r[5], taxCode: r[6], big: r[7] }));
+    KSIC.forEach(x => { x.label = `${x.code} ${x.name}`; x.hay = `${x.code} ${x.name} ${x.sebun} ${x.jungbun} ${x.big}`.toLowerCase(); x.nameHay = `${x.name} ${x.sebun}`.toLowerCase(); });
+    const KSIC_MAP = new Map(KSIC.map(x => [x.code, x]));
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const won = n => Math.round(n).toLocaleString('ko-KR');
     const eok = n => n >= 100000000 ? (Math.round(n / 1000000) / 100).toLocaleString('ko-KR') + '억' : n >= 10000 ? Math.round(n / 10000).toLocaleString('ko-KR') + '만' : won(n);
@@ -410,6 +448,101 @@
         const next = all[all.indexOf(el) + 1];
         (next || document.getElementById('showResult')).focus();
     }
+    // ===== 업종 검색 목록 (입력하면 바로 아래에 후보 표시, 클릭·엔터로 선택) =====
+    // 띄어 쓴 단어가 모두 들어 있는 업종만, 코드·이름이 맞는 것부터 보여 줌
+    function search(list, q, limit) {
+        const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+        if (!words.length) return { items: list.slice(0, limit), total: list.length };
+        const scored = [];
+        for (const x of list) {
+            if (!words.every(w => x.hay.includes(w))) continue;
+            let s = 0;
+            for (const w of words) {
+                if (x.code.startsWith(w)) s += 100;
+                else if (x.name.toLowerCase().startsWith(w)) s += 60;
+                else if (x.nameHay.includes(w)) s += 40;
+            }
+            scored.push([s, x]);
+        }
+        scored.sort((a, b) => b[0] - a[0]);
+        return { items: scored.slice(0, limit).map(p => p[1]), total: scored.length };
+    }
+    const mark = (text, q) => {
+        let h = esc(text);
+        q.split(/\s+/).filter(Boolean).forEach(w => { h = h.replace(new RegExp(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`); });
+        return h;
+    };
+
+    function makeAc(box, { list, map, sub, onPick }) {
+        const input = box.querySelector('input'), listEl = box.querySelector('.ac-list'), clear = box.querySelector('.clear');
+        let items = [], on = -1;
+        box.code = '';
+        const close = () => { box.classList.remove('open'); on = -1; };
+        const render = () => {
+            const q = input.value.trim();
+            const r = search(list, box.code && input.value === map.get(box.code).label ? '' : q, 60);
+            items = r.items;
+            listEl.innerHTML = items.length
+                ? items.map((x, i) => `<div class="ac-item${i === on ? ' on' : ''}" data-i="${i}"><b>${mark(x.code, q)}</b> ${mark(x.name, q)}<small>${esc(sub(x))}</small></div>`).join('') +
+                  (r.total > items.length ? `<div class="ac-more">${r.total.toLocaleString()}개 중 ${items.length}개 표시 · 단어를 더 넣으면 좁혀집니다 (예: "제조 식품")</div>` : `<div class="ac-more">${r.total}개</div>`)
+                : '<div class="ac-more">검색 결과가 없습니다. 다른 단어로 찾아보세요.</div>';
+            box.classList.add('open');
+        };
+        const pick = x => {
+            box.code = x ? x.code : '';
+            input.value = x ? x.label : '';
+            box.classList.toggle('has', !!x);
+            close();
+            onPick(x);
+        };
+        box.setCode = code => pick(map.get(code) || null);
+        input.addEventListener('focus', () => { input.select(); render(); });
+        input.addEventListener('input', () => {
+            if (box.code) { box.code = ''; box.classList.remove('has'); onPick(null); }
+            on = -1; render();
+        });
+        input.addEventListener('keydown', e => {
+            if (!box.classList.contains('open')) return;
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                on = Math.max(0, Math.min(items.length - 1, on + (e.key === 'ArrowDown' ? 1 : -1)));
+                render();
+                const el = listEl.querySelector('.ac-item.on'); if (el) el.scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                if (items.length) { e.preventDefault(); e.stopPropagation(); pick(items[on >= 0 ? on : 0]); focusNext(input); }
+            } else if (e.key === 'Escape') close();
+        });
+        // mousedown: 입력칸 focus가 풀리기 전에 선택
+        listEl.addEventListener('mousedown', e => {
+            const it = e.target.closest('.ac-item'); if (!it) return;
+            e.preventDefault(); pick(items[+it.dataset.i]); focusNext(input);
+        });
+        // 이미 고른 업종 칸을 다시 누르면 글자 전체 선택 → 바로 새로 검색
+        input.addEventListener('click', () => { if (box.code) { input.select(); render(); } });
+        input.addEventListener('blur', () => setTimeout(() => {
+            close();
+            // 고르지 않고 나가면: 결과가 하나뿐이면 그것으로, 아니면 원래 선택 유지 안 함
+            if (!box.code && input.value.trim()) { const r = search(list, input.value.trim(), 2); if (r.total === 1) pick(r.items[0]); }
+        }, 120));
+        clear.addEventListener('click', () => { pick(null); input.focus(); });
+    }
+
+    function formatDate(input) {
+        let v = input.value.replace(/\D/g, '');
+        if (v.length > 4 && v.length <= 6) v = v.slice(0, 4) + '-' + v.slice(4);
+        else if (v.length > 6) v = v.slice(0, 4) + '-' + v.slice(4, 6) + '-' + v.slice(6, 8);
+        input.value = v;
+    }
+    document.getElementById('region').innerHTML = GijangEngine.REGIONS.map(r => `<option>${esc(r[0])}</option>`).join('');
+    const ksicAc = document.getElementById('ksicAc');
+    makeAc(ksicAc, {
+        list: KSIC, map: KSIC_MAP, sub: x => `${x.big} > ${x.jungbun} · 창업감면 ${x.startup}`,
+        onPick: x => {
+            document.getElementById('ksicInfo').textContent = x ? `창업감면 ${x.startup}${x.note ? ` (${x.note})` : ''}` : '';
+            markStale();
+        }
+    });
+
     function readInput() {
         return {
             bizName: document.getElementById('bizName').value.trim(),
@@ -417,6 +550,10 @@
             isNew: document.getElementById('isNew').checked,
             profit: Number(document.getElementById('profit').value.replace(/[^0-9]/g, '')) || 0,
             taxYear: Number(document.getElementById('taxYear').value),
+            ksic: ksicAc.code, startDate: document.getElementById('startDate').value.trim(), birth: document.getElementById('birth').value.trim(),
+            enlist: document.getElementById('enlist').value.trim(), discharge: document.getElementById('discharge').value.trim(),
+            region: document.getElementById('region').value, firstIncomeYear: document.getElementById('firstIncomeYear').value.trim(),
+            majorHolder: document.getElementById('majorHolder').checked, realStartup: document.getElementById('realStartup').checked,
             smallCorp: document.getElementById('smallCorp').checked,
             premium: [...form.querySelectorAll('.premium')].some(x => x.checked),
             premiumWhy: [...form.querySelectorAll('.premium')].filter(x => x.checked).map(x => x.parentElement.textContent.trim())
@@ -435,7 +572,7 @@
             panel.insertAdjacentHTML('afterbegin', '<div class="stale-note">입력이 바뀌었습니다. 아래 <b>[결과 보기]</b>를 다시 눌러 주세요.</div>');
         }
     }
-    form.addEventListener('input', e => { if (e.target.classList.contains('money')) formatMoney(e.target); markStale(); });
+    form.addEventListener('input', e => { if (e.target.classList.contains('money')) formatMoney(e.target); if (e.target.classList.contains('date')) formatDate(e.target); markStale(); });
     form.addEventListener('change', markStale);
     form.addEventListener('keydown', e => {
         if (e.key !== 'Enter') return;
@@ -453,7 +590,34 @@
         }
         const r = CorpFee.compute(input);
         const t = CorpFee.corpTax(input.profit, input.taxYear, input.smallCorp);
-        r.corpTax = t;
+        // 창업중소기업 세액감면 (개인 계산기와 같은 판정, 법인은 대표자가 최대주주여야 청년창업)
+        const kk = KSIC_MAP.get(input.ksic);
+        const sr = kk ? GijangEngine.startupRelief({
+            year: input.taxYear, revenue: input.revenue, startupKind: kk.startup, startupNote: kk.note,
+            birth: input.birth, startDate: input.startDate, enlist: input.enlist, discharge: input.discharge,
+            region: input.region, firstIncomeYear: input.firstIncomeYear, realStartup: input.realStartup, youthAllowed: input.majorHolder
+        }) : null;
+        t.reliefRate = sr ? sr.reliefRate : 0;
+        t.relief = Math.floor(t.tax * t.reliefRate);
+        t.local = Math.floor((t.tax - t.relief) * 0.1);
+        t.total = t.tax - t.relief + t.local;
+        t.effective = t.base ? t.total / t.base : 0;
+        r.corpTax = t; r.startup = sr;
+        const pct0 = v => (Math.round(v * 1000) / 10) + '%';
+        const reliefHtml = sr ? `
+          <h3>🚀 창업중소기업 세액감면 <small>${esc(kk.code)} ${esc(kk.name)}</small></h3>
+          <div class="relief"><span class="rate${sr.reliefRate ? '' : ' zero'}">${pct0(sr.reliefRate)}</span> &nbsp;${esc(sr.reliefText)}</div>
+          ${canDetail() ? `<details class="print-only"><summary>요건</summary>
+            <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
+              <tr><th>요건</th><th>내용</th><th>판정</th></tr>
+              <tr><td class="k">업종</td><td>${esc(kk.code)} ${esc(kk.name)}<br>${esc(sr.industryText)}</td><td>${esc(sr.industryOk)}</td></tr>
+              <tr><td class="k">나이</td><td>${sr.age == null ? '-' : sr.age + '세'}${sr.milText ? ` (병역 ${esc(sr.milText)} 차감)` : ''}${input.majorHolder ? '' : ' · 대표자 최대주주 아님'}</td><td>${esc(sr.ageText)}</td></tr>
+              <tr><td class="k">생계형</td><td>연 매출 ${won(input.revenue)}원</td><td>${esc(sr.livelihoodText)}</td></tr>
+              <tr><td class="k">실질 창업</td><td>${input.realStartup ? '예' : '아니오'}</td><td>${esc(sr.realOk)}</td></tr>
+              <tr><td class="k">감면기간</td><td>${esc(sr.periodText) || '-'}</td><td>${esc(sr.periodOk)}</td></tr>
+              <tr><td class="k">지역 · 규정</td><td>${esc(input.region)}<br>${esc(sr.ruleText)}</td><td>${esc(sr.rateGroup)}${sr.ruleText ? ' ' + pct0(sr.regionRate) : ''}</td></tr>
+            </table></div></details>` : ''}
+          <p class="calc-note">※ 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도가 적용될 수 있습니다.</p>` : '';
         current = { r, input };
         const steps = [`매출 구간: ${esc(r.bracket)} → 월 ${won(r.monthlyBase - r.over100)}원`];
         if (r.over100) steps.push(`100억원 초과 가산: 50억원마다 월 50만원 → +${won(r.over100)}원`);
@@ -464,13 +628,14 @@
           <h3>🧾 예상 법인세 <small>${esc(t.label)}${t.small ? ' · 소규모 법인' : ''}</small></h3>
           <div class="sum">
             <div class="sum-row"><span>법인세 <small>예상 이익 ${eok(t.base)}원 기준</small></span><b>${won(t.tax)}원</b></div>
-            <div class="sum-row"><span>지방소득세 <small>법인세의 10%</small></span><b>${won(t.local)}원</b></div>
+            ${t.relief ? `<div class="sum-row"><span>창업감면 <small>법인세 × ${pct0(t.reliefRate)}</small></span><b style="color:#166534;">− ${won(t.relief)}원</b></div>` : ''}
+            <div class="sum-row"><span>지방소득세 <small>${t.relief ? '감면 후 ' : ''}법인세의 10%</small></span><b>${won(t.local)}원</b></div>
             <div class="sum-row total"><span>총 납부할 세액</span><b>${won(t.total)}원</b></div>
           </div>`
           : `<h3>🧾 예상 법인세</h3><div class="warn-box" style="margin-top:0;">왼쪽에 예상 이익을 넣으면 예상 법인세도 함께 계산됩니다.</div>`;
         const detail = canDetail();
-        const printInputs = detail ? `<div class="print-only print-inputs"><b>입력값</b>${input.bizName ? ' · 법인명 ' + esc(input.bizName) : ''}${input.isNew ? ' · 신규법인' : ''} · 연 매출액 ${won(input.revenue)} · 예상 이익 ${won(input.profit)} · ${input.taxYear}년 세율${input.smallCorp ? ' · 소규모 법인' : ''}${input.premium ? ' · 고급기장(' + input.premiumWhy.map(esc).join(', ') + ')' : ''} · 출력일 ${new Date().toLocaleDateString('ko-KR')}</div>` : '';
-        panel.innerHTML = `${printInputs}${taxHtml}
+        const printInputs = detail ? `<div class="print-only print-inputs"><b>입력값</b>${input.bizName ? ' · 법인명 ' + esc(input.bizName) : ''}${input.isNew ? ' · 신규법인' : ''} · 연 매출액 ${won(input.revenue)} · 예상 이익 ${won(input.profit)} · ${input.taxYear}년 세율${input.smallCorp ? ' · 소규모 법인' : ''}${input.premium ? ' · 고급기장(' + input.premiumWhy.map(esc).join(', ') + ')' : ''}${input.ksic ? `<br>감면 판단 업종 ${esc(input.ksic)} · 설립일 ${esc(input.startDate || '-')} · 대표자 생년월일 ${esc(input.birth || '-')} · 병역 ${esc(input.enlist || '-')} ~ ${esc(input.discharge || '-')} · ${esc(input.region)} · 최초 소득 ${esc(input.firstIncomeYear || '-')}년 · 대표자 최대주주 ${input.majorHolder ? '예' : '아니오'} · 실질창업 ${input.realStartup ? '예' : '아니오'}<br>` : ' · '}출력일 ${new Date().toLocaleDateString('ko-KR')}</div>` : '';
+        panel.innerHTML = `${printInputs}${reliefHtml}${taxHtml}
           <h3>🏢 나의 기장료는?${input.bizName ? ' <small>' + esc(input.bizName) + '</small>' : ''}</h3>
           <div class="sum">
             <div class="sum-row big"><span>월 기장료 <small>부가세 포함</small></span><b>${won(r.monthlyWithVat)}원</b></div>
@@ -558,6 +723,7 @@
             summary: [
                 ['연 매출액', won(r.revenue) + '원' + (r.isNew ? ' (신규법인)' : '')],
                 ['예상 이익', input.profit ? won(input.profit) + '원' : '-'],
+                ['창업감면', r.startup ? r.startup.reliefText : '-'],
                 ['총 납부할 세액 (법인세+지방세)', t && t.base ? won(t.total) + '원' : '-'],
                 ['고급기장', input.premium ? input.premiumWhy.join(', ') : '해당 없음'],
                 ['월 기장료 (부가세 포함)', won(r.monthlyWithVat) + '원'], ['법인세 조정료 (부가세 포함)', won(r.adjustWithVat) + '원'],
