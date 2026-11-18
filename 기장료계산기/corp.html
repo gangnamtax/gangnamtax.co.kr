@@ -159,6 +159,29 @@
         .jgrid { grid-template-columns: 1fr; }
         table.rt th, table.rt td { padding: 6px 5px; font-size: 12px; }
     }
+
+    /* 계산근거 출력 (기장계약 고객 · 관리자만) */
+    .print-btn { width: 100%; margin-top: 14px; padding: 11px; background: #fff; color: #1e3a8a; border: 1px solid #93c5fd; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .print-btn:hover { background: #eff6ff; }
+    .print-only { display: none; }
+    @media print {
+        @page { size: A4; margin: 12mm; }
+        body { background: #fff; padding: 0; display: block; }
+        .wrapper { max-width: none; }
+        .wrapper > a, #authButtons, .lock-overlay, #taxForm, .print-btn, .stale-note, details summary { display: none !important; }
+        .header { box-shadow: none; padding: 0 0 8px; border-bottom: 2px solid #1e3a8a; border-radius: 0; margin-bottom: 10px; }
+        .calculator-card { box-shadow: none; padding: 0; min-height: 0; }
+        .layout { display: block; }
+        .result-col { position: static; max-height: none; overflow: visible; border: none; padding: 0; }
+        .result-col.stale > * { opacity: 1 !important; }
+        .print-only { display: block; }
+        details { display: block; }
+        details > *:not(summary) { display: block; }
+        .jcard, .sum, table.rt, .best, .relief { break-inside: avoid; }
+        h3 { break-after: avoid; }
+    }
+    .print-inputs { font-size: 12px; color: #334155; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.7; }
+    .print-inputs b { color: #0f172a; }
   </style>
 </head>
 <body>
@@ -315,12 +338,20 @@
     // 구글 Apps Script가 아직 이 계산기(24시간 이용권)를 모르는 예전 버전이면, 양도세 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
     const baseUpdateUi = updateUi;
     updateUi = function (user, plan, ...rest) {
+        window.CALC_USER = user || null;
         if (plan && !plan.hours) { showComingSoon(); return; }
         return baseUpdateUi(user, plan, ...rest);
     };
   </script>
   <script src="js/corp-fee.js"></script>
   <script>
+
+    // 기장계약 고객 · 관리자만 계산 과정 상세와 계산근거 출력 (회원 시트 '기장계약' 칸)
+    const canDetail = () => !!(window.CALC_USER && (window.CALC_USER.client || window.CALC_USER.admin));
+    function printBasis() {
+        document.querySelectorAll('#resultPanel details').forEach(d => { d.open = true; });
+        window.print();
+    }
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const won = n => Math.round(n).toLocaleString('ko-KR');
     const eok = n => n >= 100000000 ? (Math.round(n / 1000000) / 100).toLocaleString('ko-KR') + '억' : n >= 10000 ? Math.round(n / 10000).toLocaleString('ko-KR') + '만' : won(n);
@@ -394,7 +425,9 @@
             <div class="sum-row total"><span>총 납부할 세액</span><b>${won(t.total)}원</b></div>
           </div>`
           : `<h3>🧾 예상 법인세</h3><div class="warn-box" style="margin-top:0;">왼쪽에 예상 이익을 넣으면 예상 법인세도 함께 계산됩니다.</div>`;
-        panel.innerHTML = `${taxHtml}
+        const detail = canDetail();
+        const printInputs = detail ? `<div class="print-only print-inputs"><b>입력값</b>${input.bizName ? ' · 법인명 ' + esc(input.bizName) : ''}${input.isNew ? ' · 신규법인' : ''} · 연 매출액 ${won(input.revenue)} · 예상 이익 ${won(input.profit)} · ${input.taxYear}년 세율${input.smallCorp ? ' · 소규모 법인' : ''}${input.premium ? ' · 고급기장(' + input.premiumWhy.map(esc).join(', ') + ')' : ''} · 출력일 ${new Date().toLocaleDateString('ko-KR')}</div>` : '';
+        panel.innerHTML = `${printInputs}${taxHtml}
           <h3>🏢 나의 기장료는?${input.bizName ? ' <small>' + esc(input.bizName) + '</small>' : ''}</h3>
           <div class="sum">
             <div class="sum-row big"><span>월 기장료 <small>부가세 포함</small></span><b>${won(r.monthlyWithVat)}원</b></div>
@@ -417,14 +450,15 @@
             <tr><td class="k">법인세 조정료</td><td class="n">${won(r.adjust)}</td><td class="n">${won(r.adjustVat)}</td><td class="n">${won(r.adjustWithVat)}</td></tr>
             <tr class="total"><td class="k">연 총 수수료</td><td class="n">${won(r.monthly * 12 + r.adjust)}</td><td class="n">${won(r.monthlyVat * 12 + r.adjustVat)}</td><td class="n">${won(r.total)}</td></tr>
           </table></div>
-          <details open><summary>계산 과정</summary>
+          ${detail ? `<details open><summary>계산 과정</summary>
             <p class="calc-note">· ${steps.join('<br>· ')}<br>
               · 법인세 조정료: ${esc(r.adjustFormula)} = ${won(r.adjust)}원 (최저 40만원)${input.profit ? `<br>
               · 법인세: ${taxSteps} → 합계 ${won(t.tax)}원 (실효세율 ${(t.effective * 100).toFixed(1)}%, 지방소득세 포함)<br>
               · 세액공제 · 감면, 이월결손금, 최저한세, 세무조정은 반영하지 않았습니다.` : ''}</p>
-          </details>
+          </details>` : ''}
           ${input.profit ? `<div class="best" style="font-size: 14px; margin-top: 10px;">👉 1년 세금 + 수수료 <span style="color:#dc2626;">${won(t.total + r.total)}원</span> <span style="font-weight: normal; color: #475569;">(총 납부할 세액 ${won(t.total)}원 + 연 총 수수료 ${won(r.total)}원)</span></div>` : ''}
 
+          ${detail ? `<button type="button" class="print-btn" onclick="printBasis()">🖨️ 계산근거 출력</button>` : ''}
           <div class="notice-text">
             <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
             <p>※ 산출된 세액과 보수는 참고용이며, 법적 근거로 사용할 수 없습니다. 실제 보수는 업무 범위와 상담 내용에 따라 달라질 수 있습니다.</p>

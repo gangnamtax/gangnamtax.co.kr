@@ -151,6 +151,29 @@
         .jgrid, .jgrid.three { grid-template-columns: 1fr; }
         table.rt th, table.rt td { padding: 6px 5px; font-size: 12px; }
     }
+
+    /* 계산근거 출력 (기장계약 고객 · 관리자만) */
+    .print-btn { width: 100%; margin-top: 14px; padding: 11px; background: #fff; color: #1e3a8a; border: 1px solid #93c5fd; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .print-btn:hover { background: #eff6ff; }
+    .print-only { display: none; }
+    @media print {
+        @page { size: A4; margin: 12mm; }
+        body { background: #fff; padding: 0; display: block; }
+        .wrapper { max-width: none; }
+        .wrapper > a, #authButtons, .lock-overlay, #taxForm, .print-btn, .stale-note, details summary { display: none !important; }
+        .header { box-shadow: none; padding: 0 0 8px; border-bottom: 2px solid #1e3a8a; border-radius: 0; margin-bottom: 10px; }
+        .calculator-card { box-shadow: none; padding: 0; min-height: 0; }
+        .layout { display: block; }
+        .result-col { position: static; max-height: none; overflow: visible; border: none; padding: 0; }
+        .result-col.stale > * { opacity: 1 !important; }
+        .print-only { display: block; }
+        details { display: block; }
+        details > *:not(summary) { display: block; }
+        .jcard, .sum, table.rt, .best, .relief { break-inside: avoid; }
+        h3 { break-after: avoid; }
+    }
+    .print-inputs { font-size: 12px; color: #334155; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.7; }
+    .print-inputs b { color: #0f172a; }
   </style>
 </head>
 <body>
@@ -324,6 +347,7 @@
     // 구글 Apps Script가 아직 이 계산기(24시간 이용권)를 모르는 예전 버전이면, 양도세 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
     const baseUpdateUi = updateUi;
     updateUi = function (user, plan, ...rest) {
+        window.CALC_USER = user || null;
         if (plan && !plan.hours) { showComingSoon(); return; }
         return baseUpdateUi(user, plan, ...rest);
     };
@@ -341,6 +365,13 @@
     const KSIC_MAP = new Map(KSIC.map(x => [x.code, x]));
     const pctText = r => (Math.round(r * 1000) / 10).toFixed(1) + '%';
     const pct0 = r => (Math.round(r * 1000) / 10).toString() + '%';
+
+    // 기장계약 고객 · 관리자만 계산 과정 상세와 계산근거 출력 (회원 시트 '기장계약' 칸)
+    const canDetail = () => !!(window.CALC_USER && (window.CALC_USER.client || window.CALC_USER.admin));
+    function printBasis() {
+        document.querySelectorAll('#resultPanel details').forEach(d => { d.open = true; });
+        window.print();
+    }
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const won = n => Math.round(n).toLocaleString('ko-KR');
     const eok = n => n >= 100000000 ? (Math.round(n / 1000000) / 100).toLocaleString('ko-KR') + '억' : n >= 10000 ? Math.round(n / 10000).toLocaleString('ko-KR') + '만' : won(n);
@@ -689,7 +720,10 @@
             `<tr class="${cls}"><td class="k">${label}</td>${cols.map(c => `<td class="n${minKey && c[minKey] === min ? ' bestcol' : ''}">${fmt(c[key])}</td>`).join('')}</tr>`;
         const book = j.book.result === '복식부기의무자';
 
-        document.getElementById('resultPanel').innerHTML = `
+        const detail = canDetail();
+        const bizLines = input.biz.map((b, i) => `업종${i + 1} ${esc(b.code)} ${esc((IND_MAP.get(b.code) || {}).name || '')} (직전 ${won(b.prev)} / 해당 ${won(b.cur)})`).join('<br>');
+        const printInputs = detail ? `<div class="print-only print-inputs"><b>입력값</b>${input.bizName ? ' · 상호 ' + esc(input.bizName) : ''} · 귀속연도 ${input.year}${input.isNew ? ' · 신규' : ''}${input.isPro ? ' · 전문직' : ''}<br>${bizLines}<br>장부상 필요경비 ${won(input.bookExpense)} · 주요경비(매입 ${won(input.purchase)} · 임차 ${won(input.rent)} · 인건비 ${won(input.labor)}) · 종합소득공제 ${won(input.deduction)}<br>창업일 ${esc(input.startDate || '-')} · 생년월일 ${esc(input.birth || '-')} · 병역 ${esc(input.enlist || '-')} ~ ${esc(input.discharge || '-')} · ${esc(input.region)} · 최초 소득 ${esc(input.firstIncomeYear || '-')}년 · 실질창업 ${input.realStartup ? '예' : '아니오'}<br>직원 ${input.employees}명${input.premium ? ' · 고급기장' : ''}${input.discount ? ' · 할인 ' + Math.round(input.discount * 100) + '%' : ''} · 출력일 ${new Date().toLocaleDateString('ko-KR')}</div>` : '';
+        document.getElementById('resultPanel').innerHTML = `${printInputs}
           <h3>📌 판정 결과 <small>${input.year}년 귀속${input.bizName ? ' · ' + esc(input.bizName) : ''}</small></h3>
           <div class="main-biz">주업종(직전): <b>${esc(r.prevMainName)}</b>${r.prevMainName !== r.curMainName ? `<br>주업종(해당): <b>${esc(r.curMainName)}</b>` : ''}</div>
           <div class="jgrid three" style="margin-top: 8px;">
@@ -703,7 +737,7 @@
 
           <h3>🚀 창업중소기업 세액감면</h3>
           <div class="relief"><span class="rate${s.reliefRate ? '' : ' zero'}">${pct0(s.reliefRate)}</span> &nbsp;${esc(s.reliefText)}</div>
-          <details><summary>요건 자세히 보기</summary>
+          ${detail ? `<details><summary>요건 자세히 보기</summary>
             <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
               <tr><th>요건</th><th>내용</th><th>판정</th></tr>
               <tr><td class="k">업종</td><td>${esc(s.ksicText)}<br>${esc(s.industryText)}</td><td>${esc(s.industryOk)}</td></tr>
@@ -714,7 +748,7 @@
               <tr><td class="k">지역 · 규정</td><td>${esc(s.region)}<br>${esc(s.ruleText)}</td><td>${esc(s.rateGroup)}${s.ruleText ? ' ' + pct0(s.regionRate) : ''}</td></tr>
             </table></div>
             <p class="calc-note">※ 감면 배제: 기한후 신고·무신고 결정, 복식부기의무자의 추계·간편장부 신고(무신고 간주), 사업용계좌 미신고·현금영수증가맹점 미가입. 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도.</p>
-          </details>
+          </details>` : ''}
 
           <h3>⚖️ 추계 vs 장부 소득세</h3>
           <div class="table-wrap"><table class="rt">
@@ -729,7 +763,7 @@
             ${row(t, '추계 대비 절감', 'saving', minTax, 'total', 'em')}
           </table></div>
           <div class="best">👉 ${esc(r.tax.best)}</div>
-          <details><summary>계산 과정 자세히 보기</summary>
+          ${detail ? `<details><summary>계산 과정 자세히 보기</summary>
             <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
               <tr><th>항목</th>${th(t, null, 'total')}</tr>
               ${row(t, '수입금액', 'revenue')}
@@ -747,7 +781,7 @@
               ${row(t, '총 부담세액', 'total', null, null, 'total')}
             </table></div>
             <p class="calc-note">· 추계 필요경비: ${esc(r.tax.expenseNote)}<br>· 소득금액 한도: ${esc(r.tax.capNote)}<br>· 추계 소득금액: ${esc(r.tax.incomeNote)}<br>· 창업감면: ${esc(r.tax.reliefNote)}<br>· 장부 신고의 필요경비는 장부상 실제 필요경비(수입금액 한도)입니다.</p>
-          </details>
+          </details>` : ''}
 
           <h3>💼 기장료 · 조정료 <small>부가세 포함</small></h3>
           <div class="table-wrap"><table class="rt">
@@ -760,11 +794,12 @@
             ${row(fv, '추계 대비 순효과', 'net', minGrand, 'grand')}
           </table></div>
           <div class="best">👉 수수료 포함: ${esc(r.fee.best.replace('세금+보수', '세금+수수료'))}</div>
-          <details><summary>수수료 계산 자세히 보기</summary>
+          ${detail ? `<details><summary>수수료 계산 자세히 보기</summary>
             <p class="calc-note">· 위 금액은 모두 부가세(10%)를 더한 금액이고, 아래 계산식은 부가세를 빼고 계산한 금액입니다.<br>· 월 기장료: ${esc(r.fee.monthlyNote)}<br>· 조정료: ${esc(r.fee.adjustNote)}<br>· 추계신고는 기장이 없어 기장료가 없습니다. 월 기장료에는 부가가치세·원천세 신고 대행이 포함됩니다.<br>· 수수료는 필요경비로 인정되어 실제 세금은 이보다 조금 줄어듭니다.</p>
-          </details>
+          </details>` : ''}
 
           ${warns.length ? `<div class="warn-box">⚠️ ${warns.map(esc).join('<br>⚠️ ')}</div>` : ''}
+          ${detail ? `<button type="button" class="print-btn" onclick="printBasis()">🖨️ 계산근거 출력</button>` : ''}
           <div class="notice-text">
             <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
             <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
