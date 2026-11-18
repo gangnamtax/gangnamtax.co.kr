@@ -678,6 +678,8 @@
 
     function renderResult(r, input, warns) {
         const j = r.judge, s = r.startup, t = r.tax.cols, f = r.fee.rows;
+        // 수수료는 모두 부가세 포함 금액으로 표시
+        const fv = f.map(c => ({ ...c, monthly: c.monthly * 1.1, adjust: c.adjust * 1.1, faithful: c.faithful * 1.1 }));
         const minTax = Math.min(...t.map(c => c.total)), minGrand = Math.min(...f.map(c => c.grand));
         const card = (title, x, kind, desc) => `<div class="jcard"><div class="t">${title}</div><div class="v ${kind}">${esc(x)}</div>${desc ? `<div class="d">${desc}</div>` : ''}</div>`;
         const th = (cols, min, key) => cols.map(c => `<th class="n${c[key] === min ? ' bestcol' : ''}">${esc(c.name.replace(/ \(.*\)/, ''))}</th>`).join('');
@@ -745,19 +747,19 @@
             <p class="calc-note">※ 감면 배제: 기한후 신고·무신고 결정, 복식부기의무자의 추계·간편장부 신고(무신고 간주), 사업용계좌 미신고·현금영수증가맹점 미가입. 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도.</p>
           </details>
 
-          <h3>💼 기장료 · 조정료 <small>세무회계강남 보수표 · 부가세 포함</small></h3>
+          <h3>💼 기장료 · 조정료 <small>모두 부가세 포함</small></h3>
           <div class="table-wrap"><table class="rt">
-            <tr><th>항목</th>${th(f, minGrand, 'grand')}</tr>
-            ${row(f, '월 기장료', 'monthly', minGrand, 'grand')}
-            ${row(f, '조정료·신고대행', 'adjust', minGrand, 'grand')}
-            ${f.some(c => c.faithful) ? row(f, '성실신고확인', 'faithful', minGrand, 'grand') : ''}
-            ${row(f, '연간 보수 (VAT 포함)', 'withVat', minGrand, 'grand', 'em')}
-            ${row(f, '세금 + 보수', 'grand', minGrand, 'grand', 'total')}
-            ${row(f, '추계 대비 순효과', 'net', minGrand, 'grand')}
+            <tr><th>항목</th>${th(fv, minGrand, 'grand')}</tr>
+            ${row(fv, '월 기장료', 'monthly', minGrand, 'grand')}
+            ${row(fv, '조정료·신고대행', 'adjust', minGrand, 'grand')}
+            ${fv.some(c => c.faithful) ? row(fv, '성실신고확인', 'faithful', minGrand, 'grand') : ''}
+            ${row(fv, '연 총 수수료', 'withVat', minGrand, 'grand', 'em')}
+            ${row(fv, '세금 + 수수료', 'grand', minGrand, 'grand', 'total')}
+            ${row(fv, '추계 대비 순효과', 'net', minGrand, 'grand')}
           </table></div>
-          <div class="best">👉 보수 포함: ${esc(r.fee.best)}</div>
-          <details><summary>보수 계산 자세히 보기</summary>
-            <p class="calc-note">· 월 기장료: ${esc(r.fee.monthlyNote)}<br>· 조정료: ${esc(r.fee.adjustNote)}<br>· 추계신고는 기장이 없어 기장료가 없습니다. 월 기장료에는 부가가치세·원천세 신고 대행이 포함됩니다.<br>· 보수는 필요경비로 인정되어 실제 세금은 이보다 조금 줄어듭니다.</p>
+          <div class="best">👉 수수료 포함: ${esc(r.fee.best.replace('세금+보수', '세금+수수료'))}</div>
+          <details><summary>수수료 계산 자세히 보기</summary>
+            <p class="calc-note">· 위 금액은 모두 부가세(10%)를 더한 금액이고, 아래 계산식은 부가세를 빼고 계산한 금액입니다.<br>· 월 기장료: ${esc(r.fee.monthlyNote)}<br>· 조정료: ${esc(r.fee.adjustNote)}<br>· 추계신고는 기장이 없어 기장료가 없습니다. 월 기장료에는 부가가치세·원천세 신고 대행이 포함됩니다.<br>· 수수료는 필요경비로 인정되어 실제 세금은 이보다 조금 줄어듭니다.</p>
           </details>
 
           ${warns.length ? `<div class="warn-box">⚠️ ${warns.map(esc).join('<br>⚠️ ')}</div>` : ''}
