@@ -127,6 +127,16 @@
     table.rt td.bestcol, table.rt th.bestcol { box-shadow: inset 0 0 0 9999px rgba(250, 204, 21, .12); }
     .best { margin-top: 8px; padding: 9px 12px; background: #fff; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 700; color: #1e3a8a; }
     .relief { border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 12px; font-size: 13px; }
+    /* 세로 요약: 항목 왼쪽, 금액 오른쪽 */
+    .sum { border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; overflow: hidden; }
+    .sum-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px; font-size: 14px; color: #334155; }
+    .sum-row + .sum-row { border-top: 1px solid #f1f5f9; }
+    .sum-row small { display: block; font-size: 11px; color: #94a3b8; font-weight: normal; }
+    .sum-row b { font-variant-numeric: tabular-nums; white-space: nowrap; color: #0f172a; }
+    .sum-row.total { background: #fef2f2; border-top: 2px solid #fecaca; font-weight: 700; }
+    .sum-row.total b { color: #dc2626; font-size: 17px; }
+    .sum-row.big { background: #eff6ff; font-weight: 700; }
+    .sum-row.big b { color: #1e3a8a; font-size: 19px; }
     .relief .rate { font-size: 18px; font-weight: 800; color: #166534; }
     .relief .rate.zero { color: #64748b; }
     details { margin-top: 6px; }
@@ -159,7 +169,6 @@
         <div>
           <h2>🏢 법인세 · 법인 기장료 계산기</h2>
           <p>예상 법인세 · 월 기장료 · 법인세 조정료 · 1년 합계</p>
-          <div class="kind-tabs"><a href="main.html">개인사업자</a><a class="on">법인</a></div>
         </div>
         <div id="authButtons">
           <a id="adminLink" href="../양도세계산기/admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
@@ -376,39 +385,45 @@
         if (r.over100) steps.push(`100억원 초과 가산: 50억원마다 월 50만원 → +${won(r.over100)}원`);
         if (input.premium) steps.push(`고급기장 × 1.3 (${input.premiumWhy.map(esc).join(', ')}) → 월 ${won(r.monthly)}원`);
         const taxSteps = t.steps.map(s => `${eok(s.from)}원 ~ ${eok(s.to)}원 × ${Math.round(s.rate * 100)}% = ${won(s.tax)}원`).join('<br>· ');
+        // 1) 예상 법인세: 법인세 · 지방소득세 · 총 납부할 세액 (세로)
         const taxHtml = input.profit ? `
           <h3>🧾 예상 법인세 <small>${esc(t.label)}${t.small ? ' · 소규모 법인' : ''}</small></h3>
-          <div class="jgrid">
-            <div class="jcard"><div class="t">법인세 (산출세액)</div><div class="v">${won(t.tax)}원</div><div class="d">예상 이익 ${eok(t.base)}원 기준</div></div>
-            <div class="jcard"><div class="t">법인세 + 지방소득세 (10%)</div><div class="v on">${won(t.total)}원</div><div class="d">지방소득세 ${won(t.local)}원 · 실효세율 ${(t.effective * 100).toFixed(1)}%</div></div>
-          </div>
-          <details><summary>법인세 계산 과정</summary><p class="calc-note">· ${taxSteps}<br>· 세액공제 · 감면, 이월결손금, 최저한세, 세무조정은 반영하지 않았습니다.</p></details>`
-          : `<div class="warn-box" style="margin-top:0;">예상 이익을 넣으면 예상 법인세도 함께 계산됩니다.</div>`;
+          <div class="sum">
+            <div class="sum-row"><span>법인세 <small>예상 이익 ${eok(t.base)}원 기준</small></span><b>${won(t.tax)}원</b></div>
+            <div class="sum-row"><span>지방소득세 <small>법인세의 10%</small></span><b>${won(t.local)}원</b></div>
+            <div class="sum-row total"><span>총 납부할 세액</span><b>${won(t.total)}원</b></div>
+          </div>`
+          : `<h3>🧾 예상 법인세</h3><div class="warn-box" style="margin-top:0;">왼쪽에 예상 이익을 넣으면 예상 법인세도 함께 계산됩니다.</div>`;
         panel.innerHTML = `${taxHtml}
           <h3>🏢 나의 기장료는?${input.bizName ? ' <small>' + esc(input.bizName) + '</small>' : ''}</h3>
-          <div class="jgrid">
-            <div class="jcard"><div class="t">월 기장료 (부가세 포함)</div><div class="v">${won(r.monthlyWithVat)}원</div><div class="d">공급가액 ${won(r.monthly)}원 + 부가세 ${won(r.monthlyVat)}원</div></div>
-            <div class="jcard"><div class="t">법인세 조정료 (연 1회, 부가세 포함)</div><div class="v">${won(r.adjustWithVat)}원</div><div class="d">공급가액 ${won(r.adjust)}원 + 부가세 ${won(r.adjustVat)}원</div></div>
+          <div class="sum">
+            <div class="sum-row big"><span>월 기장료 <small>부가세 포함</small></span><b>${won(r.monthlyWithVat)}원</b></div>
           </div>
-          <div class="best" style="font-size: 15px;">👉 1년 총 보수 <span style="color:#dc2626;">${won(r.total)}원</span> <span style="font-weight: normal; color: #475569;">(월 평균 ${won(r.perMonth)}원, 부가세 포함)</span></div>
+          <div class="sum" style="margin-top: 8px;">
+            <div class="sum-row"><span>연 기장료 <small>월 기장료 × 12개월</small></span><b>${won(r.yearlyBookkeeping)}원</b></div>
+            <div class="sum-row"><span>법인세 조정료 <small>연 1회</small></span><b>${won(r.adjustWithVat)}원</b></div>
+            <div class="sum-row total"><span>연 총 수수료 <small>부가세 포함</small></span><b>${won(r.total)}원</b></div>
+          </div>
 
-          <h3>📋 내역 <small>매출 ${eok(r.revenue)}원${r.isNew ? ' · 신규법인' : ''}</small></h3>
+          <h3>✅ 월 기장료에 포함된 업무</h3>
+          <p class="calc-note" style="font-size: 12.5px; color: #334155;">① 장부작성(기장) ② 매월 급여 등 원천세 신고 ③ 부가가치세 신고 (연 4회) ④ 세무자문 ⑤ 각종 증명서 발급</p>
+          <p class="calc-note">※ 법인세 조정료는 결산 시 매출액(자산총액)에 따라 별도로 청구됩니다.<br>※ 소모품비는 매년 월 기장료 범위 내에서 1회 청구됩니다 (법인 3월).</p>
+
+          <h3>📋 세부내역 <small>매출 ${eok(r.revenue)}원${r.isNew ? ' · 신규법인' : ''}</small></h3>
           <div class="table-wrap"><table class="rt">
             <tr><th>항목</th><th class="n">공급가액</th><th class="n">부가세</th><th class="n">합계</th></tr>
             <tr><td class="k">월 기장료</td><td class="n">${won(r.monthly)}</td><td class="n">${won(r.monthlyVat)}</td><td class="n">${won(r.monthlyWithVat)}</td></tr>
             <tr><td class="k">연 기장료 (12개월)</td><td class="n">${won(r.monthly * 12)}</td><td class="n">${won(r.monthlyVat * 12)}</td><td class="n">${won(r.yearlyBookkeeping)}</td></tr>
             <tr><td class="k">법인세 조정료</td><td class="n">${won(r.adjust)}</td><td class="n">${won(r.adjustVat)}</td><td class="n">${won(r.adjustWithVat)}</td></tr>
-            <tr class="total"><td class="k">1년 총 보수</td><td class="n">${won(r.monthly * 12 + r.adjust)}</td><td class="n">${won(r.monthlyVat * 12 + r.adjustVat)}</td><td class="n">${won(r.total)}</td></tr>
+            <tr class="total"><td class="k">연 총 수수료</td><td class="n">${won(r.monthly * 12 + r.adjust)}</td><td class="n">${won(r.monthlyVat * 12 + r.adjustVat)}</td><td class="n">${won(r.total)}</td></tr>
           </table></div>
           <details open><summary>계산 과정</summary>
             <p class="calc-note">· ${steps.join('<br>· ')}<br>
-              · 법인세 조정료: ${esc(r.adjustFormula)} = ${won(r.adjust)}원 (최저 40만원)</p>
+              · 법인세 조정료: ${esc(r.adjustFormula)} = ${won(r.adjust)}원 (최저 40만원)${input.profit ? `<br>
+              · 법인세: ${taxSteps} → 합계 ${won(t.tax)}원 (실효세율 ${(t.effective * 100).toFixed(1)}%, 지방소득세 포함)<br>
+              · 세액공제 · 감면, 이월결손금, 최저한세, 세무조정은 반영하지 않았습니다.` : ''}</p>
           </details>
-          ${input.profit ? `<div class="best" style="font-size: 15px; margin-top: 12px;">👉 1년 세금 + 보수 <span style="color:#dc2626;">${won(t.total + r.total)}원</span> <span style="font-weight: normal; color: #475569;">(법인세·지방소득세 ${won(t.total)}원 + 보수 ${won(r.total)}원)</span></div>` : ''}
-
-          <h3>✅ 월 기장료에 포함된 업무</h3>
-          <p class="calc-note" style="font-size: 12.5px; color: #334155;">① 장부작성(기장) ② 매월 급여 등 원천세 신고 ③ 부가가치세 신고 (연 4회) ④ 세무자문 ⑤ 각종 증명서 발급</p>
-          <p class="calc-note">※ 법인세 조정료는 결산 시 매출액(자산총액)에 따라 별도로 청구됩니다.<br>※ 소모품비는 매년 월 기장료 범위 내에서 1회 청구됩니다 (법인 3월).</p>
+          ${input.profit ? `<div class="best" style="font-size: 14px; margin-top: 10px;">👉 1년 세금 + 수수료 <span style="color:#dc2626;">${won(t.total + r.total)}원</span> <span style="font-weight: normal; color: #475569;">(총 납부할 세액 ${won(t.total)}원 + 연 총 수수료 ${won(r.total)}원)</span></div>` : ''}
 
           <div class="notice-text">
             <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
