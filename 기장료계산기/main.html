@@ -152,7 +152,7 @@
         table.rt th, table.rt td { padding: 6px 5px; font-size: 12px; }
     }
 
-    /* 계산근거 출력 (기장계약 고객 · 관리자만) */
+    /* 계산근거 출력 (관리자만, 상세는 출력할 때만 보임) */
     .print-btn { width: 100%; margin-top: 14px; padding: 11px; background: #fff; color: #1e3a8a; border: 1px solid #93c5fd; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .print-btn:hover { background: #eff6ff; }
     .print-only { display: none; }
@@ -409,8 +409,8 @@
     const pctText = r => (Math.round(r * 1000) / 10).toFixed(1) + '%';
     const pct0 = r => (Math.round(r * 1000) / 10).toString() + '%';
 
-    // 기장계약 고객 · 관리자만 계산 과정 상세와 계산근거 출력 (회원 시트 '기장계약' 칸)
-    const canDetail = () => !!(window.CALC_USER && (window.CALC_USER.client || window.CALC_USER.admin));
+    // 계산근거 출력(계산 과정 상세 포함)은 관리자만. 상세는 화면에 보이지 않고 출력할 때만 나옴
+    const canDetail = () => !!(window.CALC_USER && window.CALC_USER.admin);
     function printBasis() {
         document.querySelectorAll('#resultPanel details').forEach(d => { d.open = true; });
         window.print();
@@ -780,7 +780,7 @@
 
           <h3>🚀 창업중소기업 세액감면</h3>
           <div class="relief"><span class="rate${s.reliefRate ? '' : ' zero'}">${pct0(s.reliefRate)}</span> &nbsp;${esc(s.reliefText)}</div>
-          ${detail ? `<details><summary>요건 자세히 보기</summary>
+          ${detail ? `<details class="print-only"><summary>요건 자세히 보기</summary>
             <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
               <tr><th>요건</th><th>내용</th><th>판정</th></tr>
               <tr><td class="k">업종</td><td>${esc(s.ksicText)}<br>${esc(s.industryText)}</td><td>${esc(s.industryOk)}</td></tr>
@@ -806,7 +806,7 @@
             ${row(t, '추계 대비 절감', 'saving', minTax, 'total', 'em')}
           </table></div>
           <div class="best">👉 ${esc(r.tax.best)}</div>
-          ${detail ? `<details><summary>계산 과정 자세히 보기</summary>
+          ${detail ? `<details class="print-only"><summary>계산 과정 자세히 보기</summary>
             <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
               <tr><th>항목</th>${th(t, null, 'total')}</tr>
               ${row(t, '수입금액', 'revenue')}
@@ -837,7 +837,7 @@
             ${row(fv, '추계 대비 순효과', 'net', minGrand, 'grand')}
           </table></div>
           <div class="best">👉 수수료 포함: ${esc(r.fee.best.replace('세금+보수', '세금+수수료'))}</div>
-          ${detail ? `<details><summary>수수료 계산 자세히 보기</summary>
+          ${detail ? `<details class="print-only"><summary>수수료 계산 자세히 보기</summary>
             <p class="calc-note">· 위 금액은 모두 부가세(10%)를 더한 금액이고, 아래 계산식은 부가세를 빼고 계산한 금액입니다.<br>· 월 기장료: ${esc(r.fee.monthlyNote)}<br>· 조정료: ${esc(r.fee.adjustNote)}<br>· 추계신고는 기장이 없어 기장료가 없습니다. 월 기장료에는 부가가치세·원천세 신고 대행이 포함됩니다.<br>· 수수료는 필요경비로 인정되어 실제 세금은 이보다 조금 줄어듭니다.</p>
           </details>` : ''}
 

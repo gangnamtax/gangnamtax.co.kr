@@ -160,7 +160,7 @@
         table.rt th, table.rt td { padding: 6px 5px; font-size: 12px; }
     }
 
-    /* 계산근거 출력 (기장계약 고객 · 관리자만) */
+    /* 계산근거 출력 (관리자만, 상세는 출력할 때만 보임) */
     .print-btn { width: 100%; margin-top: 14px; padding: 11px; background: #fff; color: #1e3a8a; border: 1px solid #93c5fd; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .print-btn:hover { background: #eff6ff; }
     .print-only { display: none; }
@@ -389,8 +389,8 @@
   <script src="js/corp-fee.js"></script>
   <script>
 
-    // 기장계약 고객 · 관리자만 계산 과정 상세와 계산근거 출력 (회원 시트 '기장계약' 칸)
-    const canDetail = () => !!(window.CALC_USER && (window.CALC_USER.client || window.CALC_USER.admin));
+    // 계산근거 출력(계산 과정 상세 포함)은 관리자만. 상세는 화면에 보이지 않고 출력할 때만 나옴
+    const canDetail = () => !!(window.CALC_USER && window.CALC_USER.admin);
     function printBasis() {
         document.querySelectorAll('#resultPanel details').forEach(d => { d.open = true; });
         window.print();
@@ -493,7 +493,7 @@
             <tr><td class="k">법인세 조정료</td><td class="n">${won(r.adjust)}</td><td class="n">${won(r.adjustVat)}</td><td class="n">${won(r.adjustWithVat)}</td></tr>
             <tr class="total"><td class="k">연 총 수수료</td><td class="n">${won(r.monthly * 12 + r.adjust)}</td><td class="n">${won(r.monthlyVat * 12 + r.adjustVat)}</td><td class="n">${won(r.total)}</td></tr>
           </table></div>
-          ${detail ? `<details open><summary>계산 과정</summary>
+          ${detail ? `<details class="print-only" open><summary>계산 과정</summary>
             <p class="calc-note">· ${steps.join('<br>· ')}<br>
               · 법인세 조정료: ${esc(r.adjustFormula)} = ${won(r.adjust)}원 (최저 40만원)${input.profit ? `<br>
               · 법인세: ${taxSteps} → 합계 ${won(t.tax)}원 (실효세율 ${(t.effective * 100).toFixed(1)}%, 지방소득세 포함)<br>
