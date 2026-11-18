@@ -699,6 +699,21 @@
             ${card('기장세액공제 · 사업용계좌', `${j.bookCredit === '해당 없음' ? '공제 없음' : '공제 가능'} · 계좌 ${j.account === '의무 없음' ? '의무 없음' : '의무'}`, '', j.bookCredit === '해당 없음' ? '' : '간편장부대상자가 복식부기로 신고하면 산출세액 20% (한도 100만 원)')}
           </div>
 
+          <h3>🚀 창업중소기업 세액감면</h3>
+          <div class="relief"><span class="rate${s.reliefRate ? '' : ' zero'}">${pct0(s.reliefRate)}</span> &nbsp;${esc(s.reliefText)}</div>
+          <details><summary>요건 자세히 보기</summary>
+            <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
+              <tr><th>요건</th><th>내용</th><th>판정</th></tr>
+              <tr><td class="k">업종</td><td>${esc(s.ksicText)}<br>${esc(s.industryText)}</td><td>${esc(s.industryOk)}</td></tr>
+              <tr><td class="k">나이</td><td>${s.age == null ? '-' : s.age + '세'}${s.milText ? ` (병역 ${esc(s.milText)} 차감)` : ''}</td><td>${esc(s.ageText)}</td></tr>
+              <tr><td class="k">생계형</td><td>해당연도 수입 ${won(s.revenue)}원</td><td>${esc(s.livelihoodText)}</td></tr>
+              <tr><td class="k">실질 창업</td><td>${input.realStartup ? '예' : '아니오'}</td><td>${esc(s.realOk)}</td></tr>
+              <tr><td class="k">감면기간</td><td>${esc(s.periodText) || '-'}</td><td>${esc(s.periodOk)}</td></tr>
+              <tr><td class="k">지역 · 규정</td><td>${esc(s.region)}<br>${esc(s.ruleText)}</td><td>${esc(s.rateGroup)}${s.ruleText ? ' ' + pct0(s.regionRate) : ''}</td></tr>
+            </table></div>
+            <p class="calc-note">※ 감면 배제: 기한후 신고·무신고 결정, 복식부기의무자의 추계·간편장부 신고(무신고 간주), 사업용계좌 미신고·현금영수증가맹점 미가입. 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도.</p>
+          </details>
+
           <h3>⚖️ 추계 vs 장부 소득세</h3>
           <div class="table-wrap"><table class="rt">
             <tr><th>항목</th>${th(t, minTax, 'total')}</tr>
@@ -730,21 +745,6 @@
               ${row(t, '총 부담세액', 'total', null, null, 'total')}
             </table></div>
             <p class="calc-note">· 추계 필요경비: ${esc(r.tax.expenseNote)}<br>· 소득금액 한도: ${esc(r.tax.capNote)}<br>· 추계 소득금액: ${esc(r.tax.incomeNote)}<br>· 창업감면: ${esc(r.tax.reliefNote)}<br>· 장부 신고의 필요경비는 장부상 실제 필요경비(수입금액 한도)입니다.</p>
-          </details>
-
-          <h3>🚀 창업중소기업 세액감면</h3>
-          <div class="relief"><span class="rate${s.reliefRate ? '' : ' zero'}">${pct0(s.reliefRate)}</span> &nbsp;${esc(s.reliefText)}</div>
-          <details><summary>요건 자세히 보기</summary>
-            <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
-              <tr><th>요건</th><th>내용</th><th>판정</th></tr>
-              <tr><td class="k">업종</td><td>${esc(s.ksicText)}<br>${esc(s.industryText)}</td><td>${esc(s.industryOk)}</td></tr>
-              <tr><td class="k">나이</td><td>${s.age == null ? '-' : s.age + '세'}${s.milText ? ` (병역 ${esc(s.milText)} 차감)` : ''}</td><td>${esc(s.ageText)}</td></tr>
-              <tr><td class="k">생계형</td><td>해당연도 수입 ${won(s.revenue)}원</td><td>${esc(s.livelihoodText)}</td></tr>
-              <tr><td class="k">실질 창업</td><td>${input.realStartup ? '예' : '아니오'}</td><td>${esc(s.realOk)}</td></tr>
-              <tr><td class="k">감면기간</td><td>${esc(s.periodText) || '-'}</td><td>${esc(s.periodOk)}</td></tr>
-              <tr><td class="k">지역 · 규정</td><td>${esc(s.region)}<br>${esc(s.ruleText)}</td><td>${esc(s.rateGroup)}${s.ruleText ? ' ' + pct0(s.regionRate) : ''}</td></tr>
-            </table></div>
-            <p class="calc-note">※ 감면 배제: 기한후 신고·무신고 결정, 복식부기의무자의 추계·간편장부 신고(무신고 간주), 사업용계좌 미신고·현금영수증가맹점 미가입. 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도.</p>
           </details>
 
           <h3>💼 기장료 · 조정료 <small>모두 부가세 포함</small></h3>
