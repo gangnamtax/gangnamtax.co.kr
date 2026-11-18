@@ -177,8 +177,17 @@
     .upload-pick:hover { background: #faf7f1; }
     .upload-pick input { display: none; }
     .file-list { margin-top: 10px; font-size: 13px; color: #334155; }
-    .file-list div { padding: 3px 0; }
-    .file-list span { color: #94a3b8; font-size: 12px; margin-left: 4px; }
+    .file-list div { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid #f1ece2; }
+    .file-list div:last-child { border-bottom: none; }
+    .file-list .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-list span { color: #94a3b8; font-size: 12px; white-space: nowrap; }
+    .file-list button { background: none; border: none; color: #94a3b8; font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
+    .file-list button:hover { color: #b45309; }
+    .drop-hint { display: none; margin-top: 10px; padding: 18px; text-align: center; border-radius: 8px; background: #faf3e3; color: #8a6d3b; font-weight: 700; font-size: 14px; }
+    .upload-box.drag { border-style: solid; border-width: 2px; background: #fbf6ea; }
+    .upload-box.drag .drop-hint { display: block; }
+    .progress { margin-top: 8px; height: 6px; background: #f1ece2; border-radius: 3px; overflow: hidden; }
+    .progress i { display: block; height: 100%; width: 0; background: #b08d57; transition: width .3s; }
     .extract-btn { margin-top: 10px; width: 100%; padding: 11px; background: #8a6d3b; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .extract-btn:hover { background: #74592e; }
     .extract-btn:disabled { background: #b9a682; cursor: wait; }
@@ -317,14 +326,15 @@
             <div id="methodMsg" class="live-msg" style="margin-top: 12px;"></div>
 
             <!-- 재무제표 자동 입력 -->
-            <div class="upload-box">
+            <div class="upload-box" id="dropZone">
               <div class="upload-head">
                 <div>
                   <b>재무제표로 자동 입력</b>
-                  <span>재무상태표 · 손익계산서 · 법인세 신고서(세무조정계산서)를 올리면 아래 3개 계산서를 채워 드려요.</span>
+                  <span>재무상태표 · 손익계산서 · 법인세 신고서(세무조정계산서)를 올리면 아래 3개 계산서를 채워 드려요.<br>파일을 이 칸으로 끌어다 놓아도 됩니다. (PDF · JPG · PNG, 큰 PDF는 나눠서 읽어요)</span>
                 </div>
-                <label class="upload-pick">파일 선택<input type="file" id="fsFiles" accept="application/pdf,image/jpeg,image/png,image/webp" multiple onchange="listFiles()"></label>
+                <label class="upload-pick">파일 선택<input type="file" id="fsFiles" accept="application/pdf,image/jpeg,image/png,image/webp" multiple onchange="addFiles(this.files); this.value = ''"></label>
               </div>
+              <div class="drop-hint">여기에 놓으면 추가됩니다</div>
               <div id="fileList" class="file-list"></div>
               <button type="button" id="extractBtn" class="extract-btn hidden" onclick="extractFiles()">올린 파일로 자동 입력</button>
               <div id="extractMsg" class="live-msg"></div>
@@ -677,15 +687,42 @@
     }
 
     // ===== 재무제표 자동 입력 =====
-    function listFiles() {
-        const files = [...$('fsFiles').files];
-        $('fileList').innerHTML = files.map(f => `<div>${/pdf/.test(f.type) ? '📄' : '🖼️'} ${escapeHtml(f.name)} <span>${(f.size / 1048576).toFixed(1)}MB</span></div>`).join('');
-        $('extractBtn').classList.toggle('hidden', !files.length);
+    // 큰 PDF는 브라우저에서 쪽 단위로 나눠 여러 번 읽고(한 번에 약 4MB · 12쪽), 결과를 합쳐서 채움
+    const PART_BYTES = 4 * 1048576, PART_PAGES = 12, MAX_TOTAL = 80 * 1048576, IMG_PER_PART = 5;
+    const OK_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    let fsFiles = [];
+    function addFiles(list) {
+        const skipped = [];
+        [...list].forEach(f => {
+            if (!OK_TYPES.includes(f.type)) { skipped.push(f.name); return; }
+            if (!fsFiles.some(x => x.name === f.name && x.size === f.size)) fsFiles.push(f);
+        });
+        renderFiles();
+        if (skipped.length) { $('extractMsg').className = 'live-msg warn'; $('extractMsg').textContent = `PDF · JPG · PNG만 올릴 수 있어요: ${skipped.join(', ')}`; }
+    }
+    function removeFile(i) { fsFiles.splice(i, 1); renderFiles(); }
+    function renderFiles() {
+        $('fileList').innerHTML = fsFiles.map((f, i) => `<div><span>${/pdf/.test(f.type) ? '📄' : '🖼️'}</span><span class="fname" style="color:#334155;font-size:13px;">${escapeHtml(f.name)}</span><span>${(f.size / 1048576).toFixed(1)}MB</span><button type="button" onclick="removeFile(${i})" aria-label="${escapeHtml(f.name)} 빼기">&times;</button></div>`).join('');
+        $('extractBtn').classList.toggle('hidden', !fsFiles.length);
         $('extractMsg').textContent = '';
     }
+    // 끌어다 놓기 (칸 밖에 떨어뜨려도 브라우저가 파일을 열지 않게 막음)
+    (() => {
+        const zone = $('dropZone');
+        let depth = 0;
+        const isFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+        zone.addEventListener('dragenter', e => { if (!isFiles(e)) return; e.preventDefault(); depth++; zone.classList.add('drag'); });
+        zone.addEventListener('dragover', e => { if (!isFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+        zone.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; zone.classList.remove('drag'); } });
+        zone.addEventListener('drop', e => { e.preventDefault(); depth = 0; zone.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+        window.addEventListener('dragover', e => { if (isFiles(e)) e.preventDefault(); });
+        window.addEventListener('drop', e => { if (isFiles(e)) e.preventDefault(); });
+    })();
+
     function readAsDataUrl(file) {
         return new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(file); });
     }
+    const toB64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
     // 사진은 긴 변 2000px JPEG로 줄여서 보냄 (글자는 읽히고 전송은 가볍게)
     async function shrinkImage(file) {
         const url = await readAsDataUrl(file);
@@ -697,22 +734,92 @@
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         return { mediaType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.88).split(',')[1] };
     }
-    async function extractFiles() {
-        const files = [...$('fsFiles').files].slice(0, 8);
-        if (!files.length) return;
-        const total = files.reduce((s, f) => s + f.size, 0);
-        if (files.some(f => /pdf/.test(f.type)) && total > 15 * 1048576) { alert('파일이 너무 큽니다. PDF는 합계 15MB 이하로 올려주세요.'); return; }
+    let pdfLibLoading = null;
+    function loadPdfLib() {
+        if (window.PDFLib) return Promise.resolve();
+        return pdfLibLoading || (pdfLibLoading = new Promise((ok, fail) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+            s.onload = ok; s.onerror = () => { pdfLibLoading = null; fail(new Error('pdf-lib')); };
+            document.head.appendChild(s);
+        }));
+    }
+    // PDF 한 개 → 서버로 보낼 묶음들 (작으면 그대로, 크면 쪽 단위로 나눔)
+    async function pdfParts(file) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        if (file.size <= PART_BYTES) return [{ label: file.name, files: [{ name: file.name, mediaType: 'application/pdf', data: toB64(bytes) }] }];
+        await loadPdfLib();
+        const src = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+        const n = src.getPageCount();
+        const per = Math.max(1, Math.min(PART_PAGES, Math.floor(n * PART_BYTES / file.size)));
+        const parts = [];
+        for (let start = 0; start < n; start += per) {
+            const end = Math.min(n, start + per);
+            const doc = await PDFLib.PDFDocument.create();
+            const pages = await doc.copyPages(src, Array.from({ length: end - start }, (_, k) => start + k));
+            pages.forEach(p => doc.addPage(p));
+            const out = await doc.save();
+            parts.push({ label: `${file.name} ${start + 1}~${end}쪽`, files: [{ name: file.name, mediaType: 'application/pdf', data: toB64(out) }] });
+        }
+        return parts;
+    }
+    function setProgress(done, total, text) {
         $('extractMsg').className = 'live-msg';
-        $('extractMsg').textContent = '문서를 읽는 중입니다. 쪽수에 따라 1분 정도 걸릴 수 있어요...';
-        let payload;
+        $('extractMsg').innerHTML = `${escapeHtml(text)}<div class="progress"><i style="width:${total ? Math.round(done / total * 100) : 0}%"></i></div>`;
+    }
+    // 여러 번 읽은 결과 합치기: 같은 사업연도 · 같은 기준일은 먼저 찾은 값을 쓰고 빈 값만 채움
+    function mergeExtracts(list) {
+        const out = { companyName: null, sharesIssued: null, fiscalYears: [], balanceSheets: [], notes: '' };
+        const notes = [];
+        const fill = (dst, src) => { Object.keys(src).forEach(k => { if ((dst[k] === null || dst[k] === undefined) && src[k] !== null && src[k] !== undefined) dst[k] = src[k]; }); };
+        list.forEach(d => {
+            if (!d) return;
+            if (!out.companyName && d.companyName) out.companyName = d.companyName;
+            if (!out.sharesIssued && d.sharesIssued) out.sharesIssued = d.sharesIssued;
+            (d.fiscalYears || []).forEach(y => { if (!y || !y.fiscalYearEnd) return; const f = out.fiscalYears.find(x => x.fiscalYearEnd === y.fiscalYearEnd); f ? fill(f, y) : out.fiscalYears.push({ ...y }); });
+            (d.balanceSheets || []).forEach(s => { if (!s || !s.asOf) return; const f = out.balanceSheets.find(x => x.asOf === s.asOf); f ? fill(f, s) : out.balanceSheets.push({ ...s }); });
+            if (d.notes && !notes.includes(d.notes)) notes.push(d.notes);
+        });
+        out.notes = notes.join(' / ').slice(0, 600);
+        return out;
+    }
+    async function extractFiles() {
+        if (!fsFiles.length) return;
+        const total = fsFiles.reduce((s, f) => s + f.size, 0);
+        if (total > MAX_TOTAL) { $('extractMsg').className = 'live-msg warn'; $('extractMsg').textContent = '파일이 너무 많거나 큽니다. 합계 80MB 이하로 올려주세요.'; return; }
+        const btn = $('extractBtn'), label = btn.innerText;
+        btn.disabled = true; btn.innerText = '읽는 중...';
         try {
-            payload = await Promise.all(files.map(async f => /pdf/.test(f.type)
-                ? { name: f.name, mediaType: 'application/pdf', data: (await readAsDataUrl(f)).split(',')[1] }
-                : { name: f.name, ...(await shrinkImage(f)) }));
-        } catch (err) { $('extractMsg').textContent = '파일을 열지 못했습니다.'; return; }
-        const r = await runCalc({ mode: 'extract', files: payload }, $('extractBtn'), '읽는 중...');
-        if (!r || !r.data) { $('extractMsg').textContent = ''; return; }
-        applyExtract(r.data);
+            setProgress(0, 1, '파일을 준비하는 중...');
+            let parts = [];
+            const imgs = [];
+            for (const f of fsFiles) {
+                if (/pdf/.test(f.type)) {
+                    try { parts = parts.concat(await pdfParts(f)); }
+                    catch (err) { console.error(err); throw new Error(`${f.name}을(를) 나누지 못했습니다. 암호가 걸린 PDF면 암호를 풀어서 올려주세요.`); }
+                } else imgs.push({ name: f.name, ...(await shrinkImage(f)) });
+            }
+            for (let i = 0; i < imgs.length; i += IMG_PER_PART) parts.push({ label: `사진 ${i + 1}~${Math.min(imgs.length, i + IMG_PER_PART)}`, files: imgs.slice(i, i + IMG_PER_PART) });
+
+            const results = [], failed = [];
+            for (let i = 0; i < parts.length; i++) {
+                setProgress(i, parts.length, `문서를 읽는 중입니다 (${i + 1}/${parts.length}) · ${parts[i].label}`);
+                let res;
+                try { res = await api('/api/calculate', { mode: 'extract', files: parts[i].files }); }
+                catch (err) { res = { ok: false, data: { message: '서버와 통신하지 못했습니다.' } }; }
+                if (res.ok && res.data.result && res.data.result.data) { results.push(res.data.result.data); continue; }
+                if (res.status === 401 || res.status === 402) { refreshUser(); throw new Error(res.data.message || '로그인이 필요합니다.'); }
+                if (/설정되지 않았습니다/.test(res.data.message || '')) throw new Error(res.data.message);
+                failed.push(`${parts[i].label}: ${res.data.message || '읽지 못함'}`);
+            }
+            if (!results.length) throw new Error('문서를 읽지 못했습니다.' + (failed.length ? ' ' + failed[0] : ''));
+            applyExtract(mergeExtracts(results), failed);
+        } catch (err) {
+            $('extractMsg').className = 'live-msg warn';
+            $('extractMsg').textContent = err.message || '문서를 읽지 못했습니다.';
+        } finally {
+            btn.disabled = false; btn.innerText = label;
+        }
     }
     function setVal(id, v, minus) {
         if (v === null || v === undefined || v === '' || !$(id)) return 0;
@@ -722,7 +829,7 @@
         $(id).classList.add('auto');
         return 1;
     }
-    function applyExtract(d) {
+    function applyExtract(d, failed) {
         let filled = 0;
         if (d.companyName && !$('corpName').value.trim()) { $('corpName').value = String(d.companyName).slice(0, 30); filled++; }
         if (d.sharesIssued && !has('totalShares')) filled += setVal('totalShares', d.sharesIssued);
@@ -746,6 +853,7 @@
         if (bs && bs.asOf !== $('baseDate').value) notes.push(`재무상태표는 ${bs.asOf} 기준입니다. 평가기준일과 다르면 가결산 금액으로 고쳐주세요.`);
         if (bs && bs.intangibles) notes.push(`무형자산 장부가액 ${fmt(bs.intangibles)}원: 매입한 무체재산권이면 '매입한 무체재산권 장부가액'에 넣어주세요.`);
         if (d.notes) notes.push(d.notes);
+        (failed || []).forEach(f => notes.push('읽지 못한 부분 · ' + f));
         $('extractMsg').className = 'live-msg' + (filled ? '' : ' warn');
         $('extractMsg').innerHTML = filled
             ? `${filled}칸을 채웠어요. <b>노란 칸</b>은 문서에서 읽은 값이니 원본과 꼭 대조해 주세요.${notes.length ? '<br>' + notes.map(escapeHtml).join('<br>') : ''}`
