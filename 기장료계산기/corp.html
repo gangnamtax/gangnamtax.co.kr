@@ -298,7 +298,10 @@
             <div class="f"><label for="profit">예상 이익 <small>세전 이익 (과세표준)</small></label><input type="text" id="profit" class="num money" inputmode="numeric" placeholder="0"></div>
             <div id="profitHint" class="biz-info"></div>
             <div class="f"><label for="taxYear">사업연도</label><select id="taxYear"><option value="2026">2026년 이후 (10~25%)</option><option value="2025">2025년 이전 (9~24%)</option></select></div>
-            <label class="check-line"><input type="checkbox" id="smallCorp"> 부동산임대업 주업 등 성실신고확인대상 소규모 법인</label>
+            <div class="hint" style="margin: 2px 0 6px;">소규모 법인 판단 (세 가지 모두 해당하면 2억 이하 구간 없이 20%부터)</div>
+            <label class="check-line"><input type="checkbox" class="small" id="smallShare"> 지배주주 등 지분 합계 50% 초과</label>
+            <label class="check-line"><input type="checkbox" class="small" id="smallRent"> 부동산임대업이 주업 (또는 임대료·이자·배당 수입이 매출의 50% 이상)</label>
+            <label class="check-line"><input type="checkbox" class="small" id="smallStaff"> 상시근로자 5명 미만</label>
 
             <div class="sec">4. 창업감면 <span class="hint">해당 없으면 비워두세요</span></div>
             <div class="f"><label for="ksicInput">감면 판단 업종 <small>표준산업분류</small></label>
@@ -554,7 +557,8 @@
             enlist: document.getElementById('enlist').value.trim(), discharge: document.getElementById('discharge').value.trim(),
             region: document.getElementById('region').value, firstIncomeYear: document.getElementById('firstIncomeYear').value.trim(),
             majorHolder: document.getElementById('majorHolder').checked, realStartup: document.getElementById('realStartup').checked,
-            smallCorp: document.getElementById('smallCorp').checked,
+            smallChecks: [...form.querySelectorAll('.small')].map(x => x.checked),
+            smallCorp: [...form.querySelectorAll('.small')].every(x => x.checked),
             premium: [...form.querySelectorAll('.premium')].some(x => x.checked),
             premiumWhy: [...form.querySelectorAll('.premium')].filter(x => x.checked).map(x => x.parentElement.textContent.trim())
         };
@@ -605,10 +609,19 @@
         t.effective = t.base ? t.total / t.base : 0;
         r.corpTax = t; r.startup = sr;
         const pct0 = v => (Math.round(v * 1000) / 10) + '%';
-        const reliefHtml = sr ? `
-          <h3>🚀 창업중소기업 세액감면 <small>${esc(kk.code)} ${esc(kk.name)}</small></h3>
-          <div class="relief"><span class="rate${sr.reliefRate ? '' : ' zero'}">${pct0(sr.reliefRate)}</span> &nbsp;${esc(sr.reliefText)}</div>
-          ${canDetail() ? `<details class="print-only"><summary>요건</summary>
+        // 판단: 소규모 법인 · 창업감면 (예상 법인세 위에 나란히)
+        const smallNames = ['지배주주 지분 50% 초과', '부동산임대업 주업 등', '상시근로자 5명 미만'];
+        const smallMet = input.smallChecks.filter(Boolean).length;
+        const smallCard = `<div class="jcard"><div class="t">성실신고확인대상 소규모 법인</div>
+            <div class="v ${input.smallCorp ? 'on' : 'ok'}">${input.smallCorp ? '해당' : '해당 없음'}</div>
+            <div class="d">${input.smallCorp ? '2억 이하 구간 없이 ' + (input.taxYear >= 2026 ? '20%' : '19%') + '부터 · 성실신고확인 대상' : `요건 ${smallMet}/3 충족${smallMet ? ' (' + smallNames.filter((_, i) => input.smallChecks[i]).join(', ') + ')' : ''} · 일반 세율 적용`}</div></div>`;
+        const reliefCard = `<div class="jcard"><div class="t">창업중소기업 세액감면</div>
+            <div class="v ${sr && sr.reliefRate ? 'ok' : ''}">${sr ? (sr.reliefRate ? pct0(sr.reliefRate) + ' 감면' : '감면 없음') : '업종 미선택'}</div>
+            <div class="d">${sr ? esc(sr.reliefText) + '<br>' + esc(kk.code + ' ' + kk.name) : '왼쪽 4번에서 감면 판단 업종을 고르면 판단합니다'}</div></div>`;
+        const reliefHtml = `
+          <h3>📌 판단</h3>
+          <div class="jgrid">${smallCard}${reliefCard}</div>
+          ${sr && canDetail() ? `<details class="print-only"><summary>요건</summary>
             <div class="table-wrap" style="margin-top: 6px;"><table class="rt">
               <tr><th>요건</th><th>내용</th><th>판정</th></tr>
               <tr><td class="k">업종</td><td>${esc(kk.code)} ${esc(kk.name)}<br>${esc(sr.industryText)}</td><td>${esc(sr.industryOk)}</td></tr>
@@ -618,7 +631,7 @@
               <tr><td class="k">감면기간</td><td>${esc(sr.periodText) || '-'}</td><td>${esc(sr.periodOk)}</td></tr>
               <tr><td class="k">지역 · 규정</td><td>${esc(input.region)}<br>${esc(sr.ruleText)}</td><td>${esc(sr.rateGroup)}${sr.ruleText ? ' ' + pct0(sr.regionRate) : ''}</td></tr>
             </table></div></details>` : ''}
-          <p class="calc-note">※ 감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도가 적용될 수 있습니다.</p>` : '';
+          ${sr ? '<p class="calc-note">※ 창업감면율 100% 미만이면 최저한세, 2026년 이후 창업분은 연 5억 원 한도가 적용될 수 있습니다.</p>' : ''}`;
         current = { r, input };
         const steps = [`매출 구간: ${esc(r.bracket)} → 월 ${won(r.monthlyBase - r.over100)}원`];
         if (r.over100) steps.push(`100억원 초과 가산: 50억원마다 월 50만원 → +${won(r.over100)}원`);
