@@ -408,7 +408,7 @@
   <div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
 
   <script>window.CALC_PRODUCT = 'gijang';</script>
-  <script src="../양도세계산기/js/login.js"></script>
+  <script src="../양도세계산기/js/login.js?v=20261118c"></script>
   <script>
     // 구글 Apps Script가 아직 이 계산기(24시간 이용권)를 모르는 예전 버전이면, 양도세 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
     const baseUpdateUi = updateUi;
@@ -418,9 +418,9 @@
         return baseUpdateUi(user, plan, ...rest);
     };
   </script>
-  <script src="js/data.js"></script>
-  <script src="js/engine.js"></script>
-  <script src="js/corp-fee.js"></script>
+  <script src="js/data.js?v=20261118c"></script>
+  <script src="js/engine.js?v=20261118c"></script>
+  <script src="js/corp-fee.js?v=20261118c"></script>
   <script>
 
     // 계산근거 출력(계산 과정 상세 포함)은 관리자만. 상세는 화면에 보이지 않고 출력할 때만 나옴
@@ -592,7 +592,8 @@
         const t = CorpFee.corpTax(input.profit, input.taxYear, input.smallCorp);
         // 창업중소기업 세액감면 (개인 계산기와 같은 판정, 법인은 대표자가 최대주주여야 청년창업)
         const kk = KSIC_MAP.get(input.ksic);
-        const sr = kk ? GijangEngine.startupRelief({
+        // (예전 engine.js가 남아 있으면 감면 없이 계산 — 새로고침하면 반영)
+        const sr = kk && GijangEngine.startupRelief ? GijangEngine.startupRelief({
             year: input.taxYear, revenue: input.revenue, startupKind: kk.startup, startupNote: kk.note,
             birth: input.birth, startDate: input.startDate, enlist: input.enlist, discharge: input.discharge,
             region: input.region, firstIncomeYear: input.firstIncomeYear, realStartup: input.realStartup, youthAllowed: input.majorHolder
