@@ -411,7 +411,7 @@
   <div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
 
   <script>window.CALC_PRODUCT = 'gijang';</script>
-  <script src="../양도세계산기/js/login.js?v=20261118c"></script>
+  <script src="../양도세계산기/js/login.js?v=20261118d"></script>
   <script>
     // 구글 Apps Script가 아직 이 계산기(24시간 이용권)를 모르는 예전 버전이면, 양도세 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
     const baseUpdateUi = updateUi;
@@ -421,9 +421,9 @@
         return baseUpdateUi(user, plan, ...rest);
     };
   </script>
-  <script src="js/data.js?v=20261118c"></script>
-  <script src="js/engine.js?v=20261118c"></script>
-  <script src="js/corp-fee.js?v=20261118c"></script>
+  <script src="js/data.js?v=20261118d"></script>
+  <script src="js/engine.js?v=20261118d"></script>
+  <script src="js/corp-fee.js?v=20261118d"></script>
   <script>
 
     // 계산근거 출력(계산 과정 상세 포함)은 관리자만. 상세는 화면에 보이지 않고 출력할 때만 나옴
@@ -604,8 +604,10 @@
         }) : null;
         t.reliefRate = sr ? sr.reliefRate : 0;
         t.relief = Math.floor(t.tax * t.reliefRate);
+        // 성실신고확인비용 세액공제 (소규모 법인): 확인 수수료(공급가액) × 60%, 한도 150만원, 감면 후 세액 한도
+        t.credit = input.smallCorp ? Math.min(Math.floor(r.faithful * CorpFee.FAITHFUL_CREDIT_RATE), CorpFee.FAITHFUL_CREDIT_LIMIT, t.tax - t.relief) : 0;
         t.local = Math.floor((t.tax - t.relief) * 0.1);
-        t.total = t.tax - t.relief + t.local;
+        t.total = t.tax - t.relief - t.credit + t.local;
         t.effective = t.base ? t.total / t.base : 0;
         r.corpTax = t; r.startup = sr;
         const pct0 = v => (Math.round(v * 1000) / 10) + '%';
@@ -614,7 +616,7 @@
         const smallMet = input.smallChecks.filter(Boolean).length;
         const smallCard = `<div class="jcard"><div class="t">성실신고확인대상 소규모 법인</div>
             <div class="v ${input.smallCorp ? 'on' : 'ok'}">${input.smallCorp ? '해당' : '해당 없음'}</div>
-            <div class="d">${input.smallCorp ? '2억 이하 구간 없이 ' + (input.taxYear >= 2026 ? '20%' : '19%') + '부터 · 성실신고확인 대상' : `요건 ${smallMet}/3 충족${smallMet ? ' (' + smallNames.filter((_, i) => input.smallChecks[i]).join(', ') + ')' : ''} · 일반 세율 적용`}</div></div>`;
+            <div class="d">${input.smallCorp ? '2억 이하 구간 없이 ' + (input.taxYear >= 2026 ? '20%' : '19%') + '부터 · 성실신고확인서 제출 (12월 결산 4월 30일까지)<br>접대비 · 업무용승용차 비용 한도 50%' :`요건 ${smallMet}/3 충족${smallMet ? ' (' + smallNames.filter((_, i) => input.smallChecks[i]).join(', ') + ')' : ''} · 일반 세율 적용`}</div></div>`;
         const reliefCard = `<div class="jcard"><div class="t">창업중소기업 세액감면</div>
             <div class="v ${sr && sr.reliefRate ? 'ok' : ''}">${sr ? (sr.reliefRate ? pct0(sr.reliefRate) + ' 감면' : '감면 없음') : '업종 미선택'}</div>
             <div class="d">${sr ? esc(sr.reliefText) + '<br>' + esc(kk.code + ' ' + kk.name) : '왼쪽 4번에서 감면 판단 업종을 고르면 판단합니다'}</div></div>`;
@@ -643,6 +645,7 @@
           <div class="sum">
             <div class="sum-row"><span>법인세 <small>예상 이익 ${eok(t.base)}원 기준</small></span><b>${won(t.tax)}원</b></div>
             ${t.relief ? `<div class="sum-row"><span>창업감면 <small>법인세 × ${pct0(t.reliefRate)}</small></span><b style="color:#166534;">− ${won(t.relief)}원</b></div>` : ''}
+            ${t.credit ? `<div class="sum-row"><span>성실신고확인비용 세액공제 <small>확인 수수료 × 60% (한도 150만원)</small></span><b style="color:#166534;">− ${won(t.credit)}원</b></div>` : ''}
             <div class="sum-row"><span>지방소득세 <small>${t.relief ? '감면 후 ' : ''}법인세의 10%</small></span><b>${won(t.local)}원</b></div>
             <div class="sum-row total"><span>총 납부할 세액</span><b>${won(t.total)}원</b></div>
           </div>`
@@ -657,6 +660,7 @@
           <div class="sum" style="margin-top: 8px;">
             <div class="sum-row"><span>연 기장료 <small>월 기장료 × 12개월</small></span><b>${won(r.yearlyBookkeeping)}원</b></div>
             <div class="sum-row"><span>법인세 조정료 <small>연 1회</small></span><b>${won(r.adjustWithVat)}원</b></div>
+            ${r.faithful ? `<div class="sum-row"><span>성실신고확인 수수료 <small>소규모 법인 · 조정료 × 1.5 (최저 100만원)</small></span><b>${won(r.faithfulWithVat)}원</b></div>` : ''}
             <div class="sum-row total"><span>연 총 수수료 <small>부가세 포함</small></span><b>${won(r.total)}원</b></div>
           </div>
 
@@ -670,7 +674,8 @@
             <tr><td class="k">월 기장료</td><td class="n">${won(r.monthly)}</td><td class="n">${won(r.monthlyVat)}</td><td class="n">${won(r.monthlyWithVat)}</td></tr>
             <tr><td class="k">연 기장료 (12개월)</td><td class="n">${won(r.monthly * 12)}</td><td class="n">${won(r.monthlyVat * 12)}</td><td class="n">${won(r.yearlyBookkeeping)}</td></tr>
             <tr><td class="k">법인세 조정료</td><td class="n">${won(r.adjust)}</td><td class="n">${won(r.adjustVat)}</td><td class="n">${won(r.adjustWithVat)}</td></tr>
-            <tr class="total"><td class="k">연 총 수수료</td><td class="n">${won(r.monthly * 12 + r.adjust)}</td><td class="n">${won(r.monthlyVat * 12 + r.adjustVat)}</td><td class="n">${won(r.total)}</td></tr>
+            ${r.faithful ? `<tr><td class="k">성실신고확인 수수료</td><td class="n">${won(r.faithful)}</td><td class="n">${won(r.faithfulVat)}</td><td class="n">${won(r.faithfulWithVat)}</td></tr>` : ''}
+            <tr class="total"><td class="k">연 총 수수료</td><td class="n">${won(r.monthly * 12 + r.adjust + r.faithful)}</td><td class="n">${won(r.monthlyVat * 12 + r.adjustVat + r.faithfulVat)}</td><td class="n">${won(r.total)}</td></tr>
           </table></div>
           ${detail ? `<details class="print-only" open><summary>계산 과정</summary>
             <p class="calc-note">· ${steps.join('<br>· ')}<br>
@@ -741,6 +746,7 @@
                 ['총 납부할 세액 (법인세+지방세)', t && t.base ? won(t.total) + '원' : '-'],
                 ['고급기장', input.premium ? input.premiumWhy.join(', ') : '해당 없음'],
                 ['월 기장료 (부가세 포함)', won(r.monthlyWithVat) + '원'], ['법인세 조정료 (부가세 포함)', won(r.adjustWithVat) + '원'],
+                ['성실신고확인 수수료 (부가세 포함)', r.faithful ? won(r.faithfulWithVat) + '원' : '해당 없음'],
                 ['연 총 수수료 (부가세 포함)', won(r.total) + '원']
             ]
         };

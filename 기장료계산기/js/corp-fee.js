@@ -42,6 +42,9 @@
   ];
   const MIN_ADJUST = 400000;
   const VAT = 0.1;
+  const FAITHFUL_MULTIPLE = 1.5;   // 성실신고확인 수수료 = 조정료 × 1.5
+  const FAITHFUL_MIN = 1000000;    //   최저 100만원
+  const FAITHFUL_CREDIT_RATE = 0.6, FAITHFUL_CREDIT_LIMIT = 1500000; // 성실신고확인비용 세액공제 (조특법 제126조의6)
 
   const lookup = (table, x) => { let row = table[0]; for (const t of table) if (t[0] <= x) row = t; return row; };
 
@@ -65,12 +68,17 @@
     const adjust = Math.max((revenue - a[1]) * a[2] + a[3], MIN_ADJUST);
     const adjustVat = adjust * VAT;
 
+    // 성실신고확인 수수료 (성실신고확인대상 소규모 법인): 개인 계산기와 같은 기준 — 조정료 × 1.5, 최저 100만원 (천원 단위)
+    const faithful = input.smallCorp ? Math.round(Math.max(FAITHFUL_MIN, adjust * FAITHFUL_MULTIPLE) / 1000) * 1000 : 0;
+    const faithfulVat = faithful * VAT;
+
     const yearlyBookkeeping = (monthly + monthlyVat) * 12;
-    const total = yearlyBookkeeping + adjust + adjustVat;
+    const total = yearlyBookkeeping + adjust + adjustVat + faithful + faithfulVat;
     return {
       revenue, isNew, premium,
       bracket: isNew ? '신규법인' : row[2], monthlyBase, over100, monthly, monthlyVat, monthlyWithVat: monthly + monthlyVat,
       yearlyBookkeeping, adjustFormula: a[4], adjust, adjustVat, adjustWithVat: adjust + adjustVat,
+      faithful, faithfulVat, faithfulWithVat: faithful + faithfulVat,
       total, perMonth: total / 12
     };
   }
@@ -106,5 +114,5 @@
       effective: base ? (tax + local) / base : 0 };
   }
 
-  return { compute, corpTax, MONTHLY, ADJUST, PREMIUM, CORP_TAX };
+  return { compute, corpTax, MONTHLY, ADJUST, PREMIUM, CORP_TAX, FAITHFUL_CREDIT_RATE, FAITHFUL_CREDIT_LIMIT };
 });
