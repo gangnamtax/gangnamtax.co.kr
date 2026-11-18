@@ -258,8 +258,8 @@
     .deadline-box { margin-top: 14px; border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; }
     .deadline-box b { font-size: 16px; }
     /* 피상속인 가족 줄 · 추가/삭제 버튼 */
-    #family .fam { position: relative; padding: 14px 48px 12px 14px; border: 1px solid #e3d3b5; background: #fdfbf7; box-shadow: 0 1px 2px rgba(91,74,46,.06); }
-    #family .fam + .fam { margin-top: 12px; }
+    #family .fam, #pgifts .fam { position: relative; padding: 14px 48px 12px 14px; border: 1px solid #e3d3b5; background: #fdfbf7; box-shadow: 0 1px 2px rgba(91,74,46,.06); }
+    #family .fam + .fam, #pgifts .fam + .fam { margin-top: 12px; }
     .fam-del { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
         background: #fff; border: 1px solid #eadfc9; border-radius: 50%; color: #a08452; cursor: pointer; padding: 0; transition: background .15s, color .15s, border-color .15s; }
     .fam-del:hover { background: #fff7ed; border-color: #f3c99b; color: #b45309; }
@@ -409,48 +409,16 @@
                 </div>
             </div>
 
-            <div class="step-title" style="margin-top: 30px;"><span class="no">5</span>사전증여재산 <span class="who">상속인 10년 · 그 외 5년 이내</span></div>
-            <div class="two one">
-                <div class="form-group">
-                    <label for="heirGift">상속인에게 준 증여재산가액 <span class="hint">(사망일 전 10년 이내)</span></label>
-                    <input type="text" id="heirGift" value="0" oninput="formatCurrency(this); refreshForm()">
-                </div>
-                <div class="form-group">
-                    <label for="otherGift">상속인 아닌 사람(손자녀·사위 등)에게 준 증여재산가액 <span class="hint">(5년 이내)</span></label>
-                    <input type="text" id="otherGift" value="0" oninput="formatCurrency(this); refreshForm()">
-                </div>
-            </div>
-            <details class="more" id="giftMore">
-                <summary>사전증여 과세표준 · 낸 증여세 (공제 한도 · 증여세액공제용)</summary>
-                <div class="two one">
-                    <div class="form-group">
-                        <label for="heirGiftBase">상속인 증여분 과세표준 합계</label>
-                        <input type="text" id="heirGiftBase" value="0" oninput="formatCurrency(this)">
-                    </div>
-                    <div class="form-group">
-                        <label for="heirGiftTax">상속인 증여분 증여세 산출세액 합계</label>
-                        <input type="text" id="heirGiftTax" value="0" oninput="formatCurrency(this)">
-                    </div>
-                    <div class="form-group">
-                        <label for="otherGiftBase">상속인 외 증여분 과세표준 합계</label>
-                        <input type="text" id="otherGiftBase" value="0" oninput="formatCurrency(this)">
-                    </div>
-                    <div class="form-group">
-                        <label for="otherGiftTax">상속인 외 증여분 증여세 산출세액 합계</label>
-                        <input type="text" id="otherGiftTax" value="0" oninput="formatCurrency(this)">
-                    </div>
-                </div>
-            </details>
+            <div class="step-title" style="margin-top: 30px;"><span class="no">5</span>사전증여재산 <span class="who">사람별 입력 · 상속인 10년 · 그 외 5년 이내 가산</span></div>
+            <div id="pgifts"></div>
+            <button type="button" class="fam-add" onclick="addPriorGift()"><span class="plus">+</span>사전증여 추가</button>
+            <div class="live-msg" style="font-weight: normal;">받은 사람을 고르면 상속인인지(10년) 상속인 외인지(5년) 자동으로 판단합니다. 과세표준 · 산출세액을 비워두면 증여세 계산 방식으로 다시 계산합니다. 배우자에게 준 증여는 배우자공제 한도 계산에도 반영됩니다.</div>
 
             <div class="step-title spouse-only" style="margin-top: 30px;"><span class="no">6</span>배우자공제 <span class="who">최소 5억 · 최대 30억</span></div>
             <div class="two one spouse-only">
                 <div class="form-group">
                     <label for="spouseActual">배우자가 실제로 상속받는 금액 <span class="hint">(비워두면 법정상속분만큼 받는 것으로 계산)</span></label>
                     <input type="text" id="spouseActual" placeholder="모르면 비워두세요" oninput="formatCurrency(this)">
-                </div>
-                <div class="form-group">
-                    <label for="spouseGiftBase">배우자에게 10년 안에 증여한 재산의 과세표준</label>
-                    <input type="text" id="spouseGiftBase" value="0" oninput="formatCurrency(this)">
                 </div>
             </div>
 
@@ -956,7 +924,99 @@
         if (sp) lines.push('배우자공제는 별도로 최소 5억 원 (법정상속분 한도 · 최대 30억)');
         if (j.grandOnly) lines.push('※ 자녀 없이 손자녀만 대습상속하는 경우 배우자 법정상속분 계산이 달라질 수 있어 세무사 검토가 필요합니다.');
         $('personalMsg').innerHTML = lines.join('<br>');
+        if (typeof refreshGifts === 'function' && document.getElementById('pgifts')) refreshGifts();
     }
+    // ----- 사전증여 (사람별) -----
+    const FAM_GIFT_REL = { spouse: 'spouse', son: 'child', daughter: 'child', grandchild: 'grand', father: 'parent', mother: 'parent', sibling: 'kin', cohabit: 'kin' };
+    const OUT_GIFT = { o_grand: ['손자녀 (상속인 아님)', 'grand'], o_inlaw: ['사위 · 며느리', 'kin'], o_kin: ['그 밖의 친족', 'kin'], o_other: ['타인', 'other'] };
+    const num2 = el => Number(el.value.replace(/[^0-9]/g, '')) || 0;
+    const shortLabel = f => `${FAM[f.rel].label.replace(/ \(.*\)/, '')}${f.name ? ' ' + f.name : ''}`;
+    function giftTargets(sel) {
+        const j = judge();
+        const fam = j.fam.map(f => [`f${f.box.dataset.id}`, `${shortLabel(f)}${f.isHeir ? ' (상속인)' : ''}`]);
+        const out = Object.entries(OUT_GIFT).map(([k, v]) => [k, `상속인 외 · ${v[0]}`]);
+        return [...fam, ...out].map(([v, t]) => `<option value="${v}"${v === sel ? ' selected' : ''}>${esc(t)}</option>`).join('');
+    }
+    function addPriorGift() {
+        const box = document.createElement('div');
+        box.className = 'prior fam pg';
+        box.innerHTML = `
+            <div class="date-row">
+                <div class="date-col">
+                    <label class="sub-label">받은 사람</label>
+                    <select class="pg-to" onchange="refreshForm()">${giftTargets('')}</select>
+                </div>
+                <div class="date-col pg-name-box hidden">
+                    <label class="sub-label">이름</label>
+                    <input type="text" class="pg-name" maxlength="20" placeholder="예: 김손자" oninput="refreshForm()">
+                </div>
+                <div class="date-col">
+                    <label class="sub-label">증여일</label>
+                    <div class="date-input-wrapper"><input type="text" class="pg-date" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                </div>
+            </div>
+            <div class="two one" style="margin-top: 10px;">
+                <div class="form-group">
+                    <label class="sub-label">증여재산가액</label>
+                    <input type="text" class="pg-amount" placeholder="예: 100,000,000" oninput="formatCurrency(this); refreshForm()">
+                </div>
+                <div class="form-group">
+                    <label class="sub-label">그 증여의 과세표준 <span class="hint">(비우면 자동 계산)</span></label>
+                    <input type="text" class="pg-base" placeholder="자동 계산" oninput="formatCurrency(this)">
+                </div>
+                <div class="form-group">
+                    <label class="sub-label">그 증여의 증여세 산출세액 <span class="hint">(비우면 자동 계산)</span></label>
+                    <input type="text" class="pg-tax" placeholder="자동 계산" oninput="formatCurrency(this)">
+                </div>
+            </div>
+            <button type="button" class="fam-del" onclick="this.closest('.pg').remove(); refreshForm()" aria-label="이 사전증여 삭제" title="삭제"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+            <div class="live-msg pg-msg"></div>`;
+        $('pgifts').appendChild(box);
+        const w = box.querySelector('.date-input-wrapper'), inp = w.querySelector('input');
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'cal-btn'; btn.innerHTML = CAL_ICON; btn.setAttribute('aria-label', '달력에서 날짜 선택');
+        btn.addEventListener('click', () => { if (dpTarget === inp) dpClose(); else dpOpen(inp); });
+        w.append(btn);
+        refreshForm();
+    }
+    // 사전증여 줄 → 서버 형식
+    function readPriorGifts() {
+        const j = judge();
+        return [...document.querySelectorAll('#pgifts .pg')].map(b => {
+            const to = b.querySelector('.pg-to').value;
+            const f = j.fam.find(x => `f${x.box.dataset.id}` === to);
+            const o = OUT_GIFT[to];
+            const nm = b.querySelector('.pg-name').value.trim();
+            const name = f ? shortLabel(f) : `${(o ? o[0] : '타인').replace(/ \(.*\)/, '')}${nm ? ' ' + nm : ''}`;
+            return {
+                person: f ? to : `${to}:${nm}`, name: name.slice(0, 30),
+                relation: f ? FAM_GIFT_REL[f.rel] : (o ? o[1] : 'other'), heir: !!(f && f.isHeir), spouse: !!(f && f.rel === 'spouse'),
+                date: b.querySelector('.pg-date').value, amount: num2(b.querySelector('.pg-amount')),
+                base: b.querySelector('.pg-base').value.replace(/[^0-9]/g, ''), tax: b.querySelector('.pg-tax').value.replace(/[^0-9]/g, '')
+            };
+        });
+    }
+    function refreshGifts() {
+        const dd = $('deathDate').value;
+        const boxes = [...document.querySelectorAll('#pgifts .pg')];
+        boxes.forEach(b => {
+            const sel = b.querySelector('.pg-to'), v = sel.value;
+            sel.innerHTML = giftTargets(v);
+            if (v && [...sel.options].some(o => o.value === v)) sel.value = v;
+            b.querySelector('.pg-name-box').classList.toggle('hidden', !OUT_GIFT[sel.value]);
+        });
+        readPriorGifts().forEach((g, i) => {
+            const m = boxes[i].querySelector('.pg-msg');
+            let t = g.heir ? '상속인 → 상속개시일 전 10년 이내면 가산' : '상속인 외 → 상속개시일 전 5년 이내면 가산';
+            if (isDate(g.date) && isDate(dd)) {
+                const lim = `${Number(dd.slice(0, 4)) - (g.heir ? 10 : 5)}${dd.slice(4)}`;
+                t = g.date > dd ? '※ 상속개시일보다 늦은 날짜입니다.' : g.date > lim ? `${g.heir ? '상속인 · 10년' : '상속인 외 · 5년'} 이내 → 상속재산에 가산` : `${g.heir ? '10년' : '5년'}이 지나 가산하지 않습니다`;
+            }
+            if (g.spouse) t += ' · 배우자 → 배우자공제 한도에서 이 증여의 과세표준을 뺍니다';
+            m.innerText = t;
+        });
+    }
+
     addFamily('spouse');
     addFamily('son');
     addFamily('daughter');
@@ -983,9 +1043,8 @@
                 minorAges: j.minors.map(f => f.age), disabledYears: j.disabled.map(f => f.disYears),
                 realty: num('realty'), financial: num('financial'), otherAssets: num('otherAssets'), deemed: num('deemed'), presumed: num('presumed'),
                 debts: num('debts'), financialDebt: num('financialDebt'), publicCharges: num('publicCharges'), funeral: num('funeral'), enshrine: num('enshrine'),
-                heirGift: num('heirGift'), heirGiftBase: num('heirGiftBase'), heirGiftTax: num('heirGiftTax'),
-                otherGift: num('otherGift'), otherGiftBase: num('otherGiftBase'), otherGiftTax: num('otherGiftTax'),
-                spouseActual: sp ? $('spouseActual').value.replace(/[^0-9]/g, '') : '', spouseGiftBase: sp ? num('spouseGiftBase') : 0,
+                priorGifts: readPriorGifts(),
+                spouseActual: sp ? $('spouseActual').value.replace(/[^0-9]/g, '') : '',
                 cohabit: $('cohabit').checked, cohabitHouse: num('cohabitHouse'), cohabitHouseDebt: num('cohabitHouseDebt'),
                 appraisalFee: num('appraisalFee')
             };
