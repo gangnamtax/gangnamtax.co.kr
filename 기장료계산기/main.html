@@ -174,6 +174,26 @@
     }
     .print-inputs { font-size: 12px; color: #334155; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.7; }
     .print-inputs b { color: #0f172a; }
+
+    /* 기장 계약하기 (양도세 계산기의 신고 의뢰와 같은 방식) */
+    .hidden { display: none !important; }
+    .filing { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; }
+    .filing p { font-size: 13px; color: #475569; margin: 0 0 10px; }
+    .filing-btn { width: 100%; padding: 14px; background: #8a6d3b; color: #fff; border: 1px solid #8a6d3b; box-shadow: 0 2px 6px rgba(138,109,59,.25); border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .3px; }
+    .filing-btn:hover { background: #74592e; border-color: #74592e; }
+    .fmodal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 150; align-items: center; justify-content: center; padding: 16px; }
+    .fmodal.open { display: flex; }
+    .fbox { position: relative; background: #fff; width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 12px; border-top: 3px solid #b08d57; padding: 28px 26px 24px; box-shadow: 0 16px 40px rgba(15,23,42,.2); text-align: left; }
+    .fbox h3 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
+    .fbox .fdesc { font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 18px; }
+    .fbox .fclose { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+    .fbox .fg { margin-bottom: 14px; }
+    .fbox .fg label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    .fbox textarea { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; }
+    .fbox .send-btn { width: 100%; padding: 14px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .fbox .send-btn:disabled { background: #93c5fd; }
+    .fbox .close-btn2 { background: #fff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 9px 18px; font-weight: 700; cursor: pointer; }
+    @media print { .filing, .fmodal { display: none !important; } }
   </style>
 </head>
 <body>
@@ -335,6 +355,29 @@
         </div>
         <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
       </form>
+    </div>
+  </div>
+
+
+  <!-- 기장 계약하기 팝업 -->
+  <div id="contractModal" class="fmodal" onclick="if (event.target === this) closeContract()">
+    <div class="fbox" role="dialog" aria-labelledby="contractTitle">
+      <button type="button" class="fclose" onclick="closeContract()" aria-label="닫기">&times;</button>
+      <form id="contractForm" onsubmit="submitContract(event)">
+        <h3 id="contractTitle">기장 계약 상담 신청</h3>
+        <p class="fdesc">성함과 연락받으실 연락처를 남겨 주시면,<br>세무사가 확인한 뒤 연락드리겠습니다.</p>
+        <div class="fg"><label for="contractName">성함</label><input type="text" id="contractName" maxlength="50" autocomplete="name" required></div>
+        <div class="fg"><label for="contractPhone">연락받으실 연락처</label><input type="tel" id="contractPhone" maxlength="30" placeholder="010-0000-0000" autocomplete="tel" required></div>
+        <div class="fg"><label for="contractMemo">요청사항 <span class="hint">(선택)</span></label><textarea id="contractMemo" rows="3" maxlength="1000" placeholder="통화 가능한 시간, 기장 시작 희망 시기 등"></textarea></div>
+        <label class="check-line" style="margin: 0 0 16px;"><input type="checkbox" id="contractAgree" required> 입력한 정보와 계산 내용을 세무회계강남에 전달하는 데 동의합니다.</label>
+        <button type="submit" id="contractSubmit" class="send-btn">기장 계약 상담 신청 보내기</button>
+      </form>
+      <div id="contractDone" class="hidden" style="text-align: center; padding: 10px 0;">
+        <h3>기장 계약 상담 신청이 접수되었습니다</h3>
+        <p class="fdesc">세무사가 확인한 뒤<br>남겨 주신 연락처로 연락드리겠습니다.</p>
+        <p class="fdesc" style="margin-bottom: 18px;">급하신 경우 아래 번호로 전화 또는 문자 주세요!<br><a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600; font-size: 17px; display: inline-block; margin-top: 6px;">010-4454-2429</a></p>
+        <button type="button" class="close-btn2" onclick="closeContract()">닫기</button>
+      </div>
     </div>
   </div>
 
@@ -800,12 +843,71 @@
 
           ${warns.length ? `<div class="warn-box">⚠️ ${warns.map(esc).join('<br>⚠️ ')}</div>` : ''}
           ${detail ? `<button type="button" class="print-btn" onclick="printBasis()">🖨️ 계산근거 출력</button>` : ''}
+          <div class="filing">
+            <p>위 기장료로 세무회계강남에 기장을 맡기실 수 있습니다.</p>
+            <button type="button" class="filing-btn" onclick="openContract()">기장 계약하기</button>
+          </div>
           <div class="notice-text">
             <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
             <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
             <p>※ 경비율은 국세청 2024년 귀속 고시값입니다. 결손금, 성실신고확인비용 세액공제, 최저한세, 기타 세액공제는 반영하지 않았습니다.</p>
             <p>※ 종합소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
           </div>`;
+    }
+
+    // 계약 신청에 함께 보낼 요약 (마지막으로 [결과 보기] 한 내용)
+    function contractSummary() {
+        if (!current) return null;
+        const { r, input } = current, j = r.judge, f = r.fee.rows, t = r.tax.cols;
+        const pick = j.book.result === '복식부기의무자' ? f[2] : f[1];
+        const vat = n => Math.round(n * 1.1);
+        return {
+            kind: '개인사업자', bizName: input.bizName, revenue: r.startup.revenue,
+            monthlyFee: vat(pick.monthly), yearlyFee: Math.round(pick.withVat), feeBasis: pick.name,
+            summary: [
+                ['업종', input.biz.map(b => `${b.code} ${(IND_MAP.get(b.code) || {}).name || ''} (직전 ${won(b.prev)} / 해당 ${won(b.cur)})`).join(' / ')],
+                ['기장의무', j.book.result], ['추계 경비율', j.rate.result], ['외부조정', j.external.result], ['성실신고확인', j.faithful.result],
+                ['창업감면', r.startup.reliefText], ['소득세 비교', r.tax.best],
+                ['간편장부 월 기장료 (부가세 포함)', won(vat(f[1].monthly)) + '원'], ['복식부기 월 기장료 (부가세 포함)', won(vat(f[2].monthly)) + '원'],
+                ['복식부기 연 총 수수료 (부가세 포함)', won(f[2].withVat) + '원'], ['직원 수', input.employees + '명' + (input.premium ? ' · 고급기장' : '')]
+            ]
+        };
+    }
+
+    // ===== 기장 계약하기: 성함·연락처와 마지막 계산 요약을 세무사에게 메일로 전달 ('기장 계약 신청' 탭에도 기록) =====
+    function openContract() {
+        if (!contractSummary()) { alert('먼저 [결과 보기]로 결과를 확인해주세요.'); return; }
+        document.getElementById('contractForm').classList.remove('hidden');
+        document.getElementById('contractDone').classList.add('hidden');
+        document.getElementById('contractModal').classList.add('open');
+        setTimeout(() => document.getElementById('contractName').focus(), 50);
+    }
+    function closeContract() { document.getElementById('contractModal').classList.remove('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeContract(); });
+    async function submitContract(event) {
+        event.preventDefault();
+        const btn = document.getElementById('contractSubmit');
+        btn.disabled = true; btn.innerText = '보내는 중...';
+        try {
+            const res = await api('/api/request-bookkeeping', {
+                product: 'gijang', ...contractSummary(),
+                name: document.getElementById('contractName').value.trim(),
+                phone: document.getElementById('contractPhone').value.trim(),
+                memo: document.getElementById('contractMemo').value.trim()
+            });
+            if (!res.ok) {
+                alert(res.data.message || '신청을 보내지 못했습니다. 010-4454-2429로 연락 주세요.');
+                if (res.status === 401) refreshUser();
+                return;
+            }
+            document.getElementById('contractForm').classList.add('hidden');
+            document.getElementById('contractDone').classList.remove('hidden');
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다. 010-4454-2429로 연락 주세요.');
+        } finally {
+            btn.disabled = false; btn.innerText = '기장 계약 상담 신청 보내기';
+        }
     }
   </script>
 </body>
