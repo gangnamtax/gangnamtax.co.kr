@@ -75,5 +75,36 @@
     };
   }
 
-  return { compute, MONTHLY, ADJUST, PREMIUM };
+  // ===== 예상 법인세 (법인세법 제55조) =====
+  // [과세표준 상한, 세율] — 사업연도 개시일 기준
+  const CORP_TAX = {
+    2026: { label: '2026.1.1 이후 개시 사업연도', normal: [[2e8, 0.10], [200e8, 0.20], [3000e8, 0.22], [Infinity, 0.25]],
+      // 성실신고확인대상 소규모 법인 (부동산임대업 주업 등, 법인세법 제55조 제1항 단서): 2억 이하 구간 없음
+      small: [[200e8, 0.20], [3000e8, 0.22], [Infinity, 0.25]] },
+    2025: { label: '2025.12.31 이전 개시 사업연도', normal: [[2e8, 0.09], [200e8, 0.19], [3000e8, 0.21], [Infinity, 0.24]],
+      small: [[200e8, 0.19], [3000e8, 0.21], [Infinity, 0.24]] }
+  };
+  const LOCAL_TAX = 0.1;
+
+  /** base: 과세표준(예상 이익), year: 2025 | 2026, small: 성실신고확인대상 소규모 법인 */
+  function corpTax(base, year, small) {
+    base = Math.max(0, Math.floor(Number(base) || 0));
+    const t = CORP_TAX[year] || CORP_TAX[2026];
+    const table = small ? t.small : t.normal;
+    let tax = 0, prev = 0;
+    const steps = [];
+    for (const [limit, rate] of table) {
+      if (base <= prev) break;
+      const part = Math.min(base, limit) - prev;
+      tax += part * rate;
+      steps.push({ from: prev, to: Math.min(base, limit), rate, tax: part * rate });
+      prev = limit;
+    }
+    tax = Math.floor(tax);
+    const local = Math.floor(tax * LOCAL_TAX);
+    return { base, year: CORP_TAX[year] ? year : 2026, label: t.label, small: !!small, steps, tax, local, total: tax + local,
+      effective: base ? (tax + local) / base : 0 };
+  }
+
+  return { compute, corpTax, MONTHLY, ADJUST, PREMIUM, CORP_TAX };
 });

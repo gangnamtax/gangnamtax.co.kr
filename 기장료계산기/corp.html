@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>법인 기장료 계산기 - 세무회계강남</title>
-  <meta name="description" content="법인 월 기장료, 고급기장, 법인세 세무조정료와 1년 총 보수를 매출액으로 계산 - 세무회계강남 김하원 세무사">
+  <title>법인세 · 법인 기장료 계산기 - 세무회계강남</title>
+  <meta name="description" content="법인 예상 법인세(2026 세율), 월 기장료, 고급기장, 법인세 세무조정료와 1년 총 보수 계산 - 세무회계강남 김하원 세무사">
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
   <link rel="apple-touch-icon" href="/images/icon-180.png">
@@ -157,8 +157,8 @@
       <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
       <div class="header">
         <div>
-          <h2>🏢 법인 기장료 계산기</h2>
-          <p>매출액으로 보는 월 기장료 · 법인세 조정료 · 1년 총 보수</p>
+          <h2>🏢 법인세 · 법인 기장료 계산기</h2>
+          <p>예상 법인세 · 월 기장료 · 법인세 조정료 · 1년 합계</p>
           <div class="kind-tabs"><a href="main.html">개인사업자</a><a class="on">법인</a></div>
         </div>
         <div id="authButtons">
@@ -224,7 +224,13 @@
             <div class="f"><label for="revenue">연 매출액 <small>수입금액 (예상)</small></label><input type="text" id="revenue" class="num money" inputmode="numeric" placeholder="0"></div>
             <div id="revenueHint" class="biz-info"></div>
 
-            <div class="sec">3. 고급기장 <span class="hint">하나라도 해당하면 기장료 1.3배</span></div>
+            <div class="sec">3. 예상 법인세 <span class="hint">모르면 비워두세요</span></div>
+            <div class="f"><label for="profit">예상 이익 <small>세전 이익 (과세표준)</small></label><input type="text" id="profit" class="num money" inputmode="numeric" placeholder="0"></div>
+            <div id="profitHint" class="biz-info"></div>
+            <div class="f"><label for="taxYear">사업연도</label><select id="taxYear"><option value="2026">2026년 이후 (10~25%)</option><option value="2025">2025년 이전 (9~24%)</option></select></div>
+            <label class="check-line"><input type="checkbox" id="smallCorp"> 부동산임대업 주업 등 성실신고확인대상 소규모 법인</label>
+
+            <div class="sec">4. 고급기장 <span class="hint">하나라도 해당하면 기장료 1.3배</span></div>
             <label class="check-line"><input type="checkbox" class="premium" id="pCost"> 제조업 · 건설업 등 원가계산</label>
             <label class="check-line"><input type="checkbox" class="premium" id="pStaff"> 직원 5인 이상</label>
             <label class="check-line"><input type="checkbox" class="premium" id="pReport"> 분석자료 제공 · 월(분기) 결산 · 방문상담</label>
@@ -233,7 +239,7 @@
           </form>
 
           <div class="result-col" id="resultPanel">
-            <div class="empty">왼쪽에 <b>연 매출액</b>을 넣고<br>맨 아래 <b>[결과 보기]</b>를 누르면<br>월 기장료 · 법인세 조정료 · 1년 총 보수가 여기에 나옵니다.</div>
+            <div class="empty">왼쪽에 <b>연 매출액</b>과 <b>예상 이익</b>을 넣고<br>맨 아래 <b>[결과 보기]</b>를 누르면<br>예상 법인세와 기장료 · 조정료가 여기에 나옵니다.</div>
           </div>
         </div>
         <div id="result" style="display: none;"></div>
@@ -326,6 +332,9 @@
             bizName: document.getElementById('bizName').value.trim(),
             revenue: Number(revenueInput.value.replace(/[^0-9]/g, '')) || 0,
             isNew: document.getElementById('isNew').checked,
+            profit: Number(document.getElementById('profit').value.replace(/[^0-9]/g, '')) || 0,
+            taxYear: Number(document.getElementById('taxYear').value),
+            smallCorp: document.getElementById('smallCorp').checked,
             premium: [...form.querySelectorAll('.premium')].some(x => x.checked),
             premiumWhy: [...form.querySelectorAll('.premium')].filter(x => x.checked).map(x => x.parentElement.textContent.trim())
         };
@@ -334,8 +343,9 @@
     // 결과를 본 뒤 입력을 바꾸면 '다시 눌러 주세요'
     let current = null, lastLogged = '';
     function markStale() {
-        const v = readInput().revenue;
-        document.getElementById('revenueHint').textContent = v ? `= ${eok(v)}원` : '';
+        const inp = readInput();
+        document.getElementById('revenueHint').textContent = inp.revenue ? `= ${eok(inp.revenue)}원` : '';
+        document.getElementById('profitHint').textContent = inp.profit ? `= ${eok(inp.profit)}원` : '';
         const panel = document.getElementById('resultPanel');
         if (current && !panel.classList.contains('stale')) {
             panel.classList.add('stale');
@@ -347,7 +357,7 @@
     form.addEventListener('keydown', e => {
         if (e.key !== 'Enter') return;
         if (e.target.id === 'showResult') { e.preventDefault(); e.target.click(); }
-        else if (e.target.matches('input:not([type=checkbox])')) { e.preventDefault(); focusNext(e.target); }
+        else if (e.target.matches('input:not([type=checkbox]), select')) { e.preventDefault(); focusNext(e.target); }
     });
 
     function render(input) {
@@ -355,16 +365,27 @@
         panel.classList.remove('stale');
         if (!input.revenue && !input.isNew) {
             current = null;
-            panel.innerHTML = '<div class="empty">연 매출액을 넣어 주세요.<br><br>왼쪽에 <b>연 매출액</b>을 넣고 맨 아래 <b>[결과 보기]</b>를 누르면<br>월 기장료 · 법인세 조정료 · 1년 총 보수가 여기에 나옵니다.</div>';
+            panel.innerHTML = '<div class="empty">연 매출액을 넣어 주세요.<br><br>왼쪽에 <b>연 매출액</b>과 <b>예상 이익</b>을 넣고 맨 아래 <b>[결과 보기]</b>를 누르면<br>예상 법인세와 기장료 · 조정료가 여기에 나옵니다.</div>';
             return null;
         }
         const r = CorpFee.compute(input);
+        const t = CorpFee.corpTax(input.profit, input.taxYear, input.smallCorp);
+        r.corpTax = t;
         current = { r, input };
         const steps = [`매출 구간: ${esc(r.bracket)} → 월 ${won(r.monthlyBase - r.over100)}원`];
         if (r.over100) steps.push(`100억원 초과 가산: 50억원마다 월 50만원 → +${won(r.over100)}원`);
         if (input.premium) steps.push(`고급기장 × 1.3 (${input.premiumWhy.map(esc).join(', ')}) → 월 ${won(r.monthly)}원`);
-        panel.innerHTML = `
-          <h3>🏢 1년 예상 보수${input.bizName ? ' <small>' + esc(input.bizName) + '</small>' : ''}</h3>
+        const taxSteps = t.steps.map(s => `${eok(s.from)}원 ~ ${eok(s.to)}원 × ${Math.round(s.rate * 100)}% = ${won(s.tax)}원`).join('<br>· ');
+        const taxHtml = input.profit ? `
+          <h3>🧾 예상 법인세 <small>${esc(t.label)}${t.small ? ' · 소규모 법인' : ''}</small></h3>
+          <div class="jgrid">
+            <div class="jcard"><div class="t">법인세 (산출세액)</div><div class="v">${won(t.tax)}원</div><div class="d">예상 이익 ${eok(t.base)}원 기준</div></div>
+            <div class="jcard"><div class="t">법인세 + 지방소득세 (10%)</div><div class="v on">${won(t.total)}원</div><div class="d">지방소득세 ${won(t.local)}원 · 실효세율 ${(t.effective * 100).toFixed(1)}%</div></div>
+          </div>
+          <details><summary>법인세 계산 과정</summary><p class="calc-note">· ${taxSteps}<br>· 세액공제 · 감면, 이월결손금, 최저한세, 세무조정은 반영하지 않았습니다.</p></details>`
+          : `<div class="warn-box" style="margin-top:0;">예상 이익을 넣으면 예상 법인세도 함께 계산됩니다.</div>`;
+        panel.innerHTML = `${taxHtml}
+          <h3>🏢 나의 기장료는?${input.bizName ? ' <small>' + esc(input.bizName) + '</small>' : ''}</h3>
           <div class="jgrid">
             <div class="jcard"><div class="t">월 기장료 (부가세 포함)</div><div class="v">${won(r.monthlyWithVat)}원</div><div class="d">공급가액 ${won(r.monthly)}원 + 부가세 ${won(r.monthlyVat)}원</div></div>
             <div class="jcard"><div class="t">법인세 조정료 (연 1회, 부가세 포함)</div><div class="v">${won(r.adjustWithVat)}원</div><div class="d">공급가액 ${won(r.adjust)}원 + 부가세 ${won(r.adjustVat)}원</div></div>
@@ -383,6 +404,7 @@
             <p class="calc-note">· ${steps.join('<br>· ')}<br>
               · 법인세 조정료: ${esc(r.adjustFormula)} = ${won(r.adjust)}원 (최저 40만원)</p>
           </details>
+          ${input.profit ? `<div class="best" style="font-size: 15px; margin-top: 12px;">👉 1년 세금 + 보수 <span style="color:#dc2626;">${won(t.total + r.total)}원</span> <span style="font-weight: normal; color: #475569;">(법인세·지방소득세 ${won(t.total)}원 + 보수 ${won(r.total)}원)</span></div>` : ''}
 
           <h3>✅ 월 기장료에 포함된 업무</h3>
           <p class="calc-note" style="font-size: 12.5px; color: #334155;">① 장부작성(기장) ② 매월 급여 등 원천세 신고 ③ 부가가치세 신고 (연 4회) ④ 세무자문 ⑤ 각종 증명서 발급</p>
@@ -390,7 +412,8 @@
 
           <div class="notice-text">
             <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
-            <p>※ 산출된 금액은 참고용 예상 보수이며, 실제 보수는 업무 범위와 상담 내용에 따라 달라질 수 있습니다.</p>
+            <p>※ 산출된 세액과 보수는 참고용이며, 법적 근거로 사용할 수 없습니다. 실제 보수는 업무 범위와 상담 내용에 따라 달라질 수 있습니다.</p>
+            <p>※ 예상 법인세는 예상 이익을 과세표준으로 보고 법인세법 제55조 세율만 적용한 금액입니다. 세무조정 · 세액공제 · 감면 · 이월결손금 · 최저한세는 반영하지 않았습니다.</p>
             <p>※ 문의: <a href="tel:010-4454-2429" style="color:#2563eb;">010-4454-2429</a></p>
           </div>`;
         return r;
@@ -403,7 +426,8 @@
             result: {
                 revenue: r.revenue, book: '법인', rate: input.premium ? '고급기장 (1.3배)' : '일반기장',
                 external: '', faithful: '', relief: '',
-                best: `월 기장료 ${won(r.monthly)} · 조정료 ${won(r.adjust)} (공급가액)`,
+                estimateTax: r.corpTax && r.corpTax.base ? r.corpTax.total : 0,
+                best: `월 기장료 ${won(r.monthly)} · 조정료 ${won(r.adjust)} (공급가액)` + (r.corpTax && r.corpTax.base ? ` · 예상 이익 ${won(r.corpTax.base)} → 법인세+지방세 ${won(r.corpTax.total)}` : ''),
                 doubleFee: Math.round(r.total), bestWithFee: '법인 기장료 계산기'
             }
         };
