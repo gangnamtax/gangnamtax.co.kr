@@ -151,6 +151,45 @@
         .calc-layout { display: block; }
         .calculator-card { border: none; box-shadow: none; padding: 0; }
     }
+    /* 계산서 서식 */
+    .sheet-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 10px; }
+    .sheet { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 13px; }
+    .sheet.one { min-width: 0; }
+    .sheet th { background: #f8fafc; color: #334155; font-size: 12px; font-weight: 700; padding: 8px 6px; border-bottom: 1px solid #e2e8f0; text-align: center; }
+    .sheet th:first-child { text-align: left; padding-left: 12px; }
+    .sheet th small { display: block; color: #a08452; font-weight: 600; margin-top: 2px; }
+    .sheet td { padding: 3px 6px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .sheet td:first-child { padding-left: 12px; color: #334155; line-height: 1.35; word-break: keep-all; }
+    .sheet.one td:first-child { width: 62%; }
+    .sheet td input { padding: 7px 9px; font-size: 13px; border-radius: 6px; }
+    .sheet tr.head td:first-child { font-weight: 700; color: #1e293b; }
+    .sheet tr.grp td { background: #fdfbf7; color: #8a6d3b; font-size: 12px; font-weight: 700; padding: 6px 12px; border-bottom: 1px solid #f1ece2; }
+    .sheet tr.calc td { background: #f8fafc; font-weight: 700; color: #1e293b; text-align: right; padding: 8px 10px; }
+    .sheet tr.calc td:first-child { text-align: left; padding-left: 12px; }
+    .sheet tr.total td { background: #faf7f1; color: #5b4a2e; }
+    input.auto { background: #fffbeb; border-color: #f2c94c; }
+    #earnBlock.dim .sheet-wrap { opacity: .55; }
+    .upload-box { margin-top: 30px; border: 1px dashed #b08d57; background: #fdfbf7; border-radius: 10px; padding: 16px; }
+    .upload-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .upload-head b { display: block; font-size: 14px; color: #1e293b; margin-bottom: 2px; }
+    .upload-head span { font-size: 12px; color: #64748b; line-height: 1.5; }
+    .upload-pick { margin: 0; display: inline-block; background: #fff; border: 1px solid #8a6d3b; color: #8a6d3b; border-radius: 8px; padding: 9px 16px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+    .upload-pick:hover { background: #faf7f1; }
+    .upload-pick input { display: none; }
+    .file-list { margin-top: 10px; font-size: 13px; color: #334155; }
+    .file-list div { padding: 3px 0; }
+    .file-list span { color: #94a3b8; font-size: 12px; margin-left: 4px; }
+    .extract-btn { margin-top: 10px; width: 100%; padding: 11px; background: #8a6d3b; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .extract-btn:hover { background: #74592e; }
+    .extract-btn:disabled { background: #b9a682; cursor: wait; }
+    .gw-box { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; }
+    .gw-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .gw-grid div { background: #f8fafc; border-radius: 8px; padding: 9px 11px; }
+    .gw-grid span { display: block; font-size: 11.5px; color: #64748b; line-height: 1.4; }
+    .gw-grid b { display: block; font-size: 14px; color: #1e293b; margin-top: 3px; text-align: right; }
+    .gw-grid .hl { background: #faf7f1; }
+    .gw-grid .hl b { color: #5b4a2e; }
+    @media (max-width: 600px) { .gw-grid { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -233,19 +272,27 @@
               </div>
               <div class="form-group">
                 <label>평가기준일 <span class="hint">(상속개시일 · 증여일)</span></label>
-                <input type="text" id="baseDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDate(this)" onchange="refreshYears()">
+                <input type="text" id="baseDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDate(this)" onchange="refreshYears(); checkStart()">
               </div>
             </div>
             <div class="two" style="margin-bottom: 22px;">
               <div class="form-group">
+                <label>사업개시일 <span class="hint">(사업자등록증 개업일)</span></label>
+                <input type="text" id="startDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDate(this)" onchange="checkStart()">
+                <div id="startMsg" class="live-msg"></div>
+              </div>
+              <div class="form-group">
                 <label>발행주식 총수 <span class="hint">(평가기준일 현재, 자기주식 제외)</span></label>
                 <input type="text" inputmode="numeric" class="num" id="totalShares" placeholder="예: 10,000" oninput="formatNum(this); refreshLive()">
               </div>
+            </div>
+            <div class="two" style="margin-bottom: 22px;">
               <div class="form-group">
                 <label>평가할 주식 수 <span class="hint">(상속 · 증여하는 주식)</span></label>
                 <input type="text" inputmode="numeric" class="num" id="targetShares" placeholder="예: 3,000" oninput="formatNum(this); refreshLive()">
                 <div id="shareMsg" class="live-msg"></div>
               </div>
+              <div class="form-group"></div>
             </div>
             <div class="form-group">
               <label>회사 규모 <span class="hint">(최대주주 할증 판정)</span></label>
@@ -260,90 +307,55 @@
                 <label><input type="radio" name="majority" value="yes" checked><b>최대주주 등</b><span>특수관계인 포함 지분이 가장 많은 주주 그룹</span></label>
                 <label><input type="radio" name="majority" value="no"><b>그 외 주주</b><span>할증 없음</span></label>
               </div>
-              <label class="check-line"><input type="checkbox" id="exLoss"> 평가기준일이 속한 사업연도 전 3년 이내 사업연도부터 계속 결손금이 있음 <span class="hint">(최대주주 할증 제외)</span></label>
+              <label class="check-line"><input type="checkbox" id="exLoss"> <span>평가기준일이 속한 사업연도 전 3년 이내 사업연도부터 계속 결손금이 있음 <span class="hint">(최대주주 할증 제외)</span></span></label>
             </div>
 
             <div class="step-title"><span class="no">2</span>평가 방법 판정 <span class="who">순자산가치로만 평가하는 경우</span></div>
-            <label class="check-line"><input type="checkbox" id="exStart" onchange="refreshLive()"> 사업을 시작한 지 3년이 안 됨 <span class="hint">(평가기준일이 속한 사업연도 전 3년 미만)</span></label>
-            <label class="check-line"><input type="checkbox" id="exClose" onchange="refreshLive()"> 휴업 · 폐업 중이거나, 청산 절차가 진행 중 · 잔여 존속기한이 3년 이내</label>
+            <label class="check-line"><input type="checkbox" id="exStart" onchange="refreshLive()"> <span>사업을 시작한 지 3년이 안 됨 <span class="hint">(사업개시일을 넣으면 자동 판정)</span></span></label>
+            <label class="check-line"><input type="checkbox" id="exClose" onchange="refreshLive()"> <span>휴업 · 폐업 중이거나, 청산 절차가 진행 중 · 잔여 존속기한이 3년 이내 <span class="hint">(영업권 제외)</span></span></label>
             <label class="check-line"><input type="checkbox" id="exStock" onchange="refreshLive()"> 총자산 중 다른 회사 주식 · 출자지분 비율이 80% 이상</label>
             <div id="methodMsg" class="live-msg" style="margin-top: 12px;"></div>
 
-            <div class="step-title"><span class="no">3</span>순자산가치 <span class="who">평가기준일 현재 재무상태표, 상증법 평가액으로</span></div>
-            <div class="two" style="margin-bottom: 14px;">
-              <div class="form-group">
-                <label>총자산 평가액</label>
-                <input type="text" inputmode="numeric" class="num" id="assets" placeholder="원" oninput="formatNum(this); refreshLive()">
+            <!-- 재무제표 자동 입력 -->
+            <div class="upload-box">
+              <div class="upload-head">
+                <div>
+                  <b>재무제표로 자동 입력</b>
+                  <span>재무상태표 · 손익계산서 · 법인세 신고서(세무조정계산서)를 올리면 아래 3개 계산서를 채워 드려요.</span>
+                </div>
+                <label class="upload-pick">파일 선택<input type="file" id="fsFiles" accept="application/pdf,image/jpeg,image/png,image/webp" multiple onchange="listFiles()"></label>
               </div>
-              <div class="form-group">
-                <label>총부채</label>
-                <input type="text" inputmode="numeric" class="num" id="liabilities" placeholder="원" oninput="formatNum(this); refreshLive()">
-              </div>
+              <div id="fileList" class="file-list"></div>
+              <button type="button" id="extractBtn" class="extract-btn hidden" onclick="extractFiles()">올린 파일로 자동 입력</button>
+              <div id="extractMsg" class="live-msg"></div>
             </div>
-            <div class="two" style="margin-bottom: 14px;">
+
+            <div id="earnBlock">
+              <div class="step-title"><span class="no">3</span>순손익계산서 <span class="who">평가기준일 이전 최근 3개 사업연도</span></div>
+              <div class="sheet-wrap"><table class="sheet" id="earnSheet"></table></div>
+            </div>
+
+            <div class="step-title"><span class="no">4</span>순자산가액계산서 <span class="who">평가기준일 현재</span></div>
+            <div class="sheet-wrap"><table class="sheet one" id="naSheet"></table></div>
+            <div class="two" style="margin-top: 14px;">
               <div class="form-group">
-                <label>총자산 중 부동산 등 가액 <span class="hint">(토지 · 건물 · 부동산 권리, 부동산과다법인 판정)</span></label>
+                <label>자산 중 부동산 등 가액 <span class="hint">(토지 · 건물 · 부동산 권리, 부동산과다법인 판정)</span></label>
                 <input type="text" inputmode="numeric" class="num" id="realty" placeholder="원" oninput="formatNum(this); refreshLive()">
               </div>
               <div class="form-group">
-                <label>영업권 평가액 <span class="hint">(있으면, 순자산에 더함)</span></label>
-                <input type="text" inputmode="numeric" class="num" id="goodwill" placeholder="원" oninput="formatNum(this); refreshLive()">
+                <label>매입한 무체재산권 장부가액 <span class="hint">(영업권 상당액에 포함된 것, 상각 후)</span></label>
+                <input type="text" inputmode="numeric" class="num" id="intangibleBook" placeholder="원" oninput="formatNum(this); refreshLive()">
               </div>
             </div>
-            <div class="hint" style="line-height: 1.7;">
-              · 토지는 개별공시지가, 건물은 기준시가, 임대 부동산은 임대료 환산가액과 비교한 큰 금액 등 상증법 평가액으로 바꿔 넣으세요.<br>
-              · 부채에는 평가기준일까지 생긴 법인세 · 배당금 · 퇴직급여추계액 등을 포함합니다.
+            <div class="hint" style="line-height: 1.7; margin-top: 10px;">
+              · 2. 평가차액: 토지 개별공시지가 · 건물 기준시가 등 상증법 평가액과 장부가액의 차이 (낮으면 −)<br>
+              · 9~13. 평가기준일까지 생긴 법인세 · 농특세 · 지방소득세, 확정된 배당 · 상여, 퇴직급여추계액<br>
+              · 16. 제충당금: 퇴직급여충당부채 등 부채로 잡힌 충당금 (추계액을 13에 따로 더함)
             </div>
             <div id="assetMsg" class="live-msg" style="margin-top: 10px;"></div>
 
-            <div id="earnBlock">
-              <div class="step-title"><span class="no">4</span>순손익가치 <span class="who">평가기준일 이전 최근 3개 사업연도</span></div>
-              <div class="years-wrap">
-                <table class="years">
-                  <thead>
-                    <tr>
-                      <th style="width: 30%;">항목</th>
-                      <th id="y1h">1년 전<small>가중치 3</small></th>
-                      <th id="y2h">2년 전<small>가중치 2</small></th>
-                      <th id="y3h">3년 전<small>가중치 1</small></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>각 사업연도 소득금액<small>법인세 신고서 (결손은 −)</small></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="inc1" oninput="formatNum(this, true); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="inc2" oninput="formatNum(this, true); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="inc3" oninput="formatNum(this, true); refreshLive()"></td>
-                    </tr>
-                    <tr>
-                      <td>(+) 더할 금액<small>수입배당금 익금불산입 · 이월결손금 공제 등</small></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="add1" oninput="formatNum(this); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="add2" oninput="formatNum(this); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="add3" oninput="formatNum(this); refreshLive()"></td>
-                    </tr>
-                    <tr>
-                      <td>(−) 뺄 금액<small>법인세 · 지방소득세 · 벌금 · 기부금 한도초과 등</small></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="sub1" oninput="formatNum(this); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="sub2" oninput="formatNum(this); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="sub3" oninput="formatNum(this); refreshLive()"></td>
-                    </tr>
-                    <tr>
-                      <td>사업연도말 주식 수<small>비우면 발행주식 총수</small></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="sh1" oninput="formatNum(this); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="sh2" oninput="formatNum(this); refreshLive()"></td>
-                      <td><input type="text" inputmode="numeric" class="num" id="sh3" oninput="formatNum(this); refreshLive()"></td>
-                    </tr>
-                    <tr class="calc">
-                      <td>1주당 순손익액</td>
-                      <td id="eps1">-</td>
-                      <td id="eps2">-</td>
-                      <td id="eps3">-</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div id="earnMsg" class="live-msg" style="margin-top: 10px;"></div>
-            </div>
+            <div class="step-title"><span class="no">5</span>영업권평가조서 <span class="who">자동 계산</span></div>
+            <div id="gwBox" class="gw-box"></div>
 
             <button type="submit" class="calc-action-btn" style="margin-top: 28px;">주식 평가하기</button>
           </form>
@@ -480,25 +492,136 @@
         $('result').classList.add('hidden');
         $('empty').classList.remove('hidden');
     }
-    // 평가기준일 연도로 사업연도 머리글 표시 (12월 결산 가정)
-    function refreshYears() {
-        const m = /^(\d{4})-\d{2}-\d{2}$/.exec($('baseDate').value);
-        [1, 2, 3].forEach(i => {
-            const w = 4 - i;
-            $('y' + i + 'h').innerHTML = (m ? `${Number(m[1]) - i}년` : `${i}년 전`) + `<small>가중치 ${w}</small>`;
-        });
+    // ===== 계산서 서식 (순손익계산서 · 순자산가액계산서) =====
+    const EARN_ROWS = [
+        { k: 'income', label: '1. 각 사업연도 소득금액', minus: true, head: true },
+        { group: '소득에 가산할 금액' },
+        { k: 'a2', label: '2. 국세, 지방세 과오납에 대한 환급금이자' },
+        { k: 'a3', label: '3. 수입배당금 중 익금불산입액' },
+        { k: 'a4', label: '4. 이월된 기부금 손금산입액' },
+        { k: 'a5', label: '5. 이월된 업무용승용차 관련 손금산입액' },
+        { k: 'a6', label: '6. 외화환산이익 (법인세 계산 시 반영하지 않은 경우)' },
+        { k: 'a7', label: '7. 그 밖에 기획재정부령으로 정하는 금액' },
+        { c: 'addSum', label: '가. 소계 (1 + 2 + … + 7)' },
+        { group: '소득에서 공제할 금액' },
+        { k: 's8', label: '8. 당해 사업연도의 법인세액' },
+        { k: 's9a', label: '9. 법인세액의 감면액에 부과되는 농어촌특별세액' },
+        { k: 's9b', label: '9. 과세표준에 부과되는 지방소득세액' },
+        { k: 's10', label: '10. 벌금, 과료, 과태료, 가산금 및 체납처분비 손금불산입액' },
+        { k: 's11', label: '11. 의무적으로 납부하는 것이 아닌 공과금 손금불산입액' },
+        { k: 's12', label: '12. 징벌적 목적의 손해배상금 등 손금불산입액' },
+        { k: 's13', label: '13. 징수불이행으로 인해 납부하였거나 납부할 세액' },
+        { k: 's14', label: '14. 과다경비 등의 손금불산입액' },
+        { k: 's15', label: '15. 기부금 손금불산입액' },
+        { k: 's16', label: '16. 접대비 손금불산입액' },
+        { k: 's17', label: '17. 업무와 관련 없는 비용 손금불산입액' },
+        { k: 's18', label: '18. 업무용승용차 관련 비용의 손금불산입액' },
+        { k: 's19', label: '19. 지급이자의 손금불산입액' },
+        { k: 's20', label: '20. 감가상각비 시인부족액에서 상각부인액 손금추인액을 뺀 금액' },
+        { k: 's21', label: '21. 외화환산손실 (법인세 계산 시 반영하지 않은 경우)' },
+        { k: 's22', label: '22. 그 밖에 기획재정부령으로 정하는 금액' },
+        { c: 'subSum', label: '나. 소계 (8 + … + 22)' },
+        { c: 'net', label: '다. 순손익액 (가 − 나)' },
+        { k: 'capAdj', label: '라. 유상증(감)자 반영액', minus: true },
+        { c: 'netAdj', label: '마. 순손익액 (다 ± 라)' },
+        { k: 'shares', label: '바. 사업연도말 주식수 또는 환산주식수', ph: '발행주식 총수' },
+        { c: 'eps', label: '사. 주당순손익액 (마 ÷ 바)' }
+    ];
+    const ADD_KEYS = ['a2', 'a3', 'a4', 'a5', 'a6', 'a7'];
+    const SUB_KEYS = ['s8', 's9a', 's9b', 's10', 's11', 's12', 's13', 's14', 's15', 's16', 's17', 's18', 's19', 's20', 's21', 's22'];
+    const NA_ROWS = [
+        { k: 'n1', label: '1. 재무상태표상의 자산가액', head: true },
+        { group: '자산에 가산' },
+        { k: 'n2', label: '2. 평가차액', minus: true },
+        { k: 'n3', label: '3. 법인세법상 유보금액', minus: true },
+        { k: 'n4', label: '4. 유상증자 등' },
+        { k: 'n5', label: '5. 기타' },
+        { group: '자산에서 제외' },
+        { k: 'n6', label: '6. 선급비용 등' },
+        { k: 'n7', label: '7. 증자일 전의 잉여금의 유보액' },
+        { c: 'assetTotal', label: '가. 자산총계 (1 + … + 5) − (6 + 7)' },
+        { k: 'n8', label: '8. 재무상태표상의 부채액', head: true },
+        { group: '부채에 가산' },
+        { k: 'n9', label: '9. 법인세' },
+        { k: 'n10', label: '10. 농어촌특별세' },
+        { k: 'n11', label: '11. 지방소득세' },
+        { k: 'n12', label: '12. 배당금 · 상여금' },
+        { k: 'n13', label: '13. 퇴직급여추계액' },
+        { k: 'n14', label: '14. 기타' },
+        { group: '부채에서 제외' },
+        { k: 'n15', label: '15. 제준비금' },
+        { k: 'n16', label: '16. 제충당금' },
+        { k: 'n17', label: '17. 기타' },
+        { c: 'liabTotal', label: '나. 부채총계 (8 + … + 14) − (15 + 16 + 17)' },
+        { c: 'beforeGw', label: '18. 영업권포함전 순자산가액 (가 − 나)' },
+        { c: 'goodwill', label: '19. 영업권 (영업권평가조서)' },
+        { c: 'netAsset', label: '20. 순자산가액 (18 + 19)' },
+        { c: 'nav', label: '1주당 순자산가치 (20 ÷ 발행주식 총수)' }
+    ];
+    const NA_ADD = ['n2', 'n3', 'n4', 'n5'], NA_EX = ['n6', 'n7'], NL_ADD = ['n9', 'n10', 'n11', 'n12', 'n13', 'n14'], NL_EX = ['n15', 'n16', 'n17'];
+    const numInput = (id, minus, ph) => `<input type="text" inputmode="numeric" class="num" id="${id}"${ph ? ` placeholder="${ph}"` : ''} oninput="formatNum(this${minus ? ', true' : ''}); this.classList.remove('auto'); refreshLive()">`;
+
+    function buildSheets() {
+        $('earnSheet').innerHTML = `<thead><tr><th>구 분</th>${[0, 1, 2].map(i => `<th>평가기준일전 ${i + 1}년<small id="yh${i}">-</small></th>`).join('')}</tr></thead><tbody>` +
+            EARN_ROWS.map(r => r.group ? `<tr class="grp"><td colspan="4">${r.group}</td></tr>`
+                : r.c ? `<tr class="calc"><td>${r.label}</td>${[0, 1, 2].map(i => `<td id="c_${r.c}_${i}">-</td>`).join('')}</tr>`
+                : `<tr${r.head ? ' class="head"' : ''}><td>${r.label}</td>${[0, 1, 2].map(i => `<td>${numInput(`e_${r.k}_${i}`, r.minus, r.ph)}</td>`).join('')}</tr>`).join('') +
+            `<tr class="calc total"><td>아. 가중평균액 ((사1×3 + 사2×2 + 사3) ÷ 6)</td><td colspan="3" id="c_weighted">-</td></tr>
+             <tr class="calc"><td>자. 순손익가치환원율</td><td colspan="3">10%</td></tr>
+             <tr class="calc total"><td>차. 최근 3년간 순손익액의 가중평균액에 의한 1주당 가액 (아 ÷ 자)</td><td colspan="3" id="c_epv">-</td></tr></tbody>`;
+        $('naSheet').innerHTML = `<tbody>` + NA_ROWS.map(r => r.group ? `<tr class="grp"><td colspan="2">${r.group}</td></tr>`
+            : r.c ? `<tr class="calc${['netAsset', 'nav'].includes(r.c) ? ' total' : ''}"><td>${r.label}</td><td id="na_${r.c}">-</td></tr>`
+            : `<tr${r.head ? ' class="head"' : ''}><td>${r.label}</td><td>${numInput(`na_${r.k}`, r.minus)}</td></tr>`).join('') + `</tbody>`;
     }
 
-    function readInput() {
+    // 평가기준일 연도로 사업연도 머리글 표시 (12월 결산 가정, 자동 입력하면 문서의 사업연도로 바뀜)
+    let yearLabels = null;
+    function refreshYears() {
+        const m = /^(\d{4})-\d{2}-\d{2}$/.exec($('baseDate').value);
+        [0, 1, 2].forEach(i => { $('yh' + i).textContent = yearLabels ? yearLabels[i] : m ? String(Number(m[1]) - i - 1) : '-'; });
+    }
+    function isDate(s) { return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s)); }
+    function checkStart() {
+        const s = $('startDate').value, b = $('baseDate').value;
+        if (!isDate(s) || !isDate(b)) { $('startMsg').textContent = ''; return; }
+        const [y, m, d] = s.split('-').map(Number);
+        const three = `${y + 3}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const under = b < three;
+        $('exStart').checked = under;
+        $('startMsg').textContent = under ? '평가기준일 현재 사업개시 3년 미만 → 순자산가치로만 평가' : '사업개시 3년 이상';
+        $('startMsg').className = 'live-msg' + (under ? ' warn' : '');
+        refreshLive();
+    }
+
+    // 화면에서 바로 보이는 소계 (최종 평가는 서버에서 같은 방식으로 다시 계산)
+    function compute() {
         const total = num('totalShares');
-        const years = [1, 2, 3].map(i => {
-            const shares = num('sh' + i) || total;
-            const net = num('inc' + i) + num('add' + i) - num('sub' + i);
-            return { net, shares, eps: shares > 0 ? net / shares : 0, filled: has('inc' + i) };
+        const ys = [0, 1, 2].map(i => {
+            const v = k => num(`e_${k}_${i}`);
+            const addSum = v('income') + ADD_KEYS.reduce((s, k) => s + v(k), 0);
+            const subSum = SUB_KEYS.reduce((s, k) => s + v(k), 0);
+            const net = addSum - subSum, netAdj = net + v('capAdj');
+            const shares = v('shares') || total;
+            return { addSum, subSum, net, netAdj, shares, eps: shares ? Math.trunc(netAdj / shares) : 0, filled: has(`e_income_${i}`) };
         });
-        const assets = num('assets'), liab = num('liabilities'), realty = num('realty'), goodwill = num('goodwill');
-        return { total, target: num('targetShares'), years, assets, liab, realty, goodwill,
-                 realtyRatio: assets > 0 ? realty / assets : 0 };
+        const weighted = Math.trunc((ys[0].eps * 3 + ys[1].eps * 2 + ys[2].eps) / 6);
+        const epv = Math.max(0, weighted) * 10;
+        const n = k => num('na_' + k), sum = ks => ks.reduce((s, k) => s + n(k), 0);
+        const assetTotal = n('n1') + sum(NA_ADD) - sum(NA_EX);
+        const liabTotal = n('n8') + sum(NL_ADD) - sum(NL_EX);
+        const beforeGw = assetTotal - liabTotal;
+        const netWeighted = Math.trunc((ys[0].netAdj * 3 + ys[1].netAdj * 2 + ys[2].netAdj) / 6);
+        const half = Math.trunc(netWeighted * 0.5), equityReturn = Math.trunc(beforeGw * 0.1), excess = half - equityReturn;
+        let annuity = 0; for (let k = 1; k <= 5; k++) annuity += 1 / Math.pow(1.1, k);
+        const gwCalc = excess > 0 ? Math.trunc(excess * annuity) : 0;
+        const intangible = num('intangibleBook');
+        const gwValue = Math.max(0, gwCalc - intangible);
+        const goodwill = $('exClose').checked ? 0 : gwValue;
+        const netAsset = beforeGw + goodwill;
+        const nav = total ? Math.max(0, Math.trunc(netAsset / total)) : 0;
+        const realty = num('realty');
+        return { total, target: num('targetShares'), ys, weighted, epv, assetTotal, liabTotal, beforeGw, netWeighted, half, equityReturn, excess, annuity, gwCalc, intangible, gwValue, goodwill, netAsset, nav,
+                 realty, realtyRatio: assetTotal > 0 ? realty / assetTotal : 0 };
     }
 
     // 상증법 시행령 §54: 평가 방법 판정
@@ -509,35 +632,131 @@
         if ($('exStock').checked) reasons.push('주식 등 비율 80% 이상');
         if (d.realtyRatio >= 0.8) reasons.push('부동산 등 비율 80% 이상');
         const heavy = d.realtyRatio >= 0.5;
-        return { assetOnly: reasons.length > 0, reasons, heavy,
-                 wE: heavy ? 2 : 3, wA: heavy ? 3 : 2 };
+        return { assetOnly: reasons.length > 0, reasons, heavy };
     }
 
+    const fmt = n => Math.round(n).toLocaleString('ko-KR');
     function refreshLive() {
-        const d = readInput(), j = judge(d);
-        $('shareMsg').textContent = d.total && d.target ? `지분율 ${pct(d.target / d.total)}` : '';
+        const d = compute(), j = judge(d);
+        $('shareMsg').textContent = d.total && d.target ? (d.target > d.total ? '평가할 주식 수가 발행주식 총수보다 많습니다.' : `지분율 ${pct(d.target / d.total)}`) : '';
         $('shareMsg').className = 'live-msg' + (d.target > d.total && d.total ? ' warn' : '');
-        if (d.target > d.total && d.total) $('shareMsg').textContent = '평가할 주식 수가 발행주식 총수보다 많습니다.';
 
-        $('assetMsg').textContent = d.assets ? `부동산 등 비율 ${pct(d.realtyRatio)} · 순자산 ${won(d.assets - d.liab + d.goodwill)}` +
+        d.ys.forEach((y, i) => {
+            const any = y.filled || y.subSum || y.addSum;
+            ['addSum', 'subSum', 'net', 'netAdj'].forEach(k => { $(`c_${k}_${i}`).textContent = any ? fmt(y[k]) : ''; });
+            $(`c_eps_${i}`).textContent = any && y.shares ? fmt(y.eps) : '';
+        });
+        const anyYear = d.ys.some(y => y.filled);
+        $('c_weighted').textContent = anyYear ? fmt(d.weighted) : '-';
+        $('c_epv').textContent = anyYear ? fmt(d.epv) + (d.weighted <= 0 ? ' (0 이하 → 0)' : '') : '-';
+
+        const anyNa = has('na_n1') || has('na_n8');
+        ['assetTotal', 'liabTotal', 'beforeGw', 'netAsset'].forEach(k => { $('na_' + k).textContent = anyNa ? fmt(d[k]) : '-'; });
+        $('na_goodwill').textContent = anyNa ? ($('exClose').checked ? '0 (휴·폐업·청산: 제외)' : fmt(d.goodwill)) : '-';
+        $('na_nav').textContent = anyNa && d.total ? fmt(d.nav) : '-';
+
+        $('gwBox').innerHTML = `
+            <div class="gw-grid">
+                ${[0, 1, 2].map(i => `<div><span>평가기준일전 ${i + 1}년 순손익액</span><b>${anyYear ? fmt(d.ys[i].netAdj) : '-'}</b></div>`).join('')}
+                <div><span>가중평균액</span><b>${anyYear ? fmt(d.netWeighted) : '-'}</b></div>
+                <div><span>가중평균액의 50%</span><b>${anyYear ? fmt(d.half) : '-'}</b></div>
+                <div><span>평가기준일 현재 자기자본</span><b>${anyNa ? fmt(d.beforeGw) : '-'}</b></div>
+                <div><span>이자율 · 지속연수</span><b>10% · 5년</b></div>
+                <div><span>초과이익 (50% − 자기자본 × 10%)</span><b>${anyYear && anyNa ? fmt(d.excess) : '-'}</b></div>
+                <div><span>영업권 계산액 (× ${d.annuity.toFixed(4)})</span><b>${anyYear && anyNa ? fmt(d.gwCalc) : '-'}</b></div>
+                <div><span>매입 무체재산권 (상각 후)</span><b>${d.intangible ? fmt(d.intangible) : '-'}</b></div>
+                <div class="hl"><span>영업권 평가액</span><b>${anyYear && anyNa ? fmt(d.gwValue) : '-'}</b></div>
+            </div>
+            ${anyYear && anyNa && d.excess <= 0 ? '<div class="live-msg">가중평균 순손익액의 50%가 자기자본의 10% 이하라서 영업권은 0원입니다.</div>' : ''}`;
+
+        $('assetMsg').textContent = anyNa ? `부동산 등 비율 ${pct(d.realtyRatio)} (자산총계 기준)` +
             (d.realtyRatio >= 0.8 ? ' → 80% 이상, 순자산가치로만 평가' : d.realtyRatio >= 0.5 ? ' → 부동산과다법인 (손익 2 : 자산 3)' : ' → 일반법인 (손익 3 : 자산 2)') : '';
-
-        $('methodMsg').textContent = j.assetOnly ? `순자산가치로만 평가합니다 (${j.reasons.join(', ')}). 순손익가치 입력은 필요 없어요.` : '';
+        $('methodMsg').textContent = j.assetOnly ? `순자산가치로만 평가합니다 (${j.reasons.join(', ')}). 순손익계산서는 영업권 계산에만 쓰여요.` : '';
         $('methodMsg').className = 'live-msg' + (j.assetOnly ? ' warn' : '');
-        $('earnBlock').style.opacity = j.assetOnly ? '.45' : '1';
-
-        d.years.forEach((y, i) => { $('eps' + (i + 1)).textContent = y.filled && y.shares ? won(y.eps) : '-'; });
-        const w = weighted(d);
-        $('earnMsg').textContent = d.years.some(y => y.filled) ? `가중평균 1주당 순손익액 ${won(w)} ÷ 환원율 10% = 순손익가치 ${won(Math.max(0, w) / RATE)}` +
-            (w <= 0 ? ' (0 이하이므로 순손익가치는 0원)' : '') : '';
+        $('earnBlock').classList.toggle('dim', j.assetOnly);
     }
-    function weighted(d) { return (d.years[0].eps * 3 + d.years[1].eps * 2 + d.years[2].eps * 1) / 6; }
+
+    // ===== 재무제표 자동 입력 =====
+    function listFiles() {
+        const files = [...$('fsFiles').files];
+        $('fileList').innerHTML = files.map(f => `<div>${/pdf/.test(f.type) ? '📄' : '🖼️'} ${escapeHtml(f.name)} <span>${(f.size / 1048576).toFixed(1)}MB</span></div>`).join('');
+        $('extractBtn').classList.toggle('hidden', !files.length);
+        $('extractMsg').textContent = '';
+    }
+    function readAsDataUrl(file) {
+        return new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(file); });
+    }
+    // 사진은 긴 변 2000px JPEG로 줄여서 보냄 (글자는 읽히고 전송은 가볍게)
+    async function shrinkImage(file) {
+        const url = await readAsDataUrl(file);
+        const img = await new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = url; });
+        const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+        if (scale === 1 && file.size < 3 * 1048576) return { mediaType: file.type, data: url.split(',')[1] };
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        return { mediaType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.88).split(',')[1] };
+    }
+    async function extractFiles() {
+        const files = [...$('fsFiles').files].slice(0, 8);
+        if (!files.length) return;
+        const total = files.reduce((s, f) => s + f.size, 0);
+        if (files.some(f => /pdf/.test(f.type)) && total > 15 * 1048576) { alert('파일이 너무 큽니다. PDF는 합계 15MB 이하로 올려주세요.'); return; }
+        $('extractMsg').className = 'live-msg';
+        $('extractMsg').textContent = '문서를 읽는 중입니다. 쪽수에 따라 1분 정도 걸릴 수 있어요...';
+        let payload;
+        try {
+            payload = await Promise.all(files.map(async f => /pdf/.test(f.type)
+                ? { name: f.name, mediaType: 'application/pdf', data: (await readAsDataUrl(f)).split(',')[1] }
+                : { name: f.name, ...(await shrinkImage(f)) }));
+        } catch (err) { $('extractMsg').textContent = '파일을 열지 못했습니다.'; return; }
+        const r = await runCalc({ mode: 'extract', files: payload }, $('extractBtn'), '읽는 중...');
+        if (!r || !r.data) { $('extractMsg').textContent = ''; return; }
+        applyExtract(r.data);
+    }
+    function setVal(id, v, minus) {
+        if (v === null || v === undefined || v === '' || !$(id)) return 0;
+        const n = Math.round(Number(v));
+        if (!isFinite(n)) return 0;
+        $(id).value = (n < 0 && minus ? '-' : '') + Math.abs(n).toLocaleString('ko-KR');
+        $(id).classList.add('auto');
+        return 1;
+    }
+    function applyExtract(d) {
+        let filled = 0;
+        if (d.companyName && !$('corpName').value.trim()) { $('corpName').value = String(d.companyName).slice(0, 30); filled++; }
+        if (d.sharesIssued && !has('totalShares')) filled += setVal('totalShares', d.sharesIssued);
+        const base = isDate($('baseDate').value) ? $('baseDate').value : '9999-12-31';
+        const fys = (d.fiscalYears || []).filter(y => y && y.fiscalYearEnd && y.fiscalYearEnd < base)
+            .sort((a, b) => (a.fiscalYearEnd < b.fiscalYearEnd ? 1 : -1)).slice(0, 3);
+        fys.forEach((y, i) => {
+            filled += setVal(`e_income_${i}`, y.income, true);
+            ['a2', 'a3', 'a4', 'a5', 'a6', ...SUB_KEYS].forEach(k => { filled += setVal(`e_${k}_${i}`, y[k]); });
+            filled += setVal(`e_shares_${i}`, y.sharesAtYearEnd);
+        });
+        if (fys.length) { yearLabels = [0, 1, 2].map(i => fys[i] ? fys[i].fiscalYearEnd.slice(0, 7).replace('-', '.') : '-'); refreshYears(); }
+        const bss = (d.balanceSheets || []).filter(s => s && s.asOf && s.asOf <= base).sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
+        const bs = bss[0];
+        if (bs) {
+            filled += setVal('na_n1', bs.totalAssets) + setVal('na_n8', bs.totalLiabilities) + setVal('realty', bs.realty)
+                + setVal('na_n6', bs.prepaid) + setVal('na_n15', bs.retainedReserves) + setVal('na_n16', bs.provisions);
+        }
+        refreshLive();
+        const notes = [];
+        if (bs && bs.asOf !== $('baseDate').value) notes.push(`재무상태표는 ${bs.asOf} 기준입니다. 평가기준일과 다르면 가결산 금액으로 고쳐주세요.`);
+        if (bs && bs.intangibles) notes.push(`무형자산 장부가액 ${fmt(bs.intangibles)}원: 매입한 무체재산권이면 '매입한 무체재산권 장부가액'에 넣어주세요.`);
+        if (d.notes) notes.push(d.notes);
+        $('extractMsg').className = 'live-msg' + (filled ? '' : ' warn');
+        $('extractMsg').innerHTML = filled
+            ? `${filled}칸을 채웠어요. <b>노란 칸</b>은 문서에서 읽은 값이니 원본과 꼭 대조해 주세요.${notes.length ? '<br>' + notes.map(escapeHtml).join('<br>') : ''}`
+            : '문서에서 필요한 숫자를 찾지 못했습니다. 재무상태표 · 법인세 신고서가 맞는지 확인해주세요.' + (d.notes ? '<br>' + escapeHtml(d.notes) : '');
+    }
 
     // 계산은 서버(Apps Script StockVal.gs)에서: 승인된 회원만 결과를 받음
-    async function runCalc(body, btn) {
+    async function runCalc(body, btn, busyLabel) {
         const label = btn.innerText;
         btn.disabled = true;
-        btn.innerText = '평가 중...';
+        btn.innerText = busyLabel || '평가 중...';
         try {
             const { ok, status, data } = await api('/api/calculate', body);
             if (!ok) {
@@ -558,17 +777,23 @@
 
     async function calcUnlisted(e) {
         e.preventDefault();
-        const d = readInput(), j = judge(d);
+        const d = compute(), j = judge(d);
         if (!d.total) { alert('발행주식 총수를 입력해주세요.'); return; }
         if (!d.target) { alert('평가할 주식 수를 입력해주세요.'); return; }
         if (d.target > d.total) { alert('평가할 주식 수가 발행주식 총수보다 많습니다.'); return; }
-        if (!d.assets) { alert('총자산 평가액을 입력해주세요.'); return; }
-        if (!j.assetOnly && !d.years.some(y => y.filled)) { alert('최근 3개 사업연도 소득금액을 입력해주세요.'); return; }
+        if (!num('na_n1')) { alert('재무상태표상의 자산가액을 입력해주세요.'); return; }
+        if (!j.assetOnly && !d.ys.some(y => y.filled)) { alert('최근 3개 사업연도 소득금액을 입력해주세요.'); return; }
 
+        const years = [0, 1, 2].map(i => {
+            const y = { income: $(`e_income_${i}`).value };
+            ['a2', 'a3', 'a4', 'a5', 'a6', 'a7', ...SUB_KEYS, 'capAdj', 'shares'].forEach(k => { y[k] = num(`e_${k}_${i}`); });
+            return y;
+        });
+        const na = { intangibleBook: num('intangibleBook') };
+        NA_ROWS.filter(r => r.k).forEach(r => { na[r.k] = num('na_' + r.k); });
         const r = await runCalc({
             mode: 'unlisted', corpName: $('corpName').value.trim().slice(0, 30), baseDate: $('baseDate').value,
-            totalShares: d.total, targetShares: d.target, assets: d.assets, liabilities: d.liab, realty: d.realty, goodwill: d.goodwill,
-            years: [1, 2, 3].map(i => ({ income: $('inc' + i).value, add: num('add' + i), sub: num('sub' + i), shares: num('sh' + i) })),
+            totalShares: d.total, targetShares: d.target, realty: d.realty, years, na,
             exStart: $('exStart').checked, exClose: $('exClose').checked, exStock: $('exStock').checked, exLoss: $('exLoss').checked,
             corpSize: val('corpSize'), majority: val('majority')
         }, document.querySelector('#stockForm .calc-action-btn'));
@@ -582,9 +807,15 @@
                 <span class="badge blue">부동산 비율 ${pct(r.realtyRatio)}</span>
                 ${r.premium ? '<span class="badge warn">최대주주 할증 20%</span>' : ''}
             </div>
-            <h4>1주당 가치</h4>
-            ${r.assetOnly ? '' : `<div class="result-row"><span>1주당 순손익가치</span><span>${won(r.epv)}</span></div>`}
+            <h4>순손익가치</h4>
+            ${r.years.map((y, i) => `<div class="result-row info"><span>평가기준일전 ${i + 1}년 순손익액 · 주당</span><span>${fmt(y.netAdj)} · ${fmt(y.eps)}</span></div>`).join('')}
+            <div class="result-row"><span>1주당 순손익가치 (가중평균 ${fmt(r.weighted)} ÷ 10%)</span><span>${won(r.epv)}</span></div>
+            <h4>순자산가치</h4>
+            <div class="result-row info"><span>자산총계 − 부채총계</span><span>${won(r.beforeGw)}</span></div>
+            <div class="result-row"><span>영업권${r.gwExcluded ? ' (휴·폐업·청산: 제외)' : ''}</span><span>${won(r.goodwillApplied)}</span></div>
+            <div class="result-row"><span>순자산가액</span><span>${won(r.netAsset)}</span></div>
             <div class="result-row"><span>1주당 순자산가치</span><span>${won(r.nav)}</span></div>
+            <h4>1주당 평가액</h4>
             ${r.assetOnly ? '' : `<div class="result-row"><span>가중평균액 (${r.wE} : ${r.wA})</span><span>${won(r.blended)}</span></div>
             <div class="result-row info"><span>순자산가치 80% 하한</span><span>${won(r.floor)}</span></div>`}
             <div class="result-row sub"><span>1주당 평가액 <span class="hint">(${escapeHtml(r.rule)})</span></span><span>${won(r.perShare)}</span></div>
@@ -595,7 +826,7 @@
             <div class="basis">${r.basis.map(b => `<div>${escapeHtml(b)}</div>`).join('')}</div>
             <div class="notice-text">
                 <p>※ 평가기준일 전후 6개월(증여는 전 6개월 · 후 3개월) 내 매매 · 감정 · 경매 등 시가가 있으면 그 가액이 우선합니다.</p>
-                <p>※ 순손익액 · 순자산의 세부 가감항목, 증자 · 감자 시 주식 수 환산, 추정이익 평가 등은 단순화했습니다. 실제 신고 전 세무사와 확인하세요.</p>
+                <p>※ 1주당 금액은 원 미만을 절사했습니다. 추정이익 평가, 증자 · 감자 시 환산주식수 계산은 직접 넣은 값을 그대로 씁니다.</p>
                 <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
             </div>
             ${nextLinks()}`;
@@ -641,7 +872,7 @@
         if (window.innerWidth <= 860) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-    refreshYears();
+    buildSheets(); refreshYears(); refreshLive();
   </script>
 </body>
 </html>
