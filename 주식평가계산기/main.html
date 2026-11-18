@@ -330,7 +330,7 @@
               <div class="upload-head">
                 <div>
                   <b>재무제표로 자동 입력</b>
-                  <span>재무상태표 · 손익계산서 · 법인세 신고서(세무조정계산서)를 올리면 아래 3개 계산서를 채워 드려요.<br>파일을 이 칸으로 끌어다 놓아도 됩니다. (PDF · JPG · PNG, 큰 PDF는 나눠서 읽어요)</span>
+                  <span>재무상태표 · 손익계산서 · 법인세 신고서(세무조정계산서)를 올리면 아래 3개 계산서를 채워 드려요.<br>파일을 이 칸으로 끌어다 놓아도 됩니다. (PDF · JPG · PNG, 무료 · 글자가 없는 스캔 쪽은 문자 인식)</span>
                 </div>
                 <label class="upload-pick">파일 선택<input type="file" id="fsFiles" accept="application/pdf,image/jpeg,image/png,image/webp" multiple onchange="addFiles(this.files); this.value = ''"></label>
               </div>
@@ -466,6 +466,7 @@
 
   <script>window.CALC_PRODUCT = 'stock';</script>
   <script src="../양도세계산기/js/login.js"></script>
+  <script src="fs-parse.js?v=1"></script>
   <script>
     // Apps Script가 아직 주식평가 이용권을 모르는 예전 버전이면 '준비 중' 표시
     const baseUpdateUi = updateUi;
@@ -686,9 +687,11 @@
         $('earnBlock').classList.toggle('dim', j.assetOnly);
     }
 
-    // ===== 재무제표 자동 입력 =====
-    // 큰 PDF는 브라우저에서 쪽 단위로 나눠 여러 번 읽고(한 번에 약 4MB · 12쪽), 결과를 합쳐서 채움
-    const PART_BYTES = 4 * 1048576, PART_PAGES = 12, MAX_TOTAL = 80 * 1048576, IMG_PER_PART = 5;
+    // ===== 재무제표 자동 입력 (무료) =====
+    // 1) PDF 안의 글자(OCR된 스캔본 포함)를 브라우저에서 쪽마다 꺼냄
+    // 2) 글자가 없는 쪽 · 사진만 서버(구글 드라이브 OCR)로 보내 글자를 받음
+    // 3) fs-parse.js가 서식 문구 옆의 금액을 찾아 계산서에 채움
+    const MAX_TOTAL = 80 * 1048576, OCR_PER_CALL = 3, MIN_TEXT = 20;
     const OK_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
     let fsFiles = [];
     function addFiles(list) {
@@ -722,98 +725,103 @@
     function readAsDataUrl(file) {
         return new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(file); });
     }
-    const toB64 = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(s); };
-    // 사진은 긴 변 2000px JPEG로 줄여서 보냄 (글자는 읽히고 전송은 가볍게)
-    async function shrinkImage(file) {
+    // 캔버스 → OCR용 JPEG (긴 변 최대 2000px)
+    function canvasJpeg(c) { return { mediaType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] }; }
+    async function imageForOcr(file) {
         const url = await readAsDataUrl(file);
         const img = await new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = url; });
         const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
-        if (scale === 1 && file.size < 3 * 1048576) return { mediaType: file.type, data: url.split(',')[1] };
         const c = document.createElement('canvas');
         c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        return { mediaType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.88).split(',')[1] };
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        return canvasJpeg(c);
     }
-    let pdfLibLoading = null;
-    function loadPdfLib() {
-        if (window.PDFLib) return Promise.resolve();
-        return pdfLibLoading || (pdfLibLoading = new Promise((ok, fail) => {
+    let pdfJsLoading = null;
+    function loadPdfJs() {
+        if (window.pdfjsLib) return Promise.resolve();
+        return pdfJsLoading || (pdfJsLoading = new Promise((ok, fail) => {
             const s = document.createElement('script');
-            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
-            s.onload = ok; s.onerror = () => { pdfLibLoading = null; fail(new Error('pdf-lib')); };
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+            s.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; ok(); };
+            s.onerror = () => { pdfJsLoading = null; fail(new Error('PDF 읽기 도구를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.')); };
             document.head.appendChild(s);
         }));
     }
-    // PDF 한 개 → 서버로 보낼 묶음들 (작으면 그대로, 크면 쪽 단위로 나눔)
-    async function pdfParts(file) {
-        const bytes = new Uint8Array(await file.arrayBuffer());
-        if (file.size <= PART_BYTES) return [{ label: file.name, files: [{ name: file.name, mediaType: 'application/pdf', data: toB64(bytes) }] }];
-        await loadPdfLib();
-        const src = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
-        const n = src.getPageCount();
-        const per = Math.max(1, Math.min(PART_PAGES, Math.floor(n * PART_BYTES / file.size)));
-        const parts = [];
-        for (let start = 0; start < n; start += per) {
-            const end = Math.min(n, start + per);
-            const doc = await PDFLib.PDFDocument.create();
-            const pages = await doc.copyPages(src, Array.from({ length: end - start }, (_, k) => start + k));
-            pages.forEach(p => doc.addPage(p));
-            const out = await doc.save();
-            parts.push({ label: `${file.name} ${start + 1}~${end}쪽`, files: [{ name: file.name, mediaType: 'application/pdf', data: toB64(out) }] });
-        }
-        return parts;
+    // 쪽의 글자를 줄 단위로 (같은 높이의 글자 조각을 왼쪽부터 이어 붙임)
+    async function pageText(page) {
+        const tc = await page.getTextContent();
+        const rows = [];
+        tc.items.forEach(it => {
+            if (!it.str || !it.str.trim()) return;
+            const y = it.transform[5], x = it.transform[4], h = Math.abs(it.transform[3]) || 8;
+            let row = rows.find(r => Math.abs(r.y - y) < h * 0.5);
+            if (!row) rows.push(row = { y, items: [] });
+            row.items.push({ x, s: it.str });
+        });
+        rows.sort((a, b) => b.y - a.y);
+        return rows.map(r => r.items.sort((a, b) => a.x - b.x).map(i => i.s).join(' ')).join('\n');
+    }
+    async function renderPage(page) {
+        const v1 = page.getViewport({ scale: 1 });
+        const scale = Math.min(2.5, 1800 / Math.max(v1.width, v1.height));
+        const vp = page.getViewport({ scale });
+        const c = document.createElement('canvas');
+        c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        // intent 'print': 화면 갱신(requestAnimationFrame)을 기다리지 않아 다른 탭을 보고 있어도 멈추지 않음
+        await page.render({ canvasContext: g, viewport: vp, intent: 'print' }).promise;
+        return canvasJpeg(c);
     }
     function setProgress(done, total, text) {
         $('extractMsg').className = 'live-msg';
         $('extractMsg').innerHTML = `${escapeHtml(text)}<div class="progress"><i style="width:${total ? Math.round(done / total * 100) : 0}%"></i></div>`;
     }
-    // 여러 번 읽은 결과 합치기: 같은 사업연도 · 같은 기준일은 먼저 찾은 값을 쓰고 빈 값만 채움
-    function mergeExtracts(list) {
-        const out = { companyName: null, sharesIssued: null, fiscalYears: [], balanceSheets: [], notes: '' };
-        const notes = [];
-        const fill = (dst, src) => { Object.keys(src).forEach(k => { if ((dst[k] === null || dst[k] === undefined) && src[k] !== null && src[k] !== undefined) dst[k] = src[k]; }); };
-        list.forEach(d => {
-            if (!d) return;
-            if (!out.companyName && d.companyName) out.companyName = d.companyName;
-            if (!out.sharesIssued && d.sharesIssued) out.sharesIssued = d.sharesIssued;
-            (d.fiscalYears || []).forEach(y => { if (!y || !y.fiscalYearEnd) return; const f = out.fiscalYears.find(x => x.fiscalYearEnd === y.fiscalYearEnd); f ? fill(f, y) : out.fiscalYears.push({ ...y }); });
-            (d.balanceSheets || []).forEach(s => { if (!s || !s.asOf) return; const f = out.balanceSheets.find(x => x.asOf === s.asOf); f ? fill(f, s) : out.balanceSheets.push({ ...s }); });
-            if (d.notes && !notes.includes(d.notes)) notes.push(d.notes);
-        });
-        out.notes = notes.join(' / ').slice(0, 600);
-        return out;
-    }
     async function extractFiles() {
         if (!fsFiles.length) return;
-        const total = fsFiles.reduce((s, f) => s + f.size, 0);
-        if (total > MAX_TOTAL) { $('extractMsg').className = 'live-msg warn'; $('extractMsg').textContent = '파일이 너무 많거나 큽니다. 합계 80MB 이하로 올려주세요.'; return; }
+        if (fsFiles.reduce((s, f) => s + f.size, 0) > MAX_TOTAL) { $('extractMsg').className = 'live-msg warn'; $('extractMsg').textContent = '파일이 너무 많거나 큽니다. 합계 80MB 이하로 올려주세요.'; return; }
         const btn = $('extractBtn'), label = btn.innerText;
         btn.disabled = true; btn.innerText = '읽는 중...';
         try {
-            setProgress(0, 1, '파일을 준비하는 중...');
-            let parts = [];
-            const imgs = [];
+            const pages = [], needOcr = [];   // needOcr: { idx(pages 위치), label, make() }
+            let textPages = 0;
             for (const f of fsFiles) {
-                if (/pdf/.test(f.type)) {
-                    try { parts = parts.concat(await pdfParts(f)); }
-                    catch (err) { console.error(err); throw new Error(`${f.name}을(를) 나누지 못했습니다. 암호가 걸린 PDF면 암호를 풀어서 올려주세요.`); }
-                } else imgs.push({ name: f.name, ...(await shrinkImage(f)) });
+                if (!/pdf/.test(f.type)) {
+                    pages.push({ file: f.name, text: '' });
+                    needOcr.push({ idx: pages.length - 1, label: f.name, make: () => imageForOcr(f) });
+                    continue;
+                }
+                await loadPdfJs();
+                setProgress(0, 1, `${f.name} 글자를 꺼내는 중...`);
+                let pdf;
+                try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise; }
+                catch (err) { throw new Error(`${f.name}을(를) 열지 못했습니다. 암호가 걸린 PDF면 암호를 풀어서 올려주세요.`); }
+                for (let n = 1; n <= pdf.numPages; n++) {
+                    const page = await pdf.getPage(n);
+                    const text = await pageText(page);
+                    pages.push({ file: f.name, text });
+                    if (text.replace(/\s/g, '').length >= MIN_TEXT) textPages++;
+                    else needOcr.push({ idx: pages.length - 1, label: `${f.name} ${n}쪽`, make: () => renderPage(page) });
+                    if (n % 10 === 0) setProgress(n, pdf.numPages, `${f.name} 글자를 꺼내는 중 (${n}/${pdf.numPages}쪽)`);
+                }
             }
-            for (let i = 0; i < imgs.length; i += IMG_PER_PART) parts.push({ label: `사진 ${i + 1}~${Math.min(imgs.length, i + IMG_PER_PART)}`, files: imgs.slice(i, i + IMG_PER_PART) });
-
-            const results = [], failed = [];
-            for (let i = 0; i < parts.length; i++) {
-                setProgress(i, parts.length, `문서를 읽는 중입니다 (${i + 1}/${parts.length}) · ${parts[i].label}`);
+            // 글자가 없는 쪽만 구글 드라이브 OCR
+            const failed = [];
+            for (let i = 0; i < needOcr.length; i += OCR_PER_CALL) {
+                const batch = needOcr.slice(i, i + OCR_PER_CALL);
+                setProgress(i, needOcr.length, `글자가 없는 쪽을 문자 인식하는 중 (${i + 1}~${Math.min(needOcr.length, i + OCR_PER_CALL)} / ${needOcr.length}쪽)`);
+                const images = [];
+                for (const it of batch) images.push(await it.make());
                 let res;
-                try { res = await api('/api/calculate', { mode: 'extract', files: parts[i].files }); }
+                try { res = await api('/api/calculate', { mode: 'ocr', images }); }
                 catch (err) { res = { ok: false, data: { message: '서버와 통신하지 못했습니다.' } }; }
-                if (res.ok && res.data.result && res.data.result.data) { results.push(res.data.result.data); continue; }
                 if (res.status === 401 || res.status === 402) { refreshUser(); throw new Error(res.data.message || '로그인이 필요합니다.'); }
-                if (/설정되지 않았습니다/.test(res.data.message || '')) throw new Error(res.data.message);
-                failed.push(`${parts[i].label}: ${res.data.message || '읽지 못함'}`);
+                if (!res.ok) { failed.push(`${batch[0].label} 외: ${res.data.message || '문자 인식 실패'}`); continue; }
+                (res.data.result.texts || []).forEach((t, k) => { if (batch[k]) { pages[batch[k].idx].text = t || ''; if (!t) failed.push(batch[k].label); } });
             }
-            if (!results.length) throw new Error('문서를 읽지 못했습니다.' + (failed.length ? ' ' + failed[0] : ''));
-            applyExtract(mergeExtracts(results), failed);
+            setProgress(1, 1, '숫자를 찾는 중...');
+            const data = parseFinancials(pages);
+            data.notes = `${data.notes} (글자 있는 쪽 ${textPages}, 문자 인식한 쪽 ${needOcr.length - failed.length})`;
+            applyExtract(data, failed.length > 5 ? [...failed.slice(0, 5), `외 ${failed.length - 5}쪽`] : failed);
         } catch (err) {
             $('extractMsg').className = 'live-msg warn';
             $('extractMsg').textContent = err.message || '문서를 읽지 못했습니다.';
