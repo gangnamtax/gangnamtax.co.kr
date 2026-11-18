@@ -695,7 +695,7 @@
           <div class="jgrid three" style="margin-top: 8px;">
             ${card('외부조정', j.external.result, j.external.result === '외부조정 대상' ? 'on' : 'ok', `기준 ${eok(j.external.threshold)} · 환산 ${eok(j.external.amount)}`)}
             ${card('장부 기장의무', j.book.result, book ? 'on' : 'ok', `${esc(j.book.reason)}<br>기준 ${eok(j.book.threshold)} · 환산 ${eok(j.book.amount)}`)}
-            ${card('추계 시 경비율', j.rate.result, '', `단순경비율 기준 ${eok(j.rate.threshold)} · 직전 환산 ${eok(j.rate.amount)}${j.rate.multiBiz ? '<br>겸업: 수입금액 가중평균' : ''}`)}
+            ${card('추계 시 경비율', j.rate.result, '', `단순경비율 기준 ${eok(j.rate.threshold)} · 직전 환산 ${eok(j.rate.amount)}<br>단순경비율 ${pctText(j.rate.simpleRate)} · 기준경비율 ${pctText(j.rate.standardRate)}${j.book.result === '복식부기의무자' ? ' (1/2)' : ''}${j.rate.multiBiz ? '<br>겸업: 수입금액 가중평균' : ''}`)}
             ${card('무기장가산세 (추계 시)', j.penalty.result, j.penalty.result.startsWith('제외') ? 'ok' : 'on', `직전 수입 합계 ${eok(j.penalty.amount)} (4,800만 미만 제외)`)}
             ${card('기장세액공제', j.bookCredit === '해당 없음' ? '공제 없음' : '공제 가능', j.bookCredit === '해당 없음' ? '' : 'ok', `${j.bookCredit === '해당 없음' ? '' : '복식부기로 신고하면 산출세액 20% (한도 100만 원)<br>'}사업용계좌 ${j.account === '의무 없음' ? '의무 없음' : '신고·사용 의무'}`)}
             ${card('성실신고확인', j.faithful.result, j.faithful.result === '성실신고확인대상' ? 'on' : 'ok', `기준 ${eok(j.faithful.threshold)} · 해당연도 환산 ${eok(j.faithful.amount)}`)}
@@ -749,7 +749,7 @@
             <p class="calc-note">· 추계 필요경비: ${esc(r.tax.expenseNote)}<br>· 소득금액 한도: ${esc(r.tax.capNote)}<br>· 추계 소득금액: ${esc(r.tax.incomeNote)}<br>· 창업감면: ${esc(r.tax.reliefNote)}<br>· 장부 신고의 필요경비는 장부상 실제 필요경비(수입금액 한도)입니다.</p>
           </details>
 
-          <h3>💼 기장료 · 조정료 <small>모두 부가세 포함</small></h3>
+          <h3>💼 기장료 · 조정료 <small>부가세 포함</small></h3>
           <div class="table-wrap"><table class="rt">
             <tr><th>항목</th>${th(fv, minGrand, 'grand')}</tr>
             ${row(fv, '월 기장료', 'monthly', minGrand, 'grand')}

@@ -197,7 +197,10 @@
     else if (isNew) method = curBookConv < curBookTh ? '단순경비율' : '기준경비율';
     else method = simpleConv < simpleTh && curBookConv < curBookTh ? '단순경비율' : '기준경비율';
     const isStandard = method === '기준경비율';
-    const rate = rev === 0 ? 0 : (!isStandard ? (rev - sum('V')) / rev : sum('W') * (isDouble ? LAW.doubleStandardRatio : 1) / rev);
+    // 참고용: 두 경비율을 모두 계산 (화면에 함께 표시)
+    const simpleRate = rev === 0 ? 0 : (rev - sum('V')) / rev;
+    const standardRate = rev === 0 ? 0 : sum('W') * (isDouble ? LAW.doubleStandardRatio : 1) / rev;
+    const rate = isStandard ? standardRate : simpleRate;
     const methodText = `${method} ${pct(rate)}${isStandard && isDouble ? ' (1/2 적용)' : ''}`;
     const multiBiz = rows.filter(r => r.code).length > 1;
 
@@ -339,7 +342,7 @@
       prevMainName: mainName(prevMain), curMainName: mainName(curMain),
       judge: {
         book: { threshold: bookTh, amount: bookConv, result: bookType, reason: bookReason },
-        rate: { threshold: simpleTh, amount: simpleConv, result: methodText, method, rate, multiBiz },
+        rate: { threshold: simpleTh, amount: simpleConv, result: methodText, method, rate, multiBiz, simpleRate, standardRate },
         external: { threshold: extTh, amount: extConv, result: external },
         faithful: { threshold: faithTh, amount: faithConv, result: faithful },
         penalty: { threshold: LAW.smallBizNoBookPenalty, amount: prevTotal, result: penaltyText },
