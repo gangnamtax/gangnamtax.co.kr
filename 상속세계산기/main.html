@@ -257,6 +257,17 @@
     }
     .deadline-box { margin-top: 14px; border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; }
     .deadline-box b { font-size: 16px; }
+    /* 피상속인 가족 줄 · 추가/삭제 버튼 */
+    #family .fam { position: relative; padding: 14px 48px 12px 14px; border: 1px solid #e3d3b5; background: #fdfbf7; box-shadow: 0 1px 2px rgba(91,74,46,.06); }
+    #family .fam + .fam { margin-top: 12px; }
+    .fam-del { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+        background: #fff; border: 1px solid #eadfc9; border-radius: 50%; color: #a08452; cursor: pointer; padding: 0; transition: background .15s, color .15s, border-color .15s; }
+    .fam-del:hover { background: #fff7ed; border-color: #f3c99b; color: #b45309; }
+    .fam-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 10px; padding: 12px; background: #faf7f1;
+        border: 1px solid #eadfc9; border-radius: 8px; color: #8a6d3b; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background .15s, color .15s; }
+    .fam-add .plus { width: 20px; height: 20px; border-radius: 50%; background: #8a6d3b; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; line-height: 1; transition: background .15s, color .15s; }
+    .fam-add:hover { background: #8a6d3b; color: #fff; border-color: #8a6d3b; }
+    .fam-add:hover .plus { background: #fff; color: #8a6d3b; }
     .cnt-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     .cnt-row .form-group { margin-bottom: 0; }
     @media (max-width: 600px) { .cnt-row { grid-template-columns: 1fr 1fr; } }
@@ -345,7 +356,7 @@
             <div class="step-title" style="margin-top: 30px;"><span class="no">2</span>피상속인의 가족 <span class="who">가족관계증명서 기준 · 상속인 자동 판정</span></div>
             <div class="form-group">
                 <div id="family"></div>
-                <button type="button" class="add-btn" onclick="addFamily()">+ 가족 추가</button>
+                <button type="button" class="fam-add" onclick="addFamily()"><span class="plus">+</span>가족 추가</button>
                 <div class="live-msg" style="font-weight: normal;">자녀가 먼저 사망했으면 그 자녀의 자녀(손자녀)를 '손자녀 (대습상속)'으로 넣으세요. 65세 이상 · 미성년 동거가족도 넣으면 인적공제에 반영됩니다.</div>
             </div>
             <div id="personalMsg" class="ded-badge" style="display: block; margin-top: 4px; font-size: 13px; color: #5b4a2e; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 6px; padding: 10px 12px; line-height: 1.7;"></div>
@@ -856,8 +867,8 @@
                     <label class="sub-label">생년월일</label>
                     <div class="date-input-wrapper"><input type="text" class="f-birth" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
                 </div>
-                <button type="button" class="prior-del" style="margin-bottom: 10px;" onclick="this.closest('.fam').remove(); refreshForm()">삭제</button>
             </div>
+            <button type="button" class="fam-del" onclick="this.closest('.fam').remove(); refreshForm()" aria-label="이 가족 삭제" title="삭제"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
             <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
                 <label class="check-line f-cohabit-box" style="margin-top: 6px;"><input type="checkbox" class="f-cohabit" onchange="refreshForm()"> 피상속인과 동거</label>
                 <label class="check-line" style="margin-top: 6px;"><input type="checkbox" class="f-dis" onchange="refreshForm()"> 장애인</label>
