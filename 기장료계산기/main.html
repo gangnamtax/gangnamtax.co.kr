@@ -110,6 +110,8 @@
     .empty { padding: 40px 20px; text-align: center; color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; font-size: 14px; line-height: 1.7; }
     .main-biz { font-size: 12px; color: #475569; background: #f8fafc; border-radius: 8px; padding: 8px 10px; line-height: 1.6; }
     .jgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .jgrid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .jgrid.three .jcard .v { font-size: 14px; word-break: keep-all; }
     .jcard { border: 1px solid #e2e8f0; border-radius: 9px; padding: 9px 11px; background: #fff; }
     .jcard .t { font-size: 12px; color: #64748b; }
     .jcard .v { font-size: 15px; font-weight: 700; margin: 2px 0; color: #0f172a; }
@@ -146,7 +148,7 @@
     @media (max-width: 420px) {
         .f { grid-template-columns: 1fr; gap: 4px; }
         .biz-info { margin-left: 0; }
-        .jgrid { grid-template-columns: 1fr; }
+        .jgrid, .jgrid.three { grid-template-columns: 1fr; }
         table.rt th, table.rt td { padding: 6px 5px; font-size: 12px; }
     }
   </style>
@@ -690,13 +692,13 @@
         document.getElementById('resultPanel').innerHTML = `
           <h3>📌 판정 결과 <small>${input.year}년 귀속${input.bizName ? ' · ' + esc(input.bizName) : ''}</small></h3>
           <div class="main-biz">주업종(직전): <b>${esc(r.prevMainName)}</b>${r.prevMainName !== r.curMainName ? `<br>주업종(해당): <b>${esc(r.curMainName)}</b>` : ''}</div>
-          <div class="jgrid" style="margin-top: 8px;">
+          <div class="jgrid three" style="margin-top: 8px;">
+            ${card('외부조정', j.external.result, j.external.result === '외부조정 대상' ? 'on' : 'ok', `기준 ${eok(j.external.threshold)} · 환산 ${eok(j.external.amount)}`)}
             ${card('장부 기장의무', j.book.result, book ? 'on' : 'ok', `${esc(j.book.reason)}<br>기준 ${eok(j.book.threshold)} · 환산 ${eok(j.book.amount)}`)}
             ${card('추계 시 경비율', j.rate.result, '', `단순경비율 기준 ${eok(j.rate.threshold)} · 직전 환산 ${eok(j.rate.amount)}${j.rate.multiBiz ? '<br>겸업: 수입금액 가중평균' : ''}`)}
-            ${card('외부조정', j.external.result, j.external.result === '외부조정 대상' ? 'on' : 'ok', `기준 ${eok(j.external.threshold)} · 환산 ${eok(j.external.amount)}`)}
-            ${card('성실신고확인', j.faithful.result, j.faithful.result === '성실신고확인대상' ? 'on' : 'ok', `기준 ${eok(j.faithful.threshold)} · 해당연도 환산 ${eok(j.faithful.amount)}`)}
             ${card('무기장가산세 (추계 시)', j.penalty.result, j.penalty.result.startsWith('제외') ? 'ok' : 'on', `직전 수입 합계 ${eok(j.penalty.amount)} (4,800만 미만 제외)`)}
-            ${card('기장세액공제 · 사업용계좌', `${j.bookCredit === '해당 없음' ? '공제 없음' : '공제 가능'} · 계좌 ${j.account === '의무 없음' ? '의무 없음' : '의무'}`, '', j.bookCredit === '해당 없음' ? '' : '간편장부대상자가 복식부기로 신고하면 산출세액 20% (한도 100만 원)')}
+            ${card('기장세액공제', j.bookCredit === '해당 없음' ? '공제 없음' : '공제 가능', j.bookCredit === '해당 없음' ? '' : 'ok', `${j.bookCredit === '해당 없음' ? '' : '복식부기로 신고하면 산출세액 20% (한도 100만 원)<br>'}사업용계좌 ${j.account === '의무 없음' ? '의무 없음' : '신고·사용 의무'}`)}
+            ${card('성실신고확인', j.faithful.result, j.faithful.result === '성실신고확인대상' ? 'on' : 'ok', `기준 ${eok(j.faithful.threshold)} · 해당연도 환산 ${eok(j.faithful.amount)}`)}
           </div>
 
           <h3>🚀 창업중소기업 세액감면</h3>
