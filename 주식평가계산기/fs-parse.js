@@ -17,9 +17,13 @@
         const n = Number(m[2].replace(/,/g, ''));
         return m[1] && m[1] !== '' ? -n : n;
     }
-    // 다음 항목이 시작되는 곳: 원문자(⑩⑤), 줄 첫머리의 한글 · 원문자 · "105 한글" 같은 서식 코드
-    const NEXT_ITEM = /[①-⓿㉑-㊿]|\n\s*(?:[가-힣]|\(?\d{2,3}\)?\s*[가-힣])/;
-    // 라벨 뒤에서 다음 항목 전까지 처음 나오는 금액 (서식 코드 107 같은 3자리 이하 숫자는 건너뜀)
+    // 다음 항목이 시작되는 곳: 원문자(⑩⑤), 또는 한글 · 로마숫자(Ⅸ)가 들어 있는 다음 줄
+    // (숫자만 있는 다음 줄은 같은 항목의 금액일 수 있어 계속 봄)
+    const NEXT_ITEM = /[①-⓿㉑-㊿]|\n(?=[^\n]*[가-힣Ⅰ-ⅿ])/;
+    const TOKEN = /(△|▲|-|\()?\s*(\d{1,3}(?:,\d{3})+|\d+)(\))?(?![\d,])/g;
+    // 라벨 뒤에서 다음 항목 전까지의 금액
+    // - 쉼표가 있거나 5자리 이상인 숫자를 먼저 (서식 코드 107 · 06 같은 짧은 숫자는 건너뜀)
+    // - 없으면 "코드 금액" 순서로 보고 마지막 짧은 숫자 (예: "218   0", "036   550")
     function amountAfter(text, label, opts) {
         opts = opts || {};
         const re = labelRe(label);
@@ -27,13 +31,56 @@
         while ((m = re.exec(text))) {
             const rest = text.slice(m.index + m[0].length, m.index + m[0].length + (opts.window || 160));
             const stop = rest.search(opts.stopAt || NEXT_ITEM);
-            const scope = stop >= 0 ? rest.slice(0, stop) : rest;
-            AMOUNT.lastIndex = 0;
-            const a = AMOUNT.exec(scope);
-            if (a) return parseAmount(a);
-            if (!opts.all) return null;
+            const scope = (stop >= 0 ? rest.slice(0, stop) : rest)
+                .replace(/\([^()\n]*[+\-~～][^()\n]*\)/g, ' ');   // (104+105-106), (Ⅰ+Ⅱ) 같은 계산식 빼기
+            const toks = [];
+            let a;
+            TOKEN.lastIndex = 0;
+            while ((a = TOKEN.exec(scope))) toks.push(a);
+            const big = toks.find(t => t[2].includes(',') || t[2].length >= 5);
+            if (big) return parseAmount(big);
+            // 짧은 숫자는 라벨과 같은 줄에 있을 때만 금액으로 봄 (다음 줄의 짧은 숫자는 OCR이 흩어 놓은 서식 코드)
+            const line = scope.split('\n')[0];
+            const lt = [];
+            TOKEN.lastIndex = 0;
+            while ((a = TOKEN.exec(line))) lt.push(a);
+            if (lt.length >= 2) return parseAmount(lt[lt.length - 1]);
+            if (lt.length === 1 && lt[0][2] === '0') return 0;
+            if (opts.first) return null;   // 기본은 같은 라벨이 뒤에 또 나오면 거기서 다시 찾음 (예: 토지등 '가감계' 다음의 법인세 '가감계')
         }
         return null;
+    }
+    // OCR이 표를 "과목들 → 금액들" 순서로 흩어 놓은 경우: 과목 줄과 금액 줄을 차례대로 짝지음
+    function pairColumn(text, start, end) {
+        const lines = text.slice(start, end).split('\n').map(s => s.trim()).filter(Boolean);
+        const names = [], amounts = [];
+        const HEAD = /과목|금액|처분|코드|익금산입|손금불산입|손금산입|익금불산입|합계|법인명|사업자|소득금액조정|앞쪽|서식|연도|사업|주\)|주식회사|유출|유보|상여|배당|기타$/;
+        lines.forEach(l => {
+            const am = /^(△|-)?\s*(\d{1,3}(?:,\d{3})+)/.exec(l);
+            if (am) { amounts.push((am[1] ? -1 : 1) * Number(am[2].replace(/,/g, ''))); return; }
+            if (/[가-힣]{2,}/.test(l) && !/\d/.test(l) && !HEAD.test(l.replace(/\s/g, ''))) names.push(l.replace(/\s+/g, ''));
+        });
+        return names.length && names.length === amounts.length ? names.map((n, i) => ({ name: n, amount: amounts[i] })) : [];
+    }
+    // 소득금액조정합계표 왼쪽(익금산입 및 손금불산입) 과목별 금액
+    function adjustItems(text) {
+        const flat = text;
+        const s = flat.search(labelRe('익금산입및손금불산입'));
+        if (s < 0) return [];
+        // 표 끝의 "합계" 줄 (제목 '소득금액조정합계표'의 합계는 제외)
+        let e = flat.slice(s + 5).search(/(^|\n)[\s\d]*합\s*계(?!\s*표)/);
+        e = e < 0 ? flat.length : s + 5 + e;
+        // 1) 한 줄에 "과목 금액"이 같이 있는 경우
+        const inline = [];
+        flat.slice(s, e).split('\n').forEach(l => {
+            const m = /([가-힣][가-힣\s·()]{1,30}?)\s+(△|-)?\s*(\d{1,3}(?:,\d{3})+)/.exec(l);
+            if (m) inline.push({ name: m[1].replace(/\s+/g, ''), amount: (m[2] ? -1 : 1) * Number(m[3].replace(/,/g, '')) });
+        });
+        return inline.length ? inline : pairColumn(flat, s, e);
+    }
+    function sumItems(items, keywords, exclude) {
+        const hit = items.filter(it => keywords.some(k => it.name.includes(k)) && !(exclude || []).some(k => it.name.includes(k)));
+        return hit.length ? hit.reduce((a, it) => a + Math.abs(it.amount), 0) : null;
     }
     // 줄 단위로 키워드가 들어간 줄의 첫 금액을 모두 더함 (소득금액조정합계표처럼 과목별로 줄이 있는 표)
     function sumLines(text, keywords, exclude) {
@@ -50,13 +97,21 @@
     }
     const pad = n => String(n).padStart(2, '0');
     // 사업연도 종료일: "사업연도 2022.01.01 ~ 2022.12.31" / "2022년 1월 1일부터 2022년 12월 31일까지"
+    const D = '(\\d{4})\\s*[.\\-/년]\\s*(\\d{1,2})\\s*[.\\-/월]\\s*(\\d{1,2})\\s*일?';
     function fiscalEnd(text) {
-        const D = '(\\d{4})\\s*[.\\-/년]\\s*(\\d{1,2})\\s*[.\\-/월]\\s*(\\d{1,2})\\s*일?';
-        const m = new RegExp(`사\\s*업\\s*연\\s*도[\\s\\S]{0,40}?${D}[\\s\\S]{0,12}?(?:~|∼|-|부터)[\\s\\S]{0,6}?${D}`).exec(text);
+        // "사업연도 2022.01.01 ~ 2022.12.31"
+        let m = new RegExp(`사\\s*업\\s*연\\s*도[\\s\\S]{0,40}?${D}[\\s\\S]{0,12}?(?:~|∼|-|부터)[\\s\\S]{0,6}?${D}`).exec(text);
+        if (m) return `${m[4]}-${pad(m[5])}-${pad(m[6])}`;
+        // "2023년 01월 01일 부터 … 2023년 12월 31일 까지" (표지 · 표준손익계산서)
+        m = new RegExp(`${D}\\s*부\\s*터[\\s\\S]{0,120}?${D}\\s*까\\s*지`).exec(text);
+        if (m) return `${m[4]}-${pad(m[5])}-${pad(m[6])}`;
+        // "2023.01.01 … ~ 2023.12.31" (홈택스 증명 표지)
+        m = new RegExp(`${D}[\\s\\S]{0,80}?[~∼]\\s*${D}`).exec(text);
         return m ? `${m[4]}-${pad(m[5])}-${pad(m[6])}` : null;
     }
+    // "2025년 10월 31일 현재" · "2025/10/31 현재" · "2025.10.31 현재"
     function asOfDate(text) {
-        const m = /(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일\s*현\s*재/.exec(text);
+        const m = new RegExp(`${D}\\s*현\\s*재`).exec(text);
         return m ? `${m[1]}-${pad(m[2])}-${pad(m[3])}` : null;
     }
     function pageKind(text) {
@@ -86,10 +141,12 @@
             const kind = pageKind(t);
             if (!kind) return;
             found[kind] = (found[kind] || 0) + 1;
-            const nameM = /법\s*인\s*명[\s:：]*([^\n]{2,30}?)(?:\s{2,}|\n|사업자)/.exec(t);
+            const nameM = /법\s*인\s*명\s*\)?[\s:：]*([^\n]{2,30}?)(?:\s{2,}|\n|사\s*업\s*자)/.exec(t);
             if (!companyName && nameM) companyName = nameM[1].replace(/\s+/g, ' ').trim();
             let end = fiscalEnd(t) || fileEnd[p.file];
             if (!end) { const fy = /(20\d{2})/.exec(p.file || ''); if (fy) end = `${fy[1]}-12-31`; }
+            // 연도별로 어떤 서식을 찾았는지 기록 (못 채운 칸의 이유를 알려주는 데 씀)
+            if (end && kind !== 'bs') { const y = Y(end); y.src = y.src || []; if (!y.src.includes(kind)) y.src.push(kind); }
 
             if (kind === 'taxcalc' && end) {
                 const y = Y(end);
@@ -103,15 +160,25 @@
                 set(Y(end), 's9a', amountAfter(t, '납부할세액') ?? amountAfter(t, '산출세액'));
             } else if (kind === 'adjust' && end) {
                 const y = Y(end);
-                set(y, 's16', sumLines(t, ['접대비', '기업업무추진비']));
-                set(y, 's10', sumLines(t, ['벌과금', '벌금', '과태료', '가산세', '가산금', '체납처분비']));
-                set(y, 's11', sumLines(t, ['공과금'], ['벌과금']));
-                set(y, 's17', sumLines(t, ['업무무관']));
-                set(y, 's18', sumLines(t, ['업무용승용차']));
-                set(y, 's19', sumLines(t, ['지급이자']));
+                // 왼쪽(익금산입 및 손금불산입) 과목별 금액 → 순손익계산서 차감 항목
+                const items = adjustItems(t);
+                const RULES = [
+                    ['s16', ['접대비', '기업업무추진비']],
+                    ['s10', ['벌과금', '벌금', '과태료', '가산세', '가산금', '체납처분비']],
+                    ['s11', ['공과금'], ['벌과금']],
+                    ['s17', ['업무무관']],
+                    ['s18', ['업무용승용차']],
+                    ['s19', ['지급이자']]
+                ];
+                RULES.forEach(([k, kw, ex]) => set(y, k, items.length ? sumItems(items, kw, ex) : sumLines(t, kw, ex)));
+                y._adjDonation = items.length ? sumItems(items, ['기부금'], ['한도초과']) : sumLines(t, ['기부금'], ['한도초과']);
+                // 법인세 등(이미 8 · 9번에 들어감)과 위 규칙에 안 맞는 과목은 직접 확인하도록 알려줌
+                const known = ['법인세', '지방소득세', '농어촌특별세', '기부금', ...RULES.flatMap(r => r[1])];
+                const other = items.filter(it => !known.some(k => it.name.includes(k)));
+                if (other.length) y.unclassified = (y.unclassified || []).concat(other.map(it => `${it.name} ${it.amount.toLocaleString('ko-KR')}`));
+                // 오른쪽(손금산입 및 익금불산입) → 가산 항목
                 set(y, 'a3', sumLines(t, ['수입배당금']));
                 set(y, 'a2', sumLines(t, ['환급금이자', '환급가산금']));
-                y._adjDonation = sumLines(t, ['기부금'], ['한도초과']);
             } else if (kind === 'bs') {
                 const asOf = asOfDate(t) || end;
                 if (!asOf) return;
@@ -123,6 +190,12 @@
                 set(s, 'prepaid', amountAfter(t, '선급비용', { window: 60 }));
                 set(s, 'provisions', amountAfter(t, '퇴직급여충당부채', { window: 60 }) ?? amountAfter(t, '퇴직급여충당금', { window: 60 }));
                 set(s, 'intangibles', amountAfter(t, '무형자산', { window: 60 }));
+            } else if (kind === 'pl' && end) {
+                // 세무조정계산서가 없을 때 대신 쓸 값: 법인세비용차감전손익 · 법인세비용
+                const y = Y(end);
+                set(y, '_plPretax', amountAfter(t, '법인세비용차감전') ?? amountAfter(t, '법인세차감전'));
+                const tm = /법\s*인\s*세\s*비\s*용(?!\s*차)/.exec(t);
+                if (tm) set(y, '_plTax', amountAfter(t.slice(tm.index), '법인세비용'));
             } else if (kind === 'shares' && end) {
                 const n = amountAfter(t, '발행주식총수') ?? amountAfter(t, '기말주식수');
                 set(Y(end), 'sharesAtYearEnd', n);
@@ -131,12 +204,24 @@
         });
         // 기부금 손금불산입 = 세액조정계산서 한도초과액 + 소득금액조정합계표의 비지정기부금 등
         Object.values(years).forEach(y => { if (y._adjDonation) add(y, 's15', y._adjDonation); delete y._adjDonation; });
+        // 세액조정계산서에서 소득금액을 못 찾은 연도는 손익계산서 값으로 대신 (추정 표시)
+        const estimated = [];
+        Object.values(years).forEach(y => {
+            if ((y.income === undefined || y.income === null) && y._plPretax !== undefined && y._plPretax !== null) {
+                y.income = y._plPretax;
+                if ((y.s8 === undefined || y.s8 === null) && y._plTax) y.s8 = y._plTax;
+                estimated.push(y.fiscalYearEnd.slice(0, 4));
+                y.estimated = true;
+            }
+            delete y._plPretax; delete y._plTax;
+        });
         const kinds = { taxcalc: '세액조정계산서', adjust: '소득금액조정합계표', bs: '재무상태표', local: '지방소득세 신고서', rural: '농어촌특별세 신고서', shares: '주식등변동상황명세서', pl: '손익계산서' };
         const notes = Object.keys(found).map(k => `${kinds[k]} ${found[k]}쪽`).join(', ');
+        const est = estimated.length ? ` · ${estimated.sort().join(', ')}년은 세무조정계산서가 없어 손익계산서의 법인세비용차감전손익을 '각 사업연도 소득금액'에 대신 넣었어요(세무조정 전 금액).` : '';
         return {
             companyName, sharesIssued,
-            fiscalYears: Object.values(years), balanceSheets: Object.values(sheets),
-            notes: notes ? `찾은 서식: ${notes}` : '알아볼 수 있는 서식(세액조정계산서 · 소득금액조정합계표 · 재무상태표)을 찾지 못했습니다.'
+            fiscalYears: Object.values(years), balanceSheets: Object.values(sheets), found,
+            notes: (notes ? `찾은 서식: ${notes}` : '알아볼 수 있는 서식(세액조정계산서 · 소득금액조정합계표 · 재무상태표)을 찾지 못했습니다.') + est
         };
     }
 

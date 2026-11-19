@@ -199,6 +199,8 @@
     .gw-grid .hl { background: #faf7f1; }
     .gw-grid .hl b { color: #5b4a2e; }
     @media (max-width: 600px) { .gw-grid { grid-template-columns: 1fr 1fr; } }
+    .why { margin: 8px 0 0; padding: 0 0 0 18px; color: #475569; font-weight: 500; line-height: 1.6; }
+    .why li { margin: 2px 0; }
   </style>
 </head>
 <body>
@@ -466,7 +468,7 @@
 
   <script>window.CALC_PRODUCT = 'stock';</script>
   <script src="../양도세계산기/js/login.js"></script>
-  <script src="fs-parse.js?v=1"></script>
+  <script src="fs-parse.js?v=4"></script>
   <script>
     // Apps Script가 아직 주식평가 이용권을 모르는 예전 버전이면 '준비 중' 표시
     const baseUpdateUi = updateUi;
@@ -691,7 +693,7 @@
     // 1) PDF 안의 글자(OCR된 스캔본 포함)를 브라우저에서 쪽마다 꺼냄
     // 2) 글자가 없는 쪽 · 사진만 서버(구글 드라이브 OCR)로 보내 글자를 받음
     // 3) fs-parse.js가 서식 문구 옆의 금액을 찾아 계산서에 채움
-    const MAX_TOTAL = 80 * 1048576, OCR_PER_CALL = 3, MIN_TEXT = 20;
+    const MAX_TOTAL = 80 * 1048576, OCR_PER_CALL = 2, MIN_TEXT = 20;
     const OK_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
     let fsFiles = [];
     function addFiles(list) {
@@ -747,23 +749,36 @@
             document.head.appendChild(s);
         }));
     }
-    // 쪽의 글자를 줄 단위로 (같은 높이의 글자 조각을 왼쪽부터 이어 붙임)
+    // 쪽의 글자를 줄 단위로: 같은 높이의 글자 조각을 왼쪽부터 잇되, 실제 간격을 보고 띄어쓰기를 정함
+    // (홈택스 증명서처럼 한 글자씩 따로 찍힌 PDF도 "1 2 , 3 4 5" → "12,345"로 붙음, 칸 사이는 공백 2개 이상)
     async function pageText(page) {
         const tc = await page.getTextContent();
         const rows = [];
         tc.items.forEach(it => {
             if (!it.str || !it.str.trim()) return;
-            const y = it.transform[5], x = it.transform[4], h = Math.abs(it.transform[3]) || 8;
+            const y = it.transform[5], x = it.transform[4], h = Math.abs(it.transform[3]) || Math.abs(it.transform[0]) || 8;
             let row = rows.find(r => Math.abs(r.y - y) < h * 0.5);
             if (!row) rows.push(row = { y, items: [] });
-            row.items.push({ x, s: it.str });
+            row.items.push({ x, w: it.width || 0, h, s: it.str.trim() });
         });
         rows.sort((a, b) => b.y - a.y);
-        return rows.map(r => r.items.sort((a, b) => a.x - b.x).map(i => i.s).join(' ')).join('\n');
+        return rows.map(r => {
+            let out = '', end = null;
+            r.items.sort((a, b) => a.x - b.x).forEach(i => {
+                if (end !== null) {
+                    const gap = i.x - end;
+                    out += gap < i.h * 0.3 ? '' : gap > i.h * 1.2 ? '   ' : ' ';
+                }
+                out += i.s;
+                end = i.x + (i.w || i.s.length * i.h * 0.6);
+            });
+            return out;
+        }).join('\n');
     }
     async function renderPage(page) {
+        // 스캔본 원본(A4 200dpi ≈ 1654×2340)에 가깝게: 긴 변 2340px — 작은 글자도 문자 인식이 되도록
         const v1 = page.getViewport({ scale: 1 });
-        const scale = Math.min(2.5, 1800 / Math.max(v1.width, v1.height));
+        const scale = Math.min(3, 2340 / Math.max(v1.width, v1.height));
         const vp = page.getViewport({ scale });
         const c = document.createElement('canvas');
         c.width = Math.round(vp.width); c.height = Math.round(vp.height);
@@ -772,22 +787,28 @@
         await page.render({ canvasContext: g, viewport: vp, intent: 'print' }).promise;
         return canvasJpeg(c);
     }
-    function setProgress(done, total, text) {
+    function setProgress(done, total, text, extra) {
         $('extractMsg').className = 'live-msg';
-        $('extractMsg').innerHTML = `${escapeHtml(text)}<div class="progress"><i style="width:${total ? Math.round(done / total * 100) : 0}%"></i></div>`;
+        $('extractMsg').innerHTML = `${escapeHtml(text)}<div class="progress"><i style="width:${total ? Math.round(done / total * 100) : 0}%"></i></div>${extra || ''}`;
+    }
+    // 이 파일에서 순손익계산서에 필요한 서식(세액조정계산서 + 소득금액조정합계표)을 다 찾았나
+    function fileSatisfied(pages, file) {
+        const kinds = new Set(pages.filter(p => p.file === file && p.text).map(p => __fsParse.pageKind(p.text)));
+        return kinds.has('taxcalc') && kinds.has('adjust');
     }
     async function extractFiles() {
         if (!fsFiles.length) return;
         if (fsFiles.reduce((s, f) => s + f.size, 0) > MAX_TOTAL) { $('extractMsg').className = 'live-msg warn'; $('extractMsg').textContent = '파일이 너무 많거나 큽니다. 합계 80MB 이하로 올려주세요.'; return; }
         const btn = $('extractBtn'), label = btn.innerText;
         btn.disabled = true; btn.innerText = '읽는 중...';
+        const t0 = Date.now();
         try {
-            const pages = [], needOcr = [];   // needOcr: { idx(pages 위치), label, make() }
+            const pages = [], queue = [];   // queue: 글자가 없어 문자 인식할 쪽 { idx, file, label, make() }
             let textPages = 0;
             for (const f of fsFiles) {
                 if (!/pdf/.test(f.type)) {
                     pages.push({ file: f.name, text: '' });
-                    needOcr.push({ idx: pages.length - 1, label: f.name, make: () => imageForOcr(f) });
+                    queue.push({ idx: pages.length - 1, file: f.name, label: f.name, make: () => imageForOcr(f) });
                     continue;
                 }
                 await loadPdfJs();
@@ -800,28 +821,61 @@
                     const text = await pageText(page);
                     pages.push({ file: f.name, text });
                     if (text.replace(/\s/g, '').length >= MIN_TEXT) textPages++;
-                    else needOcr.push({ idx: pages.length - 1, label: `${f.name} ${n}쪽`, make: () => renderPage(page) });
-                    if (n % 10 === 0) setProgress(n, pdf.numPages, `${f.name} 글자를 꺼내는 중 (${n}/${pdf.numPages}쪽)`);
+                    else queue.push({ idx: pages.length - 1, file: f.name, label: `${f.name} ${n}쪽`, make: () => renderPage(page) });
                 }
             }
-            // 글자가 없는 쪽만 구글 드라이브 OCR
-            const failed = [];
-            for (let i = 0; i < needOcr.length; i += OCR_PER_CALL) {
-                const batch = needOcr.slice(i, i + OCR_PER_CALL);
-                setProgress(i, needOcr.length, `글자가 없는 쪽을 문자 인식하는 중 (${i + 1}~${Math.min(needOcr.length, i + OCR_PER_CALL)} / ${needOcr.length}쪽)`);
-                const images = [];
-                for (const it of batch) images.push(await it.make());
-                let res;
-                try { res = await api('/api/calculate', { mode: 'ocr', images }); }
-                catch (err) { res = { ok: false, data: { message: '서버와 통신하지 못했습니다.' } }; }
-                if (res.status === 401 || res.status === 402) { refreshUser(); throw new Error(res.data.message || '로그인이 필요합니다.'); }
-                if (!res.ok) { failed.push(`${batch[0].label} 외: ${res.data.message || '문자 인식 실패'}`); continue; }
-                (res.data.result.texts || []).forEach((t, k) => { if (batch[k]) { pages[batch[k].idx].text = t || ''; if (!t) failed.push(batch[k].label); } });
+            // 글자가 있는 쪽부터 바로 채워서 보여줌
+            let last = applyExtract(parseFinancials(pages), null, true);
+
+            // 글자가 없는 쪽만 구글 드라이브 OCR — 동시에 3묶음씩, 필요한 서식을 찾은 파일은 나머지 쪽을 건너뜀
+            const failed = [], skipped = {};
+            let done = 0, ocrOk = 0, blank = 0, next = 0, stopAll = null;
+            const total = queue.length;
+            const progressText = () => `글자가 없는 쪽을 문자 인식하는 중 (${done}/${total - Object.values(skipped).reduce((a, b) => a + b, 0)}쪽)`;
+            const worker = async () => {
+                while (next < queue.length && !stopAll) {
+                    const batch = [];
+                    while (batch.length < OCR_PER_CALL && next < queue.length) {
+                        const it = queue[next++];
+                        if (fileSatisfied(pages, it.file)) { skipped[it.file] = (skipped[it.file] || 0) + 1; continue; }
+                        batch.push(it);
+                    }
+                    if (!batch.length) continue;
+                    const images = [];
+                    for (const it of batch) images.push(await it.make());
+                    let res;
+                    try { res = await api('/api/calculate', { mode: 'ocr', images }); }
+                    catch (err) { res = { ok: false, data: { message: '서버와 통신하지 못했습니다.' } }; }
+                    if (res.status === 401 || res.status === 402) { stopAll = res.data.message || '로그인이 필요합니다.'; refreshUser(); return; }
+                    if (!res.ok) { batch.forEach(it => failed.push({ label: it.label, why: res.data.message || '문자 인식 실패' })); }
+                    else {
+                        const r = res.data.result || {};
+                        batch.forEach((it, k) => {
+                            const t = (r.texts || [])[k] || '', why = (r.errors || [])[k] || '';
+                            if (why) failed.push({ label: it.label, why });
+                            else if (!t.trim()) blank++;
+                            else { pages[it.idx].text = t; ocrOk++; }
+                        });
+                    }
+                    done += batch.length;
+                    // 권한 오류처럼 모든 쪽이 같은 이유로 실패하면 더 보내지 않음
+                    if (failed.length >= 4 && !ocrOk && new Set(failed.map(f => f.why)).size === 1) { stopAll = failed[0].why; return; }
+                    last = applyExtract(parseFinancials(pages), null, true);
+                    setProgress(done, total, progressText(), `<div style="margin-top:4px;">지금까지 <b>${last.filled}칸</b> 채움 · 노란 칸이 방금 읽은 값이에요</div>`);
+                }
+            };
+            if (total) {
+                setProgress(0, total, progressText());
+                await Promise.all([worker(), worker(), worker()]);
             }
-            setProgress(1, 1, '숫자를 찾는 중...');
+            if (stopAll && !failed.length) throw new Error(stopAll);
             const data = parseFinancials(pages);
-            data.notes = `${data.notes} (글자 있는 쪽 ${textPages}, 문자 인식한 쪽 ${needOcr.length - failed.length})`;
-            applyExtract(data, failed.length > 5 ? [...failed.slice(0, 5), `외 ${failed.length - 5}쪽`] : failed);
+            const skippedCount = Object.values(skipped).reduce((a, b) => a + b, 0);
+            applyExtract(data, {
+                textPages, ocrOk, blank, failed, skippedCount,
+                stopped: stopAll && failed.length ? `같은 이유로 계속 실패해 문자 인식을 멈췄어요: ${stopAll}` : '',
+                seconds: Math.round((Date.now() - t0) / 1000)
+            });
         } catch (err) {
             $('extractMsg').className = 'live-msg warn';
             $('extractMsg').textContent = err.message || '문서를 읽지 못했습니다.';
@@ -837,35 +891,74 @@
         $(id).classList.add('auto');
         return 1;
     }
-    function applyExtract(d, failed) {
+    const KIND_NAME = { taxcalc: '법인세 과세표준 및 세액조정계산서', adjust: '소득금액조정합계표', rural: '농어촌특별세 신고서', local: '법인지방소득세 신고서', pl: '손익계산서' };
+    // 읽은 값을 칸에 넣고, 못 채운 칸은 이유를 모아 보여줌. quiet = 읽는 도중(안내문은 그대로 둠)
+    function applyExtract(d, report, quiet) {
         let filled = 0;
         if (d.companyName && !$('corpName').value.trim()) { $('corpName').value = String(d.companyName).slice(0, 30); filled++; }
         if (d.sharesIssued && !has('totalShares')) filled += setVal('totalShares', d.sharesIssued);
-        const base = isDate($('baseDate').value) ? $('baseDate').value : '9999-12-31';
-        const fys = (d.fiscalYears || []).filter(y => y && y.fiscalYearEnd && y.fiscalYearEnd < base)
-            .sort((a, b) => (a.fiscalYearEnd < b.fiscalYearEnd ? 1 : -1)).slice(0, 3);
+        const baseSet = isDate($('baseDate').value);
+        const base = baseSet ? $('baseDate').value : '9999-12-31';
+        const allYears = (d.fiscalYears || []).filter(y => y && y.fiscalYearEnd);
+        const fys = allYears.filter(y => y.fiscalYearEnd < base).sort((a, b) => (a.fiscalYearEnd < b.fiscalYearEnd ? 1 : -1)).slice(0, 3);
         fys.forEach((y, i) => {
             filled += setVal(`e_income_${i}`, y.income, true);
             ['a2', 'a3', 'a4', 'a5', 'a6', ...SUB_KEYS].forEach(k => { filled += setVal(`e_${k}_${i}`, y[k]); });
             filled += setVal(`e_shares_${i}`, y.sharesAtYearEnd);
         });
         if (fys.length) { yearLabels = [0, 1, 2].map(i => fys[i] ? fys[i].fiscalYearEnd.slice(0, 7).replace('-', '.') : '-'); refreshYears(); }
-        const bss = (d.balanceSheets || []).filter(s => s && s.asOf && s.asOf <= base).sort((a, b) => (a.asOf < b.asOf ? 1 : -1));
-        const bs = bss[0];
+        const sheetsAll = (d.balanceSheets || []).filter(s => s && s.asOf);
+        const bs = sheetsAll.filter(s => s.asOf <= base).sort((a, b) => (a.asOf < b.asOf ? 1 : -1))[0];
         if (bs) {
             filled += setVal('na_n1', bs.totalAssets) + setVal('na_n8', bs.totalLiabilities) + setVal('realty', bs.realty)
                 + setVal('na_n6', bs.prepaid) + setVal('na_n15', bs.retainedReserves) + setVal('na_n16', bs.provisions);
         }
         refreshLive();
-        const notes = [];
-        if (bs && bs.asOf !== $('baseDate').value) notes.push(`재무상태표는 ${bs.asOf} 기준입니다. 평가기준일과 다르면 가결산 금액으로 고쳐주세요.`);
-        if (bs && bs.intangibles) notes.push(`무형자산 장부가액 ${fmt(bs.intangibles)}원: 매입한 무체재산권이면 '매입한 무체재산권 장부가액'에 넣어주세요.`);
-        if (d.notes) notes.push(d.notes);
-        (failed || []).forEach(f => notes.push('읽지 못한 부분 · ' + f));
+        if (quiet) return { filled };
+
+        // ---- 못 채운 칸과 이유 ----
+        const why = [];
+        if (!baseSet) why.push('평가기준일이 비어 있어 가장 최근 사업연도부터 넣었어요. 평가기준일을 넣고 다시 누르면 사업연도를 정확히 맞춰요.');
+        const r = report || {};
+        if (r.failed && r.failed.length) {
+            const byWhy = {};
+            r.failed.forEach(f => { (byWhy[f.why] = byWhy[f.why] || []).push(f.label); });
+            Object.entries(byWhy).forEach(([w, labels]) => why.push(`<b>문자 인식 실패 ${labels.length}쪽</b>: ${escapeHtml(w)} <span class="hint">(${escapeHtml(labels.slice(0, 3).join(', '))}${labels.length > 3 ? ' 외' : ''})</span>`));
+        }
+        if (r.stopped) why.push(escapeHtml(r.stopped));
+        [0, 1, 2].forEach(i => {
+            const y = fys[i], col = `평가기준일전 ${i + 1}년`;
+            if (!y) { why.push(`${col}: 해당 사업연도의 세무조정계산서 · 손익계산서를 찾지 못했어요.`); return; }
+            const yr = y.fiscalYearEnd.slice(0, 4), src = y.src || [];
+            if (y.income === undefined || y.income === null)
+                why.push(`${col}(${yr}) 각 사업연도 소득금액: ${src.includes('taxcalc') ? '세액조정계산서는 찾았지만 금액을 읽지 못했어요.' : `${KIND_NAME.taxcalc}를 찾지 못했어요.`}`);
+            else if (y.estimated) why.push(`${col}(${yr}): 세무조정계산서가 없어 손익계산서의 법인세비용차감전손익을 소득금액에 대신 넣었어요(세무조정 전 금액).`);
+            if ((y.s8 === undefined || y.s8 === null) && !y.estimated) why.push(`${col}(${yr}) 법인세액: ${src.includes('taxcalc') ? '총부담세액(가감계) 칸을 읽지 못했어요.' : '세액조정계산서가 없어 비어 있어요.'}`);
+            if (!src.includes('adjust') && !y.estimated) why.push(`${col}(${yr}): ${KIND_NAME.adjust}를 찾지 못해 접대비 · 벌과금 등 손금불산입 항목은 비어 있어요.`);
+            if (y.unclassified && y.unclassified.length) why.push(`${col}(${yr}) 소득금액조정합계표에서 자동으로 분류하지 못한 과목: <b>${escapeHtml(y.unclassified.join(', '))}</b> — 해당하는 칸(10~22번)에 직접 넣어주세요.`);
+            if (!src.includes('rural') && !y.estimated) why.push(`${col}(${yr}): 농어촌특별세 신고서가 없어 농특세는 비어 있어요(없으면 0).`);
+            if (!src.includes('local')) why.push(`${col}(${yr}): 지방소득세 신고서가 없어 지방소득세는 직접 넣어주세요.`);
+        });
+        if (!bs) {
+            const later = sheetsAll.filter(s => s.asOf > base).map(s => s.asOf);
+            why.push(later.length ? `재무상태표 기준일(${later.join(', ')})이 평가기준일보다 뒤라 순자산가액계산서에 쓰지 않았어요.`
+                : '재무상태표를 찾지 못했어요. 평가기준일 현재(가결산) 재무상태표를 올려주세요.');
+        } else {
+            if (bs.totalAssets === undefined || bs.totalAssets === null) why.push(`재무상태표(${bs.asOf})에서 자산총계를 읽지 못했어요.`);
+            if (bs.totalLiabilities === undefined || bs.totalLiabilities === null) why.push(`재무상태표(${bs.asOf})에서 부채총계를 읽지 못했어요.`);
+            if (bs.asOf !== $('baseDate').value) why.push(`재무상태표는 ${bs.asOf} 기준입니다. 평가기준일과 다르면 가결산 금액으로 고쳐주세요.`);
+            if (bs.intangibles) why.push(`무형자산 장부가액 ${fmt(bs.intangibles)}원: 매입한 무체재산권이면 '매입한 무체재산권 장부가액'에 넣어주세요.`);
+        }
+        why.push('순자산가액계산서의 평가차액 · 퇴직급여추계액 · 미지급 법인세 등은 문서에 없어 직접 넣어주세요.');
+
+        const stat = r.textPages !== undefined
+            ? `<div class="hint" style="margin-top:4px;">글자 있는 쪽 ${r.textPages} · 문자 인식 성공 ${r.ocrOk}${r.blank ? ` · 빈 쪽 ${r.blank}` : ''}${r.failed && r.failed.length ? ` · 실패 ${r.failed.length}` : ''}${r.skippedCount ? ` · 필요한 서식을 찾아 건너뛴 쪽 ${r.skippedCount}` : ''} · ${r.seconds}초</div>` : '';
         $('extractMsg').className = 'live-msg' + (filled ? '' : ' warn');
-        $('extractMsg').innerHTML = filled
-            ? `${filled}칸을 채웠어요. <b>노란 칸</b>은 문서에서 읽은 값이니 원본과 꼭 대조해 주세요.${notes.length ? '<br>' + notes.map(escapeHtml).join('<br>') : ''}`
-            : '문서에서 필요한 숫자를 찾지 못했습니다. 재무상태표 · 법인세 신고서가 맞는지 확인해주세요.' + (d.notes ? '<br>' + escapeHtml(d.notes) : '');
+        $('extractMsg').innerHTML = (filled ? `<b>${filled}칸</b>을 채웠어요. <b>노란 칸</b>은 문서에서 읽은 값이니 원본과 꼭 대조해 주세요.`
+            : '문서에서 채울 숫자를 찾지 못했어요. 아래 이유를 확인해 주세요.')
+            + `<div class="hint" style="margin-top:4px;">${escapeHtml(d.notes || '')}</div>` + stat
+            + `<ul class="why">${why.map(w => `<li>${w}</li>`).join('')}</ul>`;
+        return { filled };
     }
 
     // 계산은 서버(Apps Script StockVal.gs)에서: 승인된 회원만 결과를 받음
