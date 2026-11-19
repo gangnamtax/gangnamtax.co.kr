@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세무회계강남 상가주택(겸용주택) 양도소득세 계산기</title>
+  <meta name="description" content="상가주택(겸용주택) 양도소득세 예상세액 계산기. 주택·상가 면적 판정(12억 초과 고가 겸용주택), 기준시가 비율 안분, 주택 부분 1세대 1주택 비과세·12억 초과분, 장기보유특별공제 표1·표2, 부수토지 배율 초과 비사업용 토지까지 계산 - 세무회계강남 김하원 세무사">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <link rel="stylesheet" href="../양도세계산기/css/login.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+        background-color: #f4f6fa;
+        font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+        color: #1e293b;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 40px 20px;
+    }
+    .wrapper { width: 100%; max-width: 1100px; display: flex; flex-direction: column; }
+    .header {
+        display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;
+        background: white; border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(15,23,42,.06); border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; padding: 24px 32px;
+    }
+    .title-block .eyebrow { display: block; font-size: 12px; font-weight: 500; color: #a08452; letter-spacing: .5px; margin-bottom: 4px; }
+    .title-block h1 { margin: 0; font-size: 24px; font-weight: 700; color: #1e293b; letter-spacing: -0.5px; }
+    .calculator-card {
+        width: 100%; background: white; padding: 40px; border-radius: 12px; position: relative;
+        border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(15,23,42,.06);
+    }
+    .lock-overlay {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.95); border-radius: 12px; z-index: 10; text-align: center; padding: 20px;
+    }
+    .lock-overlay h3 { color: #1e293b; font-weight: 700; }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; }
+    .tab-btn.active { color: #8a6d3b; border-bottom: 2px solid #8a6d3b; margin-bottom: -2px; }
+    .btn-login { background-color: #8a6d3b; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-login:hover { background-color: #74592e; }
+    .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-outline:hover { background-color: #f1f5f9; }
+    .btn-logout { background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-logout:hover { background: #8a6d3b; color: #fff; }
+
+    .form-group { margin-bottom: 22px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    .hint { font-size: 12px; color: #64748b; font-weight: normal; }
+    input, select {
+        width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;
+        outline: none; transition: border-color 0.2s; background-color: #fff; font-family: inherit;
+    }
+    input:focus, select:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    .date-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .date-col { flex: 1; min-width: 150px; }
+    .date-row.dates4 { flex-wrap: nowrap; gap: 8px; }
+    .date-row.dates4 .date-col { min-width: 0; }
+    .date-row.dates4 .sub-label { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .date-row.dates4 input { padding-left: 10px; padding-right: 30px; font-size: 14px; }
+    @media (max-width: 600px) { .date-row.dates4 { flex-wrap: wrap; } .date-row.dates4 .date-col { flex: 1 1 calc(50% - 4px); } }
+    .sub-label { font-size: 12px !important; color: #64748b !important; margin-bottom: 4px !important; }
+    .date-input-wrapper { position: relative; }
+    .date-input-wrapper input[type="text"] { padding-right: 40px; }
+    .cal-btn {
+        position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+        background: none; border: none; padding: 6px; border-radius: 6px; cursor: pointer; color: #8a6d3b; display: flex;
+    }
+    .cal-btn:hover { background-color: #f1f5f9; }
+    /* 날짜 선택 팝업: 년·월 드롭다운 + 일 달력 */
+    .dp { position: absolute; z-index: 200; width: 296px; background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; box-shadow: 0 10px 28px rgba(15,23,42,.14); padding: 14px; display: none; font-family: inherit; }
+    .dp.open { display: block; }
+    .dp-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .dp-head select { flex: 1; width: auto; padding: 7px 8px; font-size: 14px; font-weight: 600; color: #1e293b; border-radius: 6px; cursor: pointer; }
+    .dp-nav { flex: 0 0 30px; height: 32px; background: none; border: 1px solid #e2e8f0; border-radius: 6px; color: #8a6d3b; font-size: 18px; line-height: 1; cursor: pointer; }
+    .dp-nav:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-week, .dp-days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+    .dp-week span { font-size: 12px; color: #64748b; padding: 4px 0 6px; font-weight: 500; }
+    .dp-week span:first-child { color: #b45309; }
+    .dp-days { gap: 2px; }
+    .dp-day { height: 34px; background: none; border: 1px solid transparent; border-radius: 6px; font-size: 14px; color: #1e293b; cursor: pointer; font-family: inherit; }
+    .dp-day.sun { color: #b45309; }
+    .dp-day:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-day.today { border-color: #cbd5e1; font-weight: 700; }
+    .dp-day.sel, .dp-day.sel:hover { background: #8a6d3b; border-color: #8a6d3b; color: #fff; font-weight: 700; }
+    .dp-foot { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+    .dp-foot button { background: none; border: none; font-size: 13px; color: #8a6d3b; font-weight: 600; cursor: pointer; padding: 4px 6px; font-family: inherit; }
+    .dp-foot .dp-close { color: #64748b; }
+    .live-msg { font-size: 12px; color: #475569; font-weight: 600; margin-top: 6px; line-height: 1.5; }
+    .live-msg.warn { color: #b45309; }
+    .live-msg:empty { display: none; }
+
+    /* 청산금 유형 선택 */
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .seg label { margin: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; cursor: pointer; font-weight: normal; transition: border-color .15s, background .15s; }
+    .seg label b { display: block; font-size: 14px; color: #1e293b; margin-bottom: 3px; }
+    .seg label span { font-size: 12px; color: #64748b; line-height: 1.5; }
+    .seg input { display: none; }
+    .membertabs { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; margin-bottom: 22px; }
+    .membertabs label { margin: 0; padding: 11px 10px; text-align: center; cursor: pointer; font-size: 14px; font-weight: 600 !important; color: #475569; background: #fff; transition: background .15s, color .15s; }
+    .membertabs label + label { border-left: 1px solid #cbd5e1; }
+    .membertabs label small { display: block; font-size: 11px; font-weight: normal; color: inherit; opacity: .85; margin-top: 2px; }
+    .membertabs input { display: none; }
+    .membertabs label:has(input:checked) { background: #8a6d3b; color: #fff; }
+    .seg label:has(input:checked) { border-color: #8a6d3b; background: #faf7f1; box-shadow: inset 0 0 0 1px #8a6d3b; }
+    .check-line { display: flex; align-items: center; gap: 6px; font-size: 13px !important; font-weight: normal !important; color: #334155; margin-top: 10px; cursor: pointer; }
+    .check-line input { width: auto; margin: 0; padding: 0; }
+    .addr-row { display: flex; gap: 8px; }
+    .addr-row button { white-space: nowrap; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .addr-row button:hover { border-color: #8a6d3b; color: #8a6d3b; }
+    .helper { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-top: 8px; }
+    .helper .date-row input { padding: 9px 12px; font-size: 13px; }
+    .panel { border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 10px; padding: 16px; margin-top: 10px; }
+    .panel .form-group { margin-bottom: 12px; }
+    .panel .form-group:last-child { margin-bottom: 0; }
+    .section-title { font-size: 12px; font-weight: 700; color: #a08452; letter-spacing: .5px; margin: 6px 0 14px; padding-bottom: 6px; border-bottom: 1px solid #f1ece2; }
+    .section-title.step { font-size: 15px; color: #5b4a2e; letter-spacing: 0; margin-top: 26px; border-bottom: 2px solid #eadfc9; }
+    .section-title.step small { font-size: 12px; font-weight: normal; color: #94a3b8; margin-left: 6px; }
+    #landSplit:empty { display: none; }
+
+    .calc-action-btn {
+        width: 100%; padding: 16px; background-color: #8a6d3b; color: white; border: none; border-radius: 6px;
+        font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: background 0.2s; letter-spacing: .5px; font-family: inherit;
+    }
+    .calc-action-btn:hover { background-color: #74592e; }
+    .calc-action-btn:disabled { background-color: #b9a682; cursor: wait; }
+
+    .result-box { background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .result-box h3 { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+    .result-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 15px; }
+    .result-row span:first-child { flex: 1; font-size: 13px; color: #334155; word-break: keep-all; line-height: 1.4; }
+    .result-row span:last-child { font-weight: 700; color: #1e293b; white-space: nowrap; flex-shrink: 0; font-size: 14px; }
+    .result-row.minus span:last-child { color: #8a6d3b; }
+    .total-tax { background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 16px 18px; margin: 18px 0 0; align-items: center; }
+    .total-tax span:first-child { font-size: 14px !important; font-weight: 600; color: #5b4a2e !important; }
+    .total-tax span:last-child { color: #5b4a2e !important; font-size: 20px !important; }
+    .basis { margin: 14px 0 0; padding: 12px 14px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #475569; line-height: 1.7; }
+    .basis div { padding-left: 1em; text-indent: -1em; }
+    .basis div::before { content: '· '; }
+    .basis:empty { display: none; }
+    .notice-text { font-size: 11px; color: #64748b; margin-top: 12px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    .notice-text p { margin: 0; padding-left: 1.2em; text-indent: -1.2em; }
+
+    .calc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; align-items: start; }
+    .result-col { position: sticky; top: 20px; }
+    .result-col .empty { border: 1px dashed #cbd5e1; background: #fff; border-radius: 10px; padding: 48px 20px; text-align: center; color: #64748b; font-size: 14px; line-height: 1.8; }
+    #result:not([style*="none"]) ~ .empty { display: none; }
+    .pagetabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 5px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .pagetabs a { text-align: center; padding: 12px 10px; border-radius: 7px; font-size: 15px; font-weight: 600; color: #475569; text-decoration: none; transition: background .15s, color .15s; }
+    .pagetabs a:hover { color: #8a6d3b; background: #faf7f1; }
+    .pagetabs a.on { background: #8a6d3b; color: #fff; }
+    .hidden { display: none !important; }
+    .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
+    .amount-guide b { color: #3f3320; }
+    .cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
+    .cost-col { border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 14px 0; background: #fcfcfd; }
+    .cost-title { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+    .cost-col .form-group { margin-bottom: 14px; }
+    .cost-col .form-group > label { font-size: 13px; }
+    .cost-col .form-group > label .hint { display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    @media (max-width: 600px) { .cost-grid { grid-template-columns: 1fr; } }
+    .own { display: inline-block; font-size: 11px; font-weight: 600; color: #1e3a8a; background: #eff4ff; border: 1px solid #c7d6f5; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
+    .tot { display: inline-block; font-size: 11px; font-weight: 600; color: #8a6d3b; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 10px; padding: 0 7px; margin-left: 4px; vertical-align: 1px; }
+    .split { margin-top: 10px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 14px; }
+    .split-title { font-size: 12px; font-weight: 700; color: #8a6d3b; margin-bottom: 4px; }
+    .split-row { display: flex; justify-content: space-between; font-size: 13px; color: #334155; padding: 2px 0; }
+    .split-row b { color: #1e293b; }
+    .filing { margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; }
+    .filing p { font-size: 13px; color: #475569; margin: 0 0 10px; }
+    .filing-btn { width: 100%; padding: 14px; background: #8a6d3b; color: #fff; border: 1px solid #8a6d3b; box-shadow: 0 2px 6px rgba(138,109,59,.25); border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: .3px; transition: background .2s, color .2s; }
+    .filing-btn:hover { background: #74592e; border-color: #74592e; }
+    .fmodal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 150; align-items: center; justify-content: center; padding: 16px; }
+    .fmodal.open { display: flex; }
+    .fbox { position: relative; background: #fff; width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 12px; border-top: 3px solid #b08d57; padding: 28px 26px 24px; box-shadow: 0 16px 40px rgba(15,23,42,.2); }
+    .fbox h3 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
+    .fdesc { font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 18px; }
+    .fclose { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+    .fbox textarea { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; }
+    .fbox textarea:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    @media (max-width: 860px) {
+        body { padding: 24px 16px; }
+        .calc-layout { grid-template-columns: 1fr; }
+        .result-col { position: static; }
+        .calculator-card { padding: 24px 18px; }
+        .header { padding: 18px; flex-wrap: wrap; gap: 10px; }
+        .title-block h1 { font-size: 20px; }
+        .seg { grid-template-columns: 1fr; }
+    }
+    .area-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .area-grid .sub-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .area-grid.two { grid-template-columns: 1fr 1fr; }
+    #taxForm, .calc-layout > * { min-width: 0; }
+    .floor-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .floor-grid th { font-size: 11px; color: #64748b; font-weight: 600; text-align: center; padding: 3px 1px; background: #f8fafc; border: 1px solid #e2e8f0; line-height: 1.2; }
+    .floor-grid th.fc-acq, .floor-grid td.fc-acq { background: #faf7f1; }
+    .floor-grid td { padding: 2px 1px; border: 1px solid #e2e8f0; }
+    .floor-grid input, .floor-grid select { padding: 5px 2px; font-size: 11px; letter-spacing: -0.4px; border-radius: 4px; width: 100%; min-width: 0; height: 28px; }
+    .floor-grid select { -webkit-appearance: none; appearance: none; padding: 5px 8px 5px 3px; background: #fff url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%276%27 height=%274%27%3E%3Cpath d=%27M0 0l3 4 3-4z%27 fill=%27%2394a3b8%27/%3E%3C/svg%3E") no-repeat right 2px center; cursor: pointer; }
+    .floor-grid td.fc-floor { white-space: nowrap; }
+    .floor-grid td.fc-floor select { width: 55%; }
+    .floor-grid td.fc-floor input { width: 42%; margin-left: 3%; text-align: center; padding: 5px 1px; }
+    .floor-grid .floor-del { width: 20px; height: 26px; font-size: 13px; padding: 0; border-radius: 4px; }
+    .floor-legend { display: none; font-size: 11px; color: #64748b; margin-bottom: 4px; }
+    .floor-del { width: 30px; height: 30px; border: 1px solid #e2e8f0; background: #fff; border-radius: 6px; color: #94a3b8; cursor: pointer; font-size: 16px; line-height: 1; }
+    .floor-del:hover { color: #b45309; border-color: #eadfc9; }
+    .floor-add { background: #fff; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 9px; width: 100%; color: #8a6d3b; font-weight: 600; cursor: pointer; font-size: 13px; }
+    .floor-add:hover { border-color: #8a6d3b; background: #faf7f1; }
+    .floor-sum { margin-top: 12px; background: #f8fafc; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #475569; }
+    .floor-sum div { display: flex; justify-content: space-between; padding: 3px 0; }
+    .floor-sum div.final { color: #5b4a2e; font-weight: 700; font-size: 14px; }
+    .floor-sum div.final b { color: #8a6d3b; }
+    .std-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+    .std-table th { font-size: 12px; color: #64748b; font-weight: 600; text-align: left; padding: 0 6px 0 0; }
+    .std-table th.col { text-align: center; }
+    .std-table td { padding: 0 0 0 8px; }
+    .std-table td input { padding: 10px 12px; font-size: 14px; }
+    .std-table td.na { text-align: center; color: #cbd5e1; }
+    .std-table tr.na-row { opacity: .45; }
+    .std-table th small { display: block; font-weight: normal; font-size: 11px; color: #94a3b8; }
+    .res-sec { margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px 4px; }
+    .res-sec h4 { margin: 0 0 10px; font-size: 14px; color: #5b4a2e; display: flex; justify-content: space-between; gap: 8px; }
+    .res-sec h4 small { font-weight: normal; color: #64748b; font-size: 12px; }
+    .res-sec .result-row { margin-bottom: 8px; }
+    .judge { background: #f8fafc; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #334155; line-height: 1.6; }
+    .judge div { display: flex; justify-content: space-between; gap: 10px; }
+    .judge div b { color: #1e293b; text-align: right; word-break: keep-all; }
+    .judge div span { flex: 1; word-break: keep-all; }
+    .judge div.key b { color: #8a6d3b; }
+    .basis-title { font-size: 12px; font-weight: 700; color: #a08452; margin: 14px 0 0; }
+    @media (max-width: 640px) {
+        .area-grid { grid-template-columns: 1fr 1fr; }
+        .std-table th { font-size: 11px; }
+        .bld-table.fixed { min-width: 540px; }
+        .bld-table.alloc { min-width: 380px; }
+        .bld-table.fixed td, .bld-table.alloc td { white-space: nowrap; }
+        .floor-legend { display: block; }
+        .floor-grid thead { display: none; }
+        .floor-grid, .floor-grid tbody { display: block; }
+        .floor-grid tr.floor-card { display: grid; grid-template-columns: 46px 70px 1fr 44px 24px; gap: 2px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 4px; }
+        .floor-grid tr.floor-card td { border: 0; padding: 0; }
+        .floor-grid tr.floor-card td:nth-child(5) { grid-column: 1 / 3; grid-row: 2; }
+        .floor-grid tr.floor-card td:nth-child(6) { grid-column: 3 / 6; grid-row: 2; }
+        .floor-grid tr.floor-card td:nth-child(7) { grid-column: 1 / 3; grid-row: 3; }
+        .floor-grid tr.floor-card td:nth-child(8) { grid-column: 3 / 6; grid-row: 3; }
+        .floor-grid tr.floor-card td:nth-child(9) { grid-column: 5; grid-row: 1; }
+    }
+    .bld-box { margin-top: 12px; border: 1px solid #eadfc9; background: #fdfbf7; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #334155; }
+    .bld-head { font-weight: 700; color: #5b4a2e; margin-bottom: 8px; }
+    .bld-head small, .bld-title small { display: block; font-weight: normal; color: #64748b; font-size: 11px; margin-top: 2px; line-height: 1.5; }
+    .bld-side + .bld-side { border-top: 1px dashed #eadfc9; margin-top: 12px; padding-top: 12px; }
+    .bld-title { font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+    .bld-msg { color: #8a6d3b; font-size: 12px; }
+    .bld-note { font-size: 11px; color: #64748b; padding-top: 4px; }
+    .bld-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 6px; }
+    .bld-table { width: 100%; border-collapse: collapse; font-size: 11px; background: #fff; }
+    .bld-table th { text-align: center !important; white-space: nowrap; background: #f8fafc; border: 1px solid #e2e8f0 !important; padding: 4px 3px !important; line-height: 1.25; }
+    .bld-table td { text-align: right; white-space: nowrap; border: 1px solid #eef2f6 !important; padding: 4px 4px !important; }
+    .bld-table td:first-child, .bld-table td:nth-child(2) { text-align: center; }
+    .bld-table td small, .bld-table th small { display: block; font-size: 10px; color: #94a3b8; font-weight: normal; }
+    .bld-table tr.bsum td { background: #faf7f1; font-weight: 700; color: #5b4a2e; }
+    .bld-table tr.bsum td:first-child { text-align: right; }
+    .bld-table tr.sub td { text-align: left !important; white-space: normal; color: #64748b; }
+    .bld-table.conv td:first-child { text-align: left; }
+    .bld-table.fixed { table-layout: fixed; font-size: 10.5px; letter-spacing: -0.3px; }
+    .bld-table.fixed td, .bld-table.fixed th { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; padding: 3px 2px !important; }
+    .bld-table.fixed td small { font-size: 9px; line-height: 1.2; }
+    .bld-table.alloc { table-layout: fixed; font-size: 10px; letter-spacing: -0.3px; }
+    .bld-table.alloc th, .bld-table.alloc td { white-space: normal; padding: 3px 2px !important; }
+    .bld-table.alloc thead th:first-child, .bld-table.alloc tbody th { width: 58px; }
+    .bld-table.alloc th:first-child { text-align: left !important; }
+    .bld-table.alloc tbody th { background: #f8fafc; font-weight: 600; color: #475569; }
+    .bld-table.alloc td.sum { background: #f8fafc; font-weight: 700; }
+    .alloc-title { font-size: 12px; font-weight: 700; color: #5b4a2e; }
+    .alloc-title small { font-weight: normal; color: #64748b; margin-left: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+      <a href="/" style="display:inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px;">← 세무회계강남 홈</a>
+      <div class="header">
+        <div class="title-block">
+          <span class="eyebrow">세무회계강남 · 상가주택 양도세 계산기</span>
+          <h1>상가주택(겸용주택) 양도소득세 계산기</h1>
+        </div>
+        <div id="authButtons">
+          <a id="adminLink" href="../양도세계산기/admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
+          <span id="planStatus" style="font-size: 12px; color: #8a6d3b; font-weight: 600; margin-right: 6px;"></span>
+          <button id="loginBtn" class="btn btn-login" onclick="openModal('login')" style="display:none;">로그인</button>
+          <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;">회원가입</button>
+          <button id="logoutBtn" class="btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="calculator-card">
+        <div id="lockOverlay" class="lock-overlay">
+          <div id="lockReady" style="display: none;">
+            <h3>상가주택 양도세 계산기 서비스 준비 중</h3>
+            <p style="color: #666; margin-bottom: 20px;">더 정확한 계산 서비스로 곧 찾아뵙겠습니다.</p>
+            <a href="/" class="btn btn-outline" style="text-decoration: none;">홈으로 가기</a>
+          </div>
+          <div id="lockChecking"><h3>로그인 상태 확인 중...</h3></div>
+          <div id="lockLogin" style="display: none;">
+            <h3>로그인 후 이용 가능합니다</h3>
+            <p style="color: #666; margin-bottom: 20px;">회원가입 후 로그인하시면 세액을 계산하실 수 있습니다.<br><span style="font-size: 13px;">양도세 계산기와 같은 회원 계정을 사용합니다.</span></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+              <button class="btn btn-login" onclick="openModal('login')">로그인</button>
+              <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+            </div>
+          </div>
+          <div id="lockWait" style="display: none;">
+            <div id="applyBefore">
+              <h3>인가 신청 후 이용 가능합니다</h3>
+              <p id="waitInfo" style="color: #666; margin-bottom: 6px;">상가주택 양도세 계산기 이용권을 계좌이체로 결제하시면 확인 후 승인해 드립니다.</p>
+              <p id="applyPlan" style="font-weight: 700; margin-bottom: 18px;"></p>
+              <button class="btn btn-login" onclick="applyAccess()" style="padding: 12px 24px;">인가 신청하기</button>
+            </div>
+            <div id="applyAfter" style="display: none;">
+              <h3>아래 계좌로 입금해 주세요</h3>
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 12px auto 12px; max-width: 360px; text-align: left; line-height: 1.8;">
+                <div><span style="color: #64748b;">입금 계좌</span> <strong id="bankLine" style="white-space: nowrap;"></strong></div>
+                <div><span style="color: #64748b;">예금주</span> <strong id="bankHolder"></strong></div>
+                <div><span style="color: #64748b;">금액</span> <strong id="bankAmount"></strong></div>
+              </div>
+              <p style="color: #666; font-size: 14px; margin-bottom: 6px;">입금자명은 가입하신 이름과 같게 해주세요.<br>입금 확인 후 승인되면 바로 이용하실 수 있습니다.</p>
+            </div>
+            <p style="color: #666; font-size: 14px;">문의: <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600;">010-4454-2429</a></p>
+          </div>
+          <div id="lockPay" style="display: none;">
+            <h3>이용권 결제 후 이용 가능합니다</h3>
+            <p id="planInfo" style="color: #666; margin-bottom: 20px;"></p>
+            <button class="btn btn-login" onclick="startPayment()" style="padding: 12px 24px;">카드로 결제하기</button>
+          </div>
+        </div>
+
+        <div class="calc-layout">
+        <form id="taxForm" onsubmit="calculateTax(event)">
+            <div class="section-title">기본 사항</div>
+            <div class="form-group">
+                <label>소재지 <span class="hint">(조정대상지역·수도권 자동 판단용)</span></label>
+                <div class="addr-row">
+                    <input type="text" id="address" placeholder="주소 검색 또는 직접 입력 (예: 서울 강동구 성내동 000)" oninput="refreshForm()" onclick="if (!this.value) searchAddress()">
+                    <button type="button" onclick="searchAddress()">주소 검색</button>
+                </div>
+            </div>
+
+            <div class="section-title step">1. 겸용주택 건물 면적 현황 <small>주택분 · 상가분 (건축물대장 층별 현황)</small></div>
+            <div class="form-group">
+                <div class="hint" style="margin-bottom: 6px;">구분은 실제 사용 용도로 · 구조·용도·신축연도는 건물 기준시가 계산에 씁니다.</div>
+                <div class="floor-legend">한 층에: ① 구분·층·면적·신축연도 ② 취득 당시 구조·용도 ③ 양도 당시 구조·용도</div>
+                <div class="floor-scroll">
+                    <table class="floor-grid">
+                        <colgroup><col style="width: 40px"><col style="width: 64px"><col style="width: 46px"><col style="width: 40px"><col><col style="width: 76px"><col><col style="width: 76px"><col style="width: 22px"></colgroup>
+                        <thead>
+                            <tr><th rowspan="2">구분</th><th rowspan="2">층</th><th rowspan="2">면적(㎡)</th><th rowspan="2">신축<br>연도</th><th colspan="2" class="fc-acq">취득 당시</th><th colspan="2">양도 당시</th><th rowspan="2"></th></tr>
+                            <tr><th class="fc-acq">구조</th><th class="fc-acq">용도</th><th>구조</th><th>용도</th></tr>
+                        </thead>
+                        <tbody id="floorBody"></tbody>
+                    </table>
+                </div>
+                <div class="hint" style="margin-top: 4px;">양도 당시 구조·용도는 취득 당시를 따라갑니다. 용도변경·증축이 있으면 바꿔 주세요.</div>
+                <button type="button" class="floor-add" onclick="addFloor()">+ 층 추가</button>
+                <div class="floor-sum">
+                    <div><span>주택 지상</span><b id="sumHouseUp">0㎡</b></div>
+                    <div><span>주택 지하</span><b id="sumHouseDown">0㎡</b></div>
+                    <div><span>상가 지상</span><b id="sumShopUp">0㎡</b></div>
+                    <div><span>상가 지하</span><b id="sumShopDown">0㎡</b></div>
+                    <div id="sumCommonLine"><span>공용 (지상 <i id="sumCommonUp">0㎡</i> · 지하 <i id="sumCommonDown">0㎡</i>) → 주택·상가 비율로 나눔</span><b id="sumCommon">0㎡</b></div>
+                    <div class="final"><span>최종 주택 연면적</span><b id="sumHouse">0㎡</b></div>
+                    <div class="final"><span>최종 상가 연면적</span><b id="sumShop">0㎡</b></div>
+                    <div><span>건물 연면적 합계</span><b id="sumAll">0㎡</b></div>
+                </div>
+                <input type="hidden" id="houseArea"><input type="hidden" id="shopArea">
+            </div>
+
+            <div class="section-title step">2. 토지 면적 안분 <small>주택 부수토지 · 상가 부수토지 · 배율 초과</small></div>
+            <div class="form-group">
+                <div class="area-grid two">
+                    <div><label class="sub-label" for="landArea">토지 면적 (㎡) <span class="hint">토지대장</span></label><input type="text" id="landArea" inputmode="decimal" placeholder="예: 230" oninput="keepDecimal(this); refreshForm()" required></div>
+                    <div><label class="sub-label" for="footprint" title="건축면적 (건물이 땅에 닿는 면적)">건물 정착면적 (㎡) <span class="hint">건축물대장 건축면적</span></label><input type="text" id="footprint" inputmode="decimal" placeholder="예: 130" oninput="keepDecimal(this); refreshForm()" required></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="zone" class="sub-label">용도지역 <span class="hint">(주택 부수토지 배율 · 시행령 제154조⑦)</span></label>
+                <select id="zone" onchange="this.dataset.manual = '1'; refreshForm()">
+                    <option value="metro_urban">수도권 도시지역 · 주거·상업·공업지역 (정착면적 3배)</option>
+                    <option value="metro_green">수도권 도시지역 · 녹지지역 (5배)</option>
+                    <option value="urban">수도권 밖 도시지역 (5배)</option>
+                    <option value="nonurban">도시지역 밖 (10배)</option>
+                </select>
+                <div id="zoneMsg" class="live-msg" style="font-weight: normal;"></div>
+                <div id="landSplit" class="floor-sum"></div>
+                <div id="areaMsg" class="live-msg"></div>
+            </div>
+
+            <div class="section-title step">3. 기준시가 <small>주택분 · 상가분 안분 (건물 기준시가 자동 계산)</small></div>
+            <div id="stdBox" class="form-group">
+                <table class="std-table">
+                    <thead><tr><th></th><th class="col">취득 당시</th><th class="col">양도 당시</th></tr></thead>
+                    <tbody>
+                        <tr class="split-row-std"><th>개별주택가격<small>주택 부분 (토지+건물)</small></th>
+                            <td><input type="text" id="acqHousePrice" placeholder="예: 400,000,000" oninput="formatCurrency(this)"></td>
+                            <td><input type="text" id="trHousePrice" placeholder="예: 900,000,000" oninput="formatCurrency(this)"></td></tr>
+                        <tr class="first-row"><th>최초 공시 개별주택가격<small>2005.4.30. 전 취득 시 · 주택 부분</small></th>
+                            <td><input type="text" id="firstHousePrice" placeholder="예: 250,000,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td class="na">-</td></tr>
+                        <tr><th>개별공시지가<small>토지 ㎡당</small></th>
+                            <td><input type="text" id="acqLandUnit" placeholder="예: 3,000,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td><input type="text" id="trLandUnit" placeholder="예: 8,000,000" oninput="formatCurrency(this); refreshForm()"></td></tr>
+                        <tr class="first-row"><th>최초 공시 개별공시지가<small>2005.4.30. 전 취득 시 · ㎡당</small></th>
+                            <td><input type="text" id="firstLandUnit" placeholder="예: 2,000,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td class="na">-</td></tr>
+                        <tr id="base01Row"><th>2001.1.1. 당시 개별공시지가<small>2000년 이전 취득 시 · ㎡당</small></th>
+                            <td><input type="text" id="base01LandUnit" placeholder="예: 1,500,000" oninput="formatCurrency(this); refreshForm()"></td>
+                            <td class="na">-</td></tr>
+                        <tr><th>상가 건물 기준시가<small>국세청 고시 (건물분만)</small></th>
+                            <td><input type="text" id="acqShopBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td>
+                            <td><input type="text" id="trShopBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td></tr>
+                        <tr id="houseBldgRow"><th>주택 건물 기준시가<small>배율 초과 토지 안분용</small></th>
+                            <td><input type="text" id="acqHouseBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td>
+                            <td><input type="text" id="trHouseBldg" placeholder="자동 계산" oninput="formatCurrency(this)"></td></tr>
+                    </tbody>
+                </table>
+                <div id="stdMsg" class="live-msg" style="font-weight: normal;"></div>
+                <div id="bldBox" class="bld-box"></div>
+                <label class="check-line"><input type="checkbox" id="useDirect" onchange="refreshForm()"> 계약서에 주택분·상가분 금액이 구분되어 있음 <span class="hint">(구분 금액으로 안분)</span></label>
+                <div id="directBox" class="helper hidden">
+                    <div class="date-row">
+                        <div class="date-col">
+                            <label class="sub-label">양도가액 중 주택분 <span class="tot">전체 금액</span></label>
+                            <input type="text" id="trHouseDirect" placeholder="예: 1,300,000,000" oninput="formatCurrency(this)">
+                        </div>
+                        <div class="date-col">
+                            <label class="sub-label">취득가액 중 주택분 <span class="own">본인 몫</span></label>
+                            <input type="text" id="acqHouseDirect" placeholder="예: 450,000,000" oninput="formatCurrency(this)">
+                        </div>
+                    </div>
+                    <div class="hint" style="margin-top: 6px;">한쪽만 구분되어 있으면 그쪽만 넣으세요. 비워 둔 쪽은 기준시가 비율로 나눕니다.</div>
+                </div>
+            </div>
+
+            <div class="section-title step">4. 과세 유형 · 날짜 · 양도가액 · 취득가액 <small>주택분 · 상가분은 위 기준시가 비율로 자동 안분</small></div>
+            <div class="form-group">
+                <label for="taxType">과세 유형 <span class="hint">(주택 부분)</span></label>
+                <select id="taxType" onchange="refreshForm()">
+                    <option value="single">1세대 1주택 (비과세 · 12억 초과분만 과세)</option>
+                    <option value="general">일반 과세</option>
+                    <option value="heavy20">다주택 중과 · 조정대상지역 2주택 (+20%p)</option>
+                    <option value="heavy30">다주택 중과 · 조정대상지역 3주택 이상 (+30%p)</option>
+                </select>
+                <label id="acqRegBox" class="check-line">
+                    <input type="checkbox" id="acqRegulated" onchange="this.dataset.manual = '1'">
+                    취득 당시 조정대상지역 <span class="hint">(2017.8.3 이후 취득 → 2년 이상 거주해야 비과세 · 주소와 취득일로 자동 판단)</span>
+                </label>
+                <div id="heavyMsg" class="live-msg"></div>
+            </div>
+
+            <div class="form-group">
+                <label>날짜</label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label class="sub-label">취득일 (잔금일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="acquisitionDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
+                    </div>
+                    <div class="date-col">
+                        <label class="sub-label">양도일 (잔금일 · 2022.1.1 이후)</label>
+                        <div class="date-input-wrapper"><input type="text" id="transferDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()" required></div>
+                    </div>
+                </div>
+                <div id="periodMsg" class="live-msg"></div>
+            </div>
+
+            <div id="residenceBox" class="form-group">
+                <label>실제 거주 기간 <span class="hint">[1세대 1주택 전용 · 장기보유특별공제 표2 및 거주요건 판정]</span></label>
+                <div class="date-row">
+                    <div class="date-col">
+                        <label class="sub-label">거주 시작일</label>
+                        <div class="date-input-wrapper"><input type="text" id="residenceStartDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
+                    <div class="date-col">
+                        <label class="sub-label">거주 종료일 (계속 거주면 양도일)</label>
+                        <div class="date-input-wrapper"><input type="text" id="residenceEndDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="refreshForm()"></div>
+                    </div>
+                </div>
+                <div id="residenceMsg" class="live-msg"></div>
+            </div>
+
+            <div class="amount-guide"><span class="tot">전체 금액</span> 양도가액은 <b>건물 전체(주택+상가)·지분 100%</b>로 넣으면 본인 지분율만큼 나눕니다.<br><span class="own">본인 몫</span> 취득가액·필요경비·양도비용은 <b>본인이 실제로 부담한 금액</b>을 주택·상가 합계로 넣으세요.</div>
+            <div class="form-group">
+                <label for="transferPrice">양도가액 <span class="tot">전체 금액</span> <span class="hint">(주택+상가+토지 합계 · 실거래가)</span></label>
+                <input type="text" id="transferPrice" placeholder="예: 2,500,000,000" oninput="formatCurrency(this); refreshForm()" required>
+            </div>
+            <div class="form-group">
+                <label for="acqType">취득가액 종류</label>
+                <select id="acqType" onchange="refreshForm()">
+                    <option value="actual">실지거래가액 (매매계약서 금액)</option>
+                    <option value="converted">환산취득가액 (양도가액 × 취득 기준시가 ÷ 양도 기준시가)</option>
+                </select>
+                <div id="acqTypeMsg" class="live-msg" style="font-weight: normal;"></div>
+            </div>
+            <div class="form-group" id="acqPriceBox">
+                <label for="acquisitionPrice">취득가액 <span class="own">본인 몫</span> <span class="hint">(주택+상가 합계)</span></label>
+                <input type="text" id="acquisitionPrice" placeholder="예: 900,000,000" oninput="formatCurrency(this)">
+            </div>
+            <div class="form-group">
+                <label for="expenses" id="expensesLabel">필요경비 <span class="own">본인 몫</span> <span class="hint">(취득세·자본적지출 등)</span></label>
+                <input type="text" id="expenses" value="0" oninput="formatCurrency(this)">
+            </div>
+            <div class="form-group">
+                <label for="saleExpenses">양도비용 <span class="own">본인 몫</span> <span class="hint">(중개수수료 등)</span></label>
+                <input type="text" id="saleExpenses" value="0" oninput="formatCurrency(this)">
+            </div>
+            <div class="form-group">
+                <label for="share">본인 지분율 (%) <span class="hint">(단독 소유는 100)</span></label>
+                <input type="text" id="share" value="100" inputmode="decimal" style="max-width: 160px;" oninput="keepDecimal(this); refreshForm()">
+                <div id="shareMsg" class="live-msg"></div>
+            </div>
+
+            <label class="check-line"><input type="checkbox" id="basicUsed"> 올해 다른 부동산을 팔아 양도소득 기본공제(250만 원)를 이미 썼음</label>
+
+            <button type="submit" id="calcBtn" class="calc-action-btn" style="margin-top: 24px;">예상 양도세 결과보기</button>
+        </form>
+
+        <div class="result-col">
+            <div id="result" class="result-box" style="display: none;">
+                <h3>상가주택 양도소득세 계산 결과</h3>
+                <div id="resJudge" class="judge"></div>
+                <div id="resSplit" style="margin-top: 10px;"></div>
+                <div id="resSections"></div>
+                <div id="resRows" style="margin-top: 16px;"></div>
+                <div class="result-row total-tax">
+                    <span id="resTotalLabel">최종 납부할 총 예상 세액</span>
+                    <span id="resTotal">0 원</span>
+                </div>
+                <div id="resNotes" class="basis"></div>
+                <div class="basis-title">근거 조문</div>
+                <div id="resBasis" class="basis" style="margin-top: 6px;"></div>
+                <div class="notice-text">
+                    <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
+                    <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
+                    <p>※ 양도소득세 신고 및 납부의 책임은 납세자 본인에게 있으며, 정확한 세액은 세무 전문가의 검토가 필요합니다.</p>
+                </div>
+                <div class="filing">
+                    <p>위 예상 산출세액을 대표세무사가 검토 후 양도소득세 신고를 맡길 수 있습니다.</p>
+                    <button type="button" class="filing-btn" onclick="openFiling()">신고 의뢰하기</button>
+                </div>
+            </div>
+            <div class="empty">왼쪽에 <b>면적 · 금액 · 기준시가</b>를 넣고<br><b>[예상 양도세 결과보기]</b>를 누르면<br>주택분 · 상가분 세액이 여기에 나옵니다.</div>
+        </div>
+        </div>
+      </div>
+  </div>
+
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 94vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>아이디 (이메일)</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
+      </form>
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 신고 의뢰 팝업 -->
+  <div id="filingModal" class="fmodal" onclick="if (event.target === this) closeFiling()">
+    <div class="fbox" role="dialog" aria-labelledby="filingTitle">
+      <button type="button" class="fclose" onclick="closeFiling()" aria-label="닫기">&times;</button>
+      <form id="filingForm" onsubmit="submitFiling(event)">
+        <h3 id="filingTitle">양도소득세 신고 의뢰</h3>
+        <p class="fdesc">성함과 연락받으실 연락처를 남겨 주시면,<br>세무사가 메일을 확인한 뒤 연락드리겠습니다.</p>
+        <div class="form-group">
+          <label for="filingName">성함</label>
+          <input type="text" id="filingName" maxlength="50" autocomplete="name" required>
+        </div>
+        <div class="form-group">
+          <label for="filingPhone">연락받으실 연락처</label>
+          <input type="tel" id="filingPhone" maxlength="30" placeholder="010-0000-0000" autocomplete="tel" required>
+        </div>
+        <div class="form-group">
+          <label for="filingMemo">요청사항 <span class="hint">(선택)</span></label>
+          <textarea id="filingMemo" rows="3" maxlength="1000" placeholder="통화 가능한 시간, 문의하실 내용 등"></textarea>
+        </div>
+        <label class="check-line" style="margin: 0 0 16px;"><input type="checkbox" id="filingAgree" required> 입력한 정보와 계산 내용을 세무회계강남에 전달하는 데 동의합니다.</label>
+        <button type="submit" id="filingSubmit" class="calc-action-btn" style="margin-top: 0;">신고 의뢰 보내기</button>
+      </form>
+      <div id="filingDone" class="hidden" style="text-align: center; padding: 10px 0;">
+        <h3>신고 의뢰가 접수되었습니다</h3>
+        <p class="fdesc">세무사가 메일을 확인한 뒤<br>남겨 주신 연락처로 연락드리겠습니다.</p>
+        <p class="fdesc" style="margin-bottom: 18px;">급하신 경우 아래 번호로 전화 또는 문자 주세요!<br><a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600; font-size: 17px; display: inline-block; margin-top: 6px;">010-4454-2429</a></p>
+        <button type="button" class="btn-outline" onclick="closeFiling()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- login.js가 찾는 결제 팝업 (이 계산기는 계좌이체 인가만 사용) -->
+  <div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
+
+  <script src="https://t1.kakaocdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+  <script>window.CALC_PRODUCT = 'mixed';</script>
+  <script src="../양도세계산기/js/login.js"></script>
+  <script>
+    // Apps Script가 아직 상가주택 이용권을 모르는 예전 버전이면 양도세 이용권으로 잘못 신청되지 않도록 '준비 중' 표시
+    const baseUpdateUi = updateUi;
+    updateUi = function (user, plan, ...rest) {
+        if (plan && !/상가주택/.test(plan.name)) { showComingSoon(); return; }
+        return baseUpdateUi(user, plan, ...rest);
+    };
+  </script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const CAL_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+
+    // 달력 버튼: 년·월은 드롭다운으로, 일은 달력에서 선택 (직접 입력도 가능)
+    const pad2 = n => String(n).padStart(2, '0');
+    const THIS_YEAR = new Date().getFullYear();
+    const FIRST_YEAR = 1960, LAST_YEAR = THIS_YEAR + 5;
+    let dpTarget = null, dpYear, dpMonth; // dpMonth: 1~12
+    const dp = document.createElement('div');
+    dp.className = 'dp';
+    dp.setAttribute('role', 'dialog');
+    dp.setAttribute('aria-label', '날짜 선택');
+    dp.innerHTML = `
+        <div class="dp-head">
+            <button type="button" class="dp-nav" data-step="-1" aria-label="이전 달">&#8249;</button>
+            <select class="dp-year" aria-label="년">${Array.from({ length: LAST_YEAR - FIRST_YEAR + 1 }, (_, i) => LAST_YEAR - i).map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
+            <select class="dp-month" aria-label="월">${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+            <button type="button" class="dp-nav" data-step="1" aria-label="다음 달">&#8250;</button>
+        </div>
+        <div class="dp-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div class="dp-days"></div>
+        <div class="dp-foot"><button type="button" class="dp-today">오늘</button><button type="button" class="dp-close">닫기</button></div>`;
+    document.body.appendChild(dp);
+    const dpYearSel = dp.querySelector('.dp-year'), dpMonthSel = dp.querySelector('.dp-month');
+
+    function dpRender() {
+        if (dpYear < FIRST_YEAR) { dpYear = FIRST_YEAR; dpMonth = 1; }
+        if (dpYear > LAST_YEAR) { dpYear = LAST_YEAR; dpMonth = 12; }
+        dpYearSel.value = dpYear;
+        dpMonthSel.value = dpMonth;
+        const first = new Date(dpYear, dpMonth - 1, 1).getDay();
+        const last = new Date(dpYear, dpMonth, 0).getDate();
+        const sel = dpTarget && isDate(dpTarget.value) ? dpTarget.value : '';
+        const t = new Date(), today = `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`;
+        let html = '<span></span>'.repeat(first);
+        for (let d = 1; d <= last; d++) {
+            const v = `${dpYear}-${pad2(dpMonth)}-${pad2(d)}`;
+            const dow = (first + d - 1) % 7;
+            const cls = ['dp-day', v === sel ? 'sel' : '', v === today ? 'today' : '', dow === 0 ? 'sun' : '', dow === 6 ? 'sat' : ''].filter(Boolean).join(' ');
+            html += `<button type="button" class="${cls}" data-v="${v}">${d}</button>`;
+        }
+        dp.querySelector('.dp-days').innerHTML = html;
+    }
+    function dpPlace() {
+        const r = dpTarget.getBoundingClientRect();
+        const w = dp.offsetWidth, h = dp.offsetHeight;
+        let left = r.left + window.scrollX;
+        left = Math.max(8 + window.scrollX, Math.min(left, window.scrollX + document.documentElement.clientWidth - w - 8));
+        let top = r.bottom + window.scrollY + 6;
+        if (r.bottom + h + 6 > window.innerHeight && r.top - h - 6 > 0) top = r.top + window.scrollY - h - 6;
+        dp.style.left = left + 'px';
+        dp.style.top = top + 'px';
+    }
+    function dpOpen(input) {
+        dpTarget = input;
+        const v = isDate(input.value) ? input.value : '';
+        const t = new Date();
+        dpYear = v ? Number(v.slice(0, 4)) : t.getFullYear();
+        dpMonth = v ? Number(v.slice(5, 7)) : t.getMonth() + 1;
+        dpRender();
+        dp.classList.add('open');
+        dpPlace();
+    }
+    function dpClose() { dp.classList.remove('open'); dpTarget = null; }
+    function dpPick(v) {
+        const input = dpTarget;
+        input.value = v;
+        dpClose();
+        input.dispatchEvent(new Event('change'));
+    }
+    dpYearSel.addEventListener('change', () => { dpYear = Number(dpYearSel.value); dpRender(); });
+    dpMonthSel.addEventListener('change', () => { dpMonth = Number(dpMonthSel.value); dpRender(); });
+    dp.addEventListener('click', e => {
+        const nav = e.target.closest('.dp-nav');
+        if (nav) {
+            dpMonth += Number(nav.dataset.step);
+            if (dpMonth < 1) { dpMonth = 12; dpYear--; }
+            if (dpMonth > 12) { dpMonth = 1; dpYear++; }
+            dpRender();
+        } else if (e.target.closest('.dp-day')) {
+            dpPick(e.target.closest('.dp-day').dataset.v);
+        } else if (e.target.closest('.dp-today')) {
+            const t = new Date();
+            dpPick(`${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`);
+        } else if (e.target.closest('.dp-close')) {
+            dpClose();
+        }
+    });
+    document.addEventListener('mousedown', e => {
+        if (dpTarget && !dp.contains(e.target) && !e.target.closest('.cal-btn')) dpClose();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && dpTarget) dpClose(); });
+    window.addEventListener('resize', () => { if (dpTarget) dpPlace(); });
+
+    document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
+        const textInput = wrapper.querySelector('input[type="text"]');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cal-btn';
+        btn.innerHTML = CAL_ICON;
+        btn.setAttribute('aria-label', '달력에서 날짜 선택');
+        btn.addEventListener('click', () => {
+            if (dpTarget === textInput) dpClose(); else dpOpen(textInput);
+        });
+        wrapper.append(btn);
+    });
+
+    // 날짜 입력: 년·월·일 칸을 각각 고칠 수 있게 (커서 위치 유지)
+    function formatDateInput(input) {
+        const ev = window.event || {};
+        const prev = input.dataset.prev || '';
+        let v = input.value, caret = input.selectionStart == null ? v.length : input.selectionStart;
+        const dashes = s => (s.match(/-/g) || []).length;
+        // '-'만 지운 경우 → 그 옆 숫자를 지움
+        if (prev.length === v.length + 1 && dashes(prev) === dashes(v) + 1) {
+            let i = 0; while (i < v.length && v[i] === prev[i]) i++;
+            if (prev[i] === '-') {
+                if (ev.inputType === 'deleteContentForward') { v = prev.slice(0, i + 1) + prev.slice(i + 2); caret = i + 1; }
+                else if (i > 0) { v = prev.slice(0, i - 1) + prev.slice(i); caret = i - 1; }
+            }
+        }
+        const before = v.slice(0, caret);
+        const digitsBefore = before.replace(/\D/g, '').length;
+        const afterDash = before.endsWith('-');
+        let out;
+        if (v.indexOf('-') < 0) {
+            const d = v.replace(/\D/g, '').slice(0, 8);
+            out = d.length > 6 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6) : d.length > 4 ? d.slice(0, 4) + '-' + d.slice(4) : d;
+        } else {
+            const raw = v.split('-');
+            const parts = [raw[0], raw[1] || '', raw.slice(2).join('')].map(s => s.replace(/\D/g, ''));
+            const caps = [4, 2, 2], segs = [];
+            let carry = '';
+            for (let i = 0; i < 3; i++) {
+                let s = parts[i];
+                if (carry && !s) s = carry;
+                carry = '';
+                if (s.length > caps[i]) {
+                    if (i < 2 && !parts[i + 1]) carry = s.slice(caps[i]);
+                    s = s.slice(0, caps[i]);
+                }
+                segs.push(s);
+                if (i >= raw.length - 1 && !carry) break;
+            }
+            out = segs.join('-');
+        }
+        // 커서: 같은 개수의 숫자 뒤로
+        let pos = 0, n = 0;
+        while (pos < out.length && n < digitsBefore) { if (/\d/.test(out[pos])) n++; pos++; }
+        if (afterDash && out[pos] === '-') pos++;
+        input.value = out;
+        input.dataset.prev = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
+    }
+    // 키를 누르기 직전 값을 기억 ('-' 삭제 감지용)
+    document.addEventListener('keydown', e => { const t = e.target; if (t && t.tagName === 'INPUT' && t.type === 'text') t.dataset.prev = t.value; }, true);
+    // 숫자·소수점만 남기되 커서는 그 자리에
+    function keepDecimal(input) {
+        const v = input.value, c = input.selectionStart == null ? v.length : input.selectionStart;
+        const clean = s => s.replace(/[^0-9.]/g, '');
+        const out = clean(v);
+        if (out === v) return;
+        const pos = clean(v.slice(0, c)).length;
+        input.value = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
+    }
+    // 금액 입력: 콤마를 넣어도 커서가 고치던 자리에 남게
+    function formatCurrency(input) {
+        const ev = window.event || {};
+        const prev = input.dataset.prev || '';
+        let v = input.value, caret = input.selectionStart == null ? v.length : input.selectionStart;
+        const commas = s => (s.match(/,/g) || []).length;
+        // ','만 지운 경우 → 그 옆 숫자를 지움
+        if (prev.length === v.length + 1 && commas(prev) === commas(v) + 1) {
+            let i = 0; while (i < v.length && v[i] === prev[i]) i++;
+            if (prev[i] === ',') {
+                if (ev.inputType === 'deleteContentForward') { v = prev.slice(0, i + 1) + prev.slice(i + 2); caret = i + 1; }
+                else if (i > 0) { v = prev.slice(0, i - 1) + prev.slice(i); caret = i - 1; }
+            }
+        }
+        const digitsAfter = v.slice(caret).replace(/\D/g, '').length;
+        const d = v.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+        const out = d ? Number(d).toLocaleString('ko-KR') : '';
+        // 커서: 뒤쪽 숫자 개수가 같도록
+        let pos = out.length, n = 0;
+        while (pos > 0 && n < Math.min(digitsAfter, d.length)) { pos--; if (/\d/.test(out[pos])) n++; }
+        input.value = out;
+        input.dataset.prev = out;
+        if (document.activeElement === input) input.setSelectionRange(pos, pos);
+    }
+    const num = id => Number($(id).value.replace(/[^0-9]/g, '')) || 0;
+    const won = n => Math.round(n).toLocaleString('ko-KR') + ' 원';
+    const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+
+    // 조정대상지역 (양도세 계산기와 같은 기준: 2025.10.16 지정 서울 전역 + 경기 일부)
+    const REGULATED_AREAS = ['과천시', '광명시', '성남시 분당구', '성남시 수정구', '성남시 중원구',
+        '수원시 영통구', '수원시 장안구', '수원시 팔달구', '안양시 동안구', '용인시 수지구', '의왕시', '하남시',
+        '화성시 동탄구', '용인시 기흥구', '구리시'];
+    const SEOUL_GU = ['강남구', '강동구', '강북구', '관악구', '광진구', '구로구', '금천구', '노원구', '도봉구', '동대문구',
+        '동작구', '마포구', '서대문구', '서초구', '성동구', '성북구', '송파구', '양천구', '영등포구', '용산구', '은평구', '종로구', '중랑구'];
+    function isRegulated(address) {
+        const a = address.replace(/\s+/g, '');
+        if (!a) return false;
+        if (/^서울/.test(a)) return true;
+        if (/^(부산|대구|인천|광주|대전|울산|세종|강원|충북|충남|충청|전북|전남|전라|경북|경남|경상|제주)/.test(a)) return false;
+        if (SEOUL_GU.some(gu => a.startsWith(gu))) return true;
+        return REGULATED_AREAS.some(area => {
+            const gu = area.split(' ')[1];
+            return a.includes(area.replace(/\s+/g, '')) || (gu && a.startsWith(gu));
+        });
+    }
+    function isAcqRegulated(address, acqDate) {
+        if (!isDate(acqDate) || !isRegulated(address)) return false;
+        if (acqDate < '2017-08-03') return false;
+        if (acqDate < '2023-01-05') return true;
+        if (acqDate < '2025-10-16') return /(강남구|서초구|송파구|용산구)/.test(address.replace(/\s+/g, ''));
+        return true;
+    }
+    function searchAddress() {
+        if (window.daum && daum.Postcode) {
+            new daum.Postcode({ oncomplete: d => { $('address').value = d.address; refreshForm(); } }).open();
+        } else {
+            $('address').focus();
+        }
+    }
+
+    // 만 연수와 'n년 n개월' 표시
+    function period(start, end) {
+        if (!isDate(start) || !isDate(end) || end < start) return null;
+        const [sy, sm, sd] = start.split('-').map(Number), [ey, em, ed] = end.split('-').map(Number);
+        let y = ey - sy, m = em - sm;
+        if (ed < sd) m -= 1;
+        if (m < 0) { y -= 1; m += 12; }
+        return { years: y, text: (y ? `${y}년 ` : '') + `${m}개월` };
+    }
+    function twoYearsBefore(d) { const [y, m, dd] = d.split('-'); return `${Number(y) - 2}-${m}-${dd}`; }
+
+    const ZONE_MULT = { metro_urban: 3, metro_green: 5, urban: 5, nonurban: 10 };
+    const areaNum = id => parseFloat(($(id).value || '').replace(/[^0-9.]/g, '')) || 0;
+    const m2 = n => `${(Math.round(n * 100) / 100).toLocaleString('ko-KR')}㎡`;
+    function isMetro(address) {
+        const a = address.replace(/\s+/g, '');
+        return /^(서울|인천|경기)/.test(a) || SEOUL_GU.some(gu => a.startsWith(gu));
+    }
+
+    // ===== 층별 면적: 주택·상가·공용으로 나눠 최종 연면적 계산 (공용은 주택:상가 비율로 배분) =====
+    const FLOOR_KINDS = [['house', '주택'], ['shop', '상가'], ['common', '공용']];
+    // 건물 구조 (국세청 건물 기준시가 구조지수 분류) [값, 표시]
+    const STRUCTS = [['철근콘크리트조', '철근콘크리트조'], ['철골(철골철근)콘크리트조', '철골철근콘크리트조'], ['라멘조', '라멘조'], ['석조', '석조'],
+        ['프리캐스트콘크리트조', 'PC조(프리캐스트)'], ['ALC조', 'ALC조'], ['스틸하우스조', '스틸하우스조'], ['목조', '목조'],
+        ['연와조', '연와조'], ['철골조', '철골조'], ['보강콘크리트조', '보강콘크리트조'], ['보강블록조', '보강블록조'], ['시멘트벽돌조', '시멘트벽돌조'],
+        ['황토조', '황토조'], ['시멘트블록조', '시멘트블록조'], ['와이어패널조', '와이어패널조'], ['EPS패널', '철골조 EPS패널'], ['조립식패널조', '조립식패널조'],
+        ['경량철골조', '경량철골조'], ['목구조', '목구조'], ['통나무조', '통나무조'], ['석회및흙벽돌조', '석회·흙벽돌조'], ['돌담및토담조', '돌담·토담조'],
+        ['철파이프조', '철파이프조'], ['컨테이너건물', '컨테이너']];
+    // 용도지수 분류 [값, 표시]
+    const USES = [['house', '다가구·다세대'], ['detached', '단독주택'], ['neigh', '근린생활시설'], ['pung', '풍속영업'],
+        ['office', '업무(사무소)'], ['academy', '교육(학원)'], ['hospital', '의료(병원)'],
+        ['inn', '숙박(여관)'], ['store', '판매(상점)'], ['warehouse', '창고'], ['parking', '주차장'], ['other', '기타(100)']];
+    const DEFAULT_USE = { house: 'house', shop: 'neigh', common: '' };
+    const opts = (list, blank) => (blank ? `<option value="">${blank}</option>` : '') + list.map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+
+    // 한 층 = 표의 한 줄: 구분 · 층(지상/지하) · 면적 · 신축연도 · 취득 구조·용도 · 양도 구조·용도
+    function addFloor(ground = 'up', no = '', kind = 'shop', area = '') {
+        const prev = [...document.querySelectorAll('#floorBody .floor-card')].pop();
+        const card = document.createElement('tr');
+        card.className = 'floor-card';
+        card.innerHTML = `
+            <td><select class="f-kind" aria-label="구분">${opts(FLOOR_KINDS)}</select></td>
+            <td class="fc-floor"><select class="f-ground" aria-label="지상/지하"><option value="up">지상</option><option value="down">지하</option></select><input type="text" class="f-no" inputmode="numeric" maxlength="3" placeholder="1" aria-label="층"></td>
+            <td><input type="text" class="f-area" inputmode="decimal" placeholder="120.5" aria-label="면적(㎡)"></td>
+            <td><input type="text" class="f-built" inputmode="numeric" maxlength="4" placeholder="1995" aria-label="신축연도"></td>
+            <td class="fc-acq"><select class="f-acq-struct" aria-label="취득 당시 구조">${opts(STRUCTS)}</select></td>
+            <td class="fc-acq"><select class="f-acq-use" aria-label="취득 당시 용도">${opts(USES, '공용(비율)')}</select></td>
+            <td><select class="f-tr-struct" aria-label="양도 당시 구조">${opts(STRUCTS)}</select></td>
+            <td><select class="f-tr-use" aria-label="양도 당시 용도">${opts(USES, '공용(비율)')}</select></td>
+            <td><button type="button" class="floor-del" aria-label="이 층 삭제">&times;</button></td>`;
+        card.querySelectorAll('select').forEach(sel => { const sync = () => { sel.title = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : ''; }; sel.addEventListener('change', sync); setTimeout(sync); });
+        const q = c => card.querySelector(c);
+        q('.f-ground').value = ground;
+        q('.f-no').value = no;
+        q('.f-kind').value = kind;
+        q('.f-area').value = area;
+        // 같은 건물이면 앞 층의 신축연도·구조를 이어받음
+        const pq = c => prev && prev.querySelector(c).value;
+        q('.f-built').value = pq('.f-built') || '';
+        q('.f-acq-struct').value = pq('.f-acq-struct') || '철근콘크리트조';
+        q('.f-tr-struct').value = pq('.f-tr-struct') || q('.f-acq-struct').value;
+        q('.f-acq-use').value = DEFAULT_USE[kind];
+        q('.f-tr-use').value = DEFAULT_USE[kind];
+        // 양도 당시 칸은 직접 고치기 전까지 취득 당시 값을 따라감
+        const follow = (from, to) => {
+            q(to).addEventListener('change', () => { q(to).dataset.manual = '1'; });
+            q(from).addEventListener('change', () => { if (!q(to).dataset.manual) q(to).value = q(from).value; });
+        };
+        follow('.f-acq-struct', '.f-tr-struct');
+        follow('.f-acq-use', '.f-tr-use');
+        q('.f-acq-use').addEventListener('change', () => { q('.f-acq-use').dataset.manual = '1'; });
+        q('.f-kind').addEventListener('change', () => {
+            const u = DEFAULT_USE[q('.f-kind').value];
+            if (!q('.f-acq-use').dataset.manual) { q('.f-acq-use').value = u; if (!q('.f-tr-use').dataset.manual) q('.f-tr-use').value = u; }
+            refreshForm();
+        });
+        q('.f-ground').addEventListener('change', refreshForm);
+        q('.f-no').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
+        q('.f-built').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
+        // 신축연도를 넣으면 아직 비어 있는 다른 층에도 같은 연도를 채움 (증축 층은 직접 고침)
+        q('.f-built').addEventListener('change', e => {
+            if (!/^\d{4}$/.test(e.target.value)) return;
+            document.querySelectorAll('#floorBody .f-built').forEach(el => { if (!el.value) el.value = e.target.value; });
+        });
+        q('.f-area').addEventListener('input', e => { keepDecimal(e.target); refreshForm(); });
+        // 구조·용도·신축연도가 바뀌면 건물 기준시가 다시 계산
+        card.addEventListener('change', e => { if (e.target.matches('.f-built, .f-acq-struct, .f-tr-struct, .f-acq-use, .f-tr-use')) refreshForm(); });
+        q('.floor-del').addEventListener('click', () => { card.remove(); refreshForm(); });
+        $('floorBody').appendChild(card);
+        refreshForm();
+    }
+    function floorRows() {
+        return [...document.querySelectorAll('#floorBody .floor-card')].map(card => {
+            const v = c => card.querySelector(c).value.trim();
+            const ground = v('.f-ground'), no = v('.f-no');
+            return {
+                name: `${ground === 'down' ? '지하' : '지상'} ${no || '-'}층`,
+                ground, no, kind: v('.f-kind'),
+                area: parseFloat(v('.f-area').replace(/[^0-9.]/g, '')) || 0,
+                built: v('.f-built'),
+                acqStruct: v('.f-acq-struct'), acqUse: v('.f-acq-use'),
+                trStruct: v('.f-tr-struct'), trUse: v('.f-tr-use')
+            };
+        });
+    }
+    function floorTotals() {
+        const rows = floorRows();
+        const sum = (k, g) => rows.filter(r => r.kind === k && (!g || r.ground === g)).reduce((s, r) => s + r.area, 0);
+        const h = sum('house'), s = sum('shop'), c = sum('common');
+        const hr = h + s > 0 ? h / (h + s) : 0;
+        const house = h + c * hr, shop = s + c * (1 - hr);
+        $('sumHouseUp').innerText = m2(sum('house', 'up'));
+        $('sumHouseDown').innerText = m2(sum('house', 'down'));
+        $('sumShopUp').innerText = m2(sum('shop', 'up'));
+        $('sumShopDown').innerText = m2(sum('shop', 'down'));
+        $('sumCommonUp').innerText = m2(sum('common', 'up'));
+        $('sumCommonDown').innerText = m2(sum('common', 'down'));
+        $('sumCommon').innerText = c ? `${m2(c)} → 주택 ${m2(c * hr)} · 상가 ${m2(c * (1 - hr))}` : '0㎡';
+        $('sumHouse').innerText = m2(house);
+        $('sumShop').innerText = m2(shop);
+        $('sumAll').innerText = m2(h + s + c);
+        $('houseArea').value = house ? String(Math.round(house * 100) / 100) : '';
+        $('shopArea').value = shop ? String(Math.round(shop * 100) / 100) : '';
+        return rows;
+    }
+
+    // 국세청 건물 기준시가 연도별 고시 (2001~2008: 「2009.1.1. 시행 건물기준시가 산정방법 해설」, 2009~2026: 「2026년 건물 기준시가 계산방법 해설」)
+    // b: ㎡당 건물신축가격기준액, s: 구조지수, g: 잔가율 그룹, life: 그룹별 내용연수, f: 그룹별 최종잔존가치율(%), l: [개별공시지가 하한, 위치지수], u: 용도지수
+    const BLD_STD = {"2001":{"b":400000,"s":{"통나무조":130,"철골(철골철근)콘크리트조":120,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"시멘트블록조":60,"경량철골조":50,"철파이프조":30,"석회및흙벽돌조":30,"돌담및토담조":30},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"연와조":2,"보강콘크리트조":2,"시멘트벽돌조":2,"철골조":2,"스틸하우스조":2,"황토조":2,"목조":2,"시멘트블록조":3,"경량철골조":3,"철파이프조":3,"석회및흙벽돌조":3,"돌담및토담조":3},"f":[20,20,20],"life":[40,30,20],"l":[[0,90],[200000,95],[500000,100],[1000000,105],[5000000,110]],"u":{"house":90,"detached":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60}},"2002":{"b":420000,"s":{"통나무조":130,"철골(철골철근)콘크리트조":120,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"시멘트블록조":60,"경량철골조":50,"철파이프조":30,"석회및흙벽돌조":30,"돌담및토담조":30},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"연와조":2,"보강콘크리트조":2,"시멘트벽돌조":2,"철골조":2,"스틸하우스조":2,"황토조":2,"목조":2,"시멘트블록조":3,"경량철골조":3,"철파이프조":3,"석회및흙벽돌조":3,"돌담및토담조":3},"f":[20,20,20],"life":[40,30,20],"l":[[0,90],[200000,95],[500000,100],[1000000,105],[5000000,110]],"u":{"house":90,"detached":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60}},"2003":{"b":460000,"s":{"통나무조":140,"철골(철골철근)콘크리트조":120,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"시멘트블록조":60,"경량철골조":50,"철파이프조":30,"석회및흙벽돌조":30,"돌담및토담조":30},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,20,20],"life":[50,40,30,20],"l":[[0,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130]],"u":{"house":90,"detached":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60}},"2004":{"b":460000,"s":{"통나무조":140,"철골(철골철근)콘크리트조":120,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"시멘트블록조":60,"경량철골조":50,"철파이프조":30,"석회및흙벽돌조":30,"돌담및토담조":30},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,20,10],"life":[50,40,30,20],"l":[[0,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130]],"u":{"house":90,"detached":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60}},"2005":{"b":460000,"s":{"통나무조":140,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"시멘트블록조":60,"경량철골조":50,"철파이프조":30,"석회및흙벽돌조":30,"돌담및토담조":30,"철골(철골철근)콘크리트조":120},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,20,10],"life":[50,40,30,20],"l":[[0,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130]],"u":{"house":90,"detached":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60}},"2006":{"b":470000,"s":{"통나무조":140,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"시멘트블록조":60,"경량철골조":50,"철파이프조":30,"석회및흙벽돌조":30,"돌담및토담조":30,"철골(철골철근)콘크리트조":120},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,10,10],"life":[50,40,30,20],"l":[[0,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130]],"u":{"house":100,"detached":100,"neigh":100,"pung":100,"office":100,"academy":90,"hospital":100,"inn":110,"store":100,"warehouse":60,"parking":60}},"2007":{"b":490000,"s":{"통나무조":140,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"시멘트블록조":60,"경량철골조":50,"철파이프조":30,"석회및흙벽돌조":30,"돌담및토담조":30,"철골(철골철근)콘크리트조":120},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,10,10],"life":[50,40,30,20],"l":[[0,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130],[30000000,135]],"u":{"house":100,"detached":100,"neigh":100,"pung":100,"office":100,"academy":90,"hospital":100,"inn":110,"store":100,"warehouse":60,"parking":60}},"2008":{"b":510000,"s":{"통나무조":140,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"EPS패널":80,"시멘트블록조":70,"경량철골조":50,"철파이프조":40,"석회및흙벽돌조":40,"돌담및토담조":40,"철골(철골철근)콘크리트조":110},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4,"스틸하우스조":3,"황토조":3},"f":[20,20,10,10],"life":[50,40,30,20],"l":[[0,75],[20000,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130],[30000000,135]],"u":{"house":100,"detached":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60}},"2009":{"b":510000,"s":{"통나무조":140,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목구조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":80,"목조":80,"EPS패널":80,"시멘트블록조":70,"경량철골조":50,"철파이프조":40,"석회및흙벽돌조":40,"돌담및토담조":40,"철골(철골철근)콘크리트조":110},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4,"스틸하우스조":3,"황토조":3},"f":[20,20,10,10],"l":[[0,75],[20000,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130],[30000000,135]],"u":{"house":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60,"detached":100},"life":[50,40,30,20]},"2010":{"b":540000,"s":{"통나무조":130,"철골(철골철근)콘크리트조":110,"목구조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":90,"목조":90,"EPS패널":80,"시멘트블록조":80,"경량철골조":60,"석회및흙벽돌조":50,"돌담및토담조":50,"철파이프조":40},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,10,10],"l":[[0,75],[20000,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130],[30000000,135]],"u":{"house":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60,"detached":100},"life":[50,40,30,20]},"2011":{"b":580000,"s":{"통나무조":130,"철골(철골철근)콘크리트조":110,"목구조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":90,"목조":90,"EPS패널":80,"시멘트블록조":80,"경량철골조":60,"석회및흙벽돌조":50,"돌담및토담조":50,"철파이프조":40},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,10,10],"l":[[0,75],[20000,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130],[30000000,135]],"u":{"house":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":60,"parking":60,"detached":100},"life":[50,40,30,20]},"2012":{"b":610000,"s":{"통나무조":130,"목구조":120,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":90,"시멘트블록조":90,"EPS패널":80,"경량철골조":70,"석회및흙벽돌조":50,"돌담및토담조":50,"철파이프조":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4},"f":[20,20,10,10],"l":[[0,75],[20000,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130],[30000000,135]],"u":{"house":100,"neigh":90,"pung":90,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":70,"parking":60,"detached":100},"life":[50,40,30,20]},"2013":{"b":620000,"s":{"통나무조":130,"목구조":120,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"스틸하우스조":90,"보강콘크리트조":90,"시멘트블록조":90,"보강블록조":90,"와이어패널조":90,"EPS패널":80,"조립식패널조":80,"경량철골조":70,"석회및흙벽돌조":50,"돌담및토담조":50,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"라멘조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"보강블록조":3,"ALC조":3,"와이어패널조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4,"조립식패널조":4,"컨테이너건물":4},"f":[20,20,10,10],"l":[[0,75],[20000,80],[50000,85],[200000,90],[500000,95],[800000,100],[1200000,105],[2000000,110],[3000000,115],[5000000,120],[7000000,125],[10000000,130],[30000000,135]],"u":{"house":100,"neigh":90,"pung":100,"office":100,"academy":90,"hospital":100,"inn":110,"store":90,"warehouse":70,"parking":60,"detached":100},"life":[50,40,30,20]},"2014":{"b":640000,"s":{"통나무조":130,"목구조":120,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"보강콘크리트조":90,"시멘트블록조":90,"보강블록조":90,"와이어패널조":90,"EPS패널":80,"조립식패널조":80,"경량철골조":70,"석회및흙벽돌조":50,"돌담및토담조":50,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"라멘조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"보강블록조":3,"ALC조":3,"와이어패널조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4,"조립식패널조":4,"컨테이너건물":4},"f":[20,20,10,10],"l":[[0,75],[20000,80],[50000,85],[100000,87],[150000,89],[200000,91],[350000,93],[500000,95],[650000,97],[800000,100],[1000000,103],[1200000,106],[1600000,109],[2000000,112],[2500000,115],[3000000,118],[4000000,121],[5000000,124],[6000000,127],[7000000,130],[8500000,133],[10000000,136],[20000000,139],[30000000,142],[50000000,145]],"u":{"house":100,"neigh":95,"pung":100,"office":110,"academy":100,"hospital":100,"inn":110,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2015":{"b":650000,"s":{"통나무조":130,"목구조":125,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":90,"시멘트벽돌조":90,"황토조":90,"철골조":90,"보강콘크리트조":90,"시멘트블록조":90,"보강블록조":90,"와이어패널조":90,"EPS패널":80,"조립식패널조":80,"경량철골조":70,"석회및흙벽돌조":50,"돌담및토담조":50,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":2,"석조":2,"프리캐스트콘크리트조":2,"목구조":2,"라멘조":2,"연와조":3,"보강콘크리트조":3,"시멘트벽돌조":3,"철골조":3,"스틸하우스조":3,"황토조":3,"목조":3,"보강블록조":3,"ALC조":3,"와이어패널조":3,"시멘트블록조":4,"경량철골조":4,"철파이프조":4,"석회및흙벽돌조":4,"돌담및토담조":4,"조립식패널조":4,"컨테이너건물":4},"f":[20,20,10,10],"l":[[0,75],[20000,80],[30000,83],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,93],[350000,95],[500000,97],[650000,100],[800000,102],[1000000,105],[1200000,107],[1600000,110],[2000000,113],[2500000,115],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,125],[5500000,126],[6000000,128],[7000000,130],[8000000,132],[9000000,135],[10000000,138],[15000000,141],[20000000,144],[25000000,147],[30000000,150],[35000000,153],[40000000,156],[45000000,159],[50000000,162],[55000000,165],[60000000,168],[65000000,171],[70000000,174],[75000000,177],[80000000,180]],"u":{"house":100,"neigh":100,"pung":105,"office":110,"academy":105,"hospital":105,"inn":115,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2016":{"b":660000,"s":{"통나무조":135,"목구조":130,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":95,"철골조":95,"보강콘크리트조":95,"보강블록조":95,"시멘트벽돌조":90,"황토조":90,"시멘트블록조":90,"와이어패널조":90,"EPS패널":85,"조립식패널조":80,"경량철골조":75,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,80],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,93],[350000,95],[500000,97],[650000,100],[800000,102],[1000000,105],[1200000,107],[1600000,110],[2000000,113],[2500000,115],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,125],[5500000,126],[6000000,128],[7000000,131],[8000000,132],[9000000,135],[10000000,138],[15000000,142],[20000000,144],[25000000,147],[30000000,150],[35000000,153],[40000000,156],[45000000,159],[50000000,162],[55000000,165],[60000000,168],[65000000,171],[70000000,174],[75000000,177],[80000000,180]],"u":{"house":100,"neigh":100,"pung":105,"office":110,"academy":105,"hospital":105,"inn":115,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2017":{"b":670000,"s":{"통나무조":135,"목구조":130,"철골(철골철근)콘크리트조":115,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":95,"철골조":95,"보강콘크리트조":95,"보강블록조":95,"시멘트벽돌조":90,"황토조":90,"시멘트블록조":90,"와이어패널조":90,"EPS패널":85,"조립식패널조":80,"경량철골조":75,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,82],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,93],[350000,95],[500000,97],[650000,100],[800000,102],[1000000,105],[1200000,107],[1600000,110],[2000000,113],[2500000,115],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,125],[5500000,126],[6000000,128],[7000000,131],[8000000,132],[9000000,135],[10000000,138],[15000000,142],[20000000,144],[25000000,147],[30000000,150],[35000000,153],[40000000,156],[45000000,159],[50000000,162],[55000000,165],[60000000,168],[65000000,171],[70000000,174],[75000000,177],[80000000,180]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":105,"hospital":105,"inn":115,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2018":{"b":690000,"s":{"통나무조":135,"목구조":130,"철골(철골철근)콘크리트조":115,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":95,"철골조":95,"보강콘크리트조":95,"보강블록조":95,"시멘트벽돌조":92,"황토조":92,"시멘트블록조":92,"와이어패널조":92,"EPS패널":85,"조립식패널조":80,"경량철골조":75,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,82],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,93],[350000,95],[500000,97],[650000,100],[800000,102],[1000000,105],[1200000,107],[1600000,110],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,125],[5500000,126],[6000000,128],[7000000,131],[8000000,132],[9000000,135],[10000000,138],[15000000,142],[20000000,144],[25000000,147],[30000000,150],[35000000,153],[40000000,156],[45000000,159],[50000000,162],[55000000,165],[60000000,168],[65000000,171],[70000000,174],[75000000,177],[80000000,180]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":105,"hospital":105,"inn":115,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2019":{"b":710000,"s":{"통나무조":135,"목구조":130,"철골(철골철근)콘크리트조":115,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":97,"철골조":97,"보강콘크리트조":97,"보강블록조":97,"시멘트벽돌조":92,"황토조":92,"시멘트블록조":92,"와이어패널조":92,"EPS패널":85,"조립식패널조":80,"경량철골조":75,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,82],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,93],[350000,95],[500000,97],[650000,100],[800000,102],[1000000,105],[1200000,107],[1600000,110],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,125],[5500000,126],[6000000,128],[7000000,131],[8000000,133],[9000000,136],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":107,"hospital":105,"inn":115,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2020":{"b":730000,"s":{"통나무조":135,"목구조":130,"철골(철골철근)콘크리트조":115,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":97,"철골조":97,"보강콘크리트조":97,"보강블록조":97,"시멘트벽돌조":92,"황토조":92,"시멘트블록조":92,"와이어패널조":92,"EPS패널":85,"조립식패널조":80,"경량철골조":77,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,82],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,94],[350000,96],[500000,98],[650000,100],[800000,102],[1000000,105],[1200000,107],[1600000,110],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,125],[5500000,126],[6000000,128],[7000000,131],[8000000,133],[9000000,136],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":107,"hospital":105,"inn":115,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2021":{"b":740000,"s":{"통나무조":135,"목구조":130,"철골(철골철근)콘크리트조":115,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":97,"철골조":97,"보강콘크리트조":97,"보강블록조":97,"시멘트벽돌조":95,"황토조":95,"시멘트블록조":95,"와이어패널조":95,"EPS패널":85,"조립식패널조":80,"경량철골조":77,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":50,"컨테이너건물":50},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,82],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,94],[350000,96],[500000,98],[650000,100],[800000,102],[1000000,105],[1200000,107],[1600000,110],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,126],[5500000,128],[6000000,130],[7000000,132],[8000000,134],[9000000,137],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":107,"hospital":110,"inn":115,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2022":{"b":780000,"s":{"통나무조":135,"목구조":130,"철골(철골철근)콘크리트조":115,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":97,"철골조":97,"보강콘크리트조":97,"보강블록조":97,"시멘트벽돌조":95,"황토조":95,"시멘트블록조":95,"와이어패널조":95,"EPS패널":85,"조립식패널조":80,"경량철골조":77,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":55,"컨테이너건물":55},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,82],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,94],[350000,96],[500000,98],[650000,100],[800000,102],[1000000,105],[1200000,108],[1600000,111],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,126],[5500000,128],[6000000,130],[7000000,132],[8000000,134],[9000000,137],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":107,"hospital":110,"inn":117,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2023":{"b":820000,"s":{"통나무조":135,"목구조":125,"철골(철골철근)콘크리트조":115,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":97,"철골조":97,"보강콘크리트조":97,"보강블록조":97,"시멘트벽돌조":95,"황토조":95,"시멘트블록조":95,"와이어패널조":95,"EPS패널":85,"조립식패널조":80,"경량철골조":77,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":57,"컨테이너건물":57},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,75],[20000,82],[30000,84],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,94],[350000,96],[500000,98],[650000,100],[800000,102],[1000000,105],[1200000,108],[1600000,111],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,126],[5500000,128],[6000000,130],[7000000,132],[8000000,134],[9000000,137],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":107,"hospital":110,"inn":117,"store":100,"warehouse":80,"parking":55,"detached":100},"life":[50,40,30,20]},"2024":{"b":830000,"s":{"통나무조":135,"목구조":125,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":97,"철골조":97,"보강콘크리트조":97,"보강블록조":97,"시멘트벽돌조":95,"황토조":95,"시멘트블록조":95,"와이어패널조":95,"EPS패널":85,"조립식패널조":80,"경량철골조":79,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":59,"컨테이너건물":59},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,78],[20000,83],[30000,85],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,94],[350000,96],[500000,98],[650000,100],[800000,102],[1000000,105],[1200000,108],[1600000,111],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,126],[5500000,128],[6000000,130],[7000000,132],[8000000,134],[9000000,137],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":100,"pung":105,"office":115,"academy":107,"hospital":110,"inn":117,"store":100,"warehouse":80,"parking":60,"detached":100},"life":[50,40,30,20]},"2025":{"b":850000,"s":{"통나무조":135,"목구조":120,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":95,"철골조":95,"보강콘크리트조":95,"보강블록조":95,"시멘트벽돌조":90,"황토조":90,"시멘트블록조":90,"와이어패널조":90,"EPS패널":85,"조립식패널조":80,"경량철골조":79,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":59,"컨테이너건물":59},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,78],[20000,83],[30000,85],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,93],[350000,94],[500000,97],[650000,100],[800000,102],[1000000,105],[1200000,108],[1600000,111],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,126],[5500000,128],[6000000,130],[7000000,132],[8000000,134],[9000000,137],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":95,"pung":105,"office":115,"academy":107,"hospital":110,"inn":112,"store":95,"warehouse":75,"parking":60,"detached":100},"life":[50,40,30,20]},"2026":{"b":860000,"s":{"통나무조":135,"목구조":115,"철골(철골철근)콘크리트조":110,"철근콘크리트조":100,"석조":100,"프리캐스트콘크리트조":100,"목조":100,"라멘조":100,"ALC조":100,"스틸하우스조":100,"연와조":95,"철골조":95,"보강콘크리트조":95,"보강블록조":95,"시멘트벽돌조":90,"황토조":90,"시멘트블록조":90,"와이어패널조":90,"EPS패널":85,"조립식패널조":80,"경량철골조":79,"석회및흙벽돌조":60,"돌담및토담조":60,"철파이프조":59,"컨테이너건물":59},"g":{"통나무조":1,"철골(철골철근)콘크리트조":1,"철근콘크리트조":1,"석조":1,"프리캐스트콘크리트조":1,"목구조":1,"라멘조":1,"연와조":2,"목조":2,"시멘트벽돌조":2,"보강콘크리트조":2,"ALC조":2,"철골조":2,"스틸하우스조":2,"보강블록조":2,"와이어패널조":2,"경량철골조":3,"석회및흙벽돌조":3,"돌담및토담조":3,"황토조":3,"시멘트블록조":3,"조립식패널조":3,"철파이프조":4,"컨테이너건물":4},"f":[10,10,10,10],"l":[[0,78],[20000,83],[30000,85],[50000,86],[70000,87],[100000,88],[130000,89],[150000,90],[180000,91],[200000,92],[300000,93],[350000,94],[500000,97],[650000,100],[800000,102],[1000000,104],[1200000,106],[1600000,108],[2000000,114],[2500000,116],[3000000,118],[3500000,120],[4000000,122],[4500000,124],[5000000,126],[5500000,128],[6000000,130],[7000000,132],[8000000,134],[9000000,137],[10000000,140],[15000000,143],[20000000,146],[25000000,149],[30000000,152],[35000000,155],[40000000,158],[45000000,161],[50000000,164],[55000000,167],[60000000,170],[65000000,173],[70000000,176],[75000000,179],[80000000,182]],"u":{"house":100,"neigh":95,"pung":105,"office":115,"academy":107,"hospital":110,"inn":112,"store":95,"warehouse":75,"parking":60,"detached":100},"life":[50,40,30,20]}};
+    // 2000.12.31. 이전 취득 건물의 취득당시 건물기준시가 산정기준율 [그룹][신축연도][취득연도] (2001.1.1. 시행 기준시가 × 기준율)
+    const BLD_RATE2000 = {"1":{"2000":{"2000":1.016},"1999":{"2000":1.017,"1999":1.002},"1998":{"2000":1.017,"1999":1.003,"1998":1.019},"1997":{"2000":1.017,"1999":1.003,"1998":1.02,"1997":0.971},"1996":{"2000":1.017,"1999":1.004,"1998":1.021,"1997":0.972,"1996":0.955},"1995":{"2000":1.018,"1999":1.004,"1998":1.022,"1997":0.973,"1996":0.957,"1995":0.972},"1994":{"2000":1.018,"1999":1.005,"1998":1.022,"1997":0.975,"1996":0.958,"1995":0.974,"1994":0.955},"1993":{"2000":1.018,"1999":1.006,"1998":1.023,"1997":0.976,"1996":0.96,"1995":0.976,"1994":0.957,"1993":0.924},"1992":{"2000":1.019,"1999":1.006,"1998":1.024,"1997":0.977,"1996":0.961,"1995":0.978,"1994":0.959,"1993":0.927,"1992":0.942},"1991":{"2000":1.019,"1999":1.007,"1998":1.025,"1997":0.978,"1996":0.963,"1995":0.979,"1994":0.961,"1993":0.929,"1992":0.944,"1991":0.88},"1990":{"2000":1.019,"1999":1.008,"1998":1.027,"1997":0.98,"1996":0.964,"1995":0.981,"1994":0.963,"1993":0.931,"1992":0.947,"1991":0.882,"1990":0.824},"1989":{"2000":1.02,"1999":1.008,"1998":1.028,"1997":0.981,"1996":0.966,"1995":0.983,"1994":0.966,"1993":0.934,"1992":0.95,"1991":0.885,"1990":0.827,"1989":0.757},"1988":{"2000":1.02,"1999":1.009,"1998":1.029,"1997":0.982,"1996":0.968,"1995":0.986,"1994":0.968,"1993":0.936,"1992":0.953,"1991":0.888,"1990":0.83,"1989":0.76,"1988":0.727},"1987":{"2000":1.021,"1999":1.01,"1998":1.03,"1997":0.984,"1996":0.97,"1995":0.988,"1994":0.97,"1993":0.939,"1992":0.956,"1991":0.891,"1990":0.833,"1989":0.763,"1988":0.73,"1987":0.711},"1986":{"2000":1.021,"1999":1.011,"1998":1.031,"1997":0.986,"1996":0.972,"1995":0.99,"1994":0.973,"1993":0.942,"1992":0.959,"1991":0.895,"1990":0.836,"1989":0.767,"1988":0.734,"1987":0.715,"1986":0.726},"1985":{"2000":1.022,"1999":1.012,"1998":1.033,"1997":0.987,"1996":0.974,"1995":0.992,"1994":0.976,"1993":0.945,"1992":0.962,"1991":0.898,"1990":0.84,"1989":0.77,"1988":0.737,"1987":0.718,"1986":0.73,"1985":0.716},"1984":{"2000":1.022,"1999":1.013,"1998":1.034,"1997":0.989,"1996":0.976,"1995":0.995,"1994":0.978,"1993":0.948,"1992":0.965,"1991":0.901,"1990":0.843,"1989":0.773,"1988":0.741,"1987":0.722,"1986":0.734,"1985":0.72},"1983":{"2000":1.022,"1999":1.014,"1998":1.035,"1997":0.991,"1996":0.978,"1995":0.998,"1994":0.981,"1993":0.951,"1992":0.969,"1991":0.905,"1990":0.847,"1989":0.777,"1988":0.744,"1987":0.726,"1986":0.738,"1985":0.725},"1982":{"2000":1.023,"1999":1.015,"1998":1.037,"1997":0.993,"1996":0.98,"1995":1.0,"1994":0.984,"1993":0.954,"1992":0.973,"1991":0.909,"1990":0.851,"1989":0.781,"1988":0.748,"1987":0.73,"1986":0.742,"1985":0.729},"1981":{"2000":1.024,"1999":1.016,"1998":1.038,"1997":0.995,"1996":0.982,"1995":1.003,"1994":0.988,"1993":0.958,"1992":0.977,"1991":0.913,"1990":0.855,"1989":0.785,"1988":0.752,"1987":0.734,"1986":0.747,"1985":0.734},"1980":{"2000":1.024,"1999":1.017,"1998":1.04,"1997":0.997,"1996":0.985,"1995":1.006,"1994":0.991,"1993":0.961,"1992":0.981,"1991":0.917,"1990":0.859,"1989":0.789,"1988":0.756,"1987":0.738,"1986":0.752,"1985":0.738},"1979":{"2000":1.025,"1999":1.018,"1998":1.042,"1997":0.999,"1996":0.988,"1995":1.009,"1994":0.995,"1993":0.965,"1992":0.985,"1991":0.921,"1990":0.863,"1989":0.793,"1988":0.761,"1987":0.743,"1986":0.756,"1985":0.744},"1978":{"2000":1.025,"1999":1.019,"1998":1.044,"1997":1.001,"1996":0.99,"1995":1.013,"1994":0.998,"1993":0.969,"1992":0.99,"1991":0.926,"1990":0.868,"1989":0.798,"1988":0.766,"1987":0.748,"1986":0.762,"1985":0.749},"1977":{"2000":1.026,"1999":1.02,"1998":1.046,"1997":1.003,"1996":0.993,"1995":1.016,"1994":1.002,"1993":0.973,"1992":0.994,"1991":0.931,"1990":0.873,"1989":0.803,"1988":0.77,"1987":0.753,"1986":0.767,"1985":0.755},"1976":{"2000":1.027,"1999":1.022,"1998":1.048,"1997":1.006,"1996":0.996,"1995":1.02,"1994":1.006,"1993":0.978,"1992":0.999,"1991":0.936,"1990":0.878,"1989":0.808,"1988":0.776,"1987":0.758,"1986":0.773,"1985":0.76},"1975":{"2000":1.027,"1999":1.023,"1998":1.05,"1997":1.009,"1996":0.999,"1995":1.023,"1994":1.011,"1993":0.983,"1992":1.005,"1991":0.941,"1990":0.884,"1989":0.813,"1988":0.781,"1987":0.764,"1986":0.779,"1985":0.767},"1974":{"2000":1.028,"1999":1.025,"1998":1.052,"1997":1.011,"1996":1.003,"1995":1.028,"1994":1.015,"1993":0.988,"1992":1.01,"1991":0.947,"1990":0.889,"1989":0.819,"1988":0.787,"1987":0.77,"1986":0.785,"1985":0.773},"1973":{"2000":1.029,"1999":1.026,"1998":1.054,"1997":1.014,"1996":1.006,"1995":1.032,"1994":1.02,"1993":0.993,"1992":1.016,"1991":0.953,"1990":0.895,"1989":0.825,"1988":0.793,"1987":0.776,"1986":0.792,"1985":0.78},"1972":{"2000":1.03,"1999":1.028,"1998":1.057,"1997":1.018,"1996":1.01,"1995":1.036,"1994":1.025,"1993":0.998,"1992":1.023,"1991":0.96,"1990":0.902,"1989":0.831,"1988":0.8,"1987":0.783,"1986":0.799,"1985":0.788},"1971":{"2000":1.031,"1999":1.03,"1998":1.06,"1997":1.021,"1996":1.014,"1995":1.041,"1994":1.031,"1993":1.004,"1992":1.029,"1991":0.966,"1990":0.909,"1989":0.838,"1988":0.806,"1987":0.79,"1986":0.807,"1985":0.795},"1970":{"2000":1.032,"1999":1.032,"1998":1.062,"1997":1.024,"1996":1.019,"1995":1.046,"1994":1.036,"1993":1.011,"1992":1.036,"1991":0.974,"1990":0.916,"1989":0.845,"1988":0.814,"1987":0.797,"1986":0.815,"1985":0.804},"1969":{"2000":1.033,"1999":1.034,"1998":1.065,"1997":1.028,"1996":1.023,"1995":1.052,"1994":1.043,"1993":1.017,"1992":1.044,"1991":0.981,"1990":0.924,"1989":0.853,"1988":0.822,"1987":0.805,"1986":0.823,"1985":0.813},"1968":{"2000":1.034,"1999":1.036,"1998":1.069,"1997":1.032,"1996":1.028,"1995":1.058,"1994":1.049,"1993":1.025,"1992":1.052,"1991":0.99,"1990":0.932,"1989":0.861,"1988":0.83,"1987":0.814,"1986":0.833,"1985":0.822},"1967":{"2000":1.035,"1999":1.038,"1998":1.072,"1997":1.037,"1996":1.033,"1995":1.064,"1994":1.056,"1993":1.032,"1992":1.061,"1991":0.998,"1990":0.941,"1989":0.87,"1988":0.839,"1987":0.823,"1986":0.843,"1985":0.832},"1966":{"2000":1.036,"1999":1.041,"1998":1.076,"1997":1.041,"1996":1.039,"1995":1.071,"1994":1.064,"1993":1.04,"1992":1.07,"1991":1.008,"1990":0.951,"1989":0.879,"1988":0.848,"1987":0.833,"1986":0.853,"1985":0.843},"1965":{"2000":1.038,"1999":1.043,"1998":1.08,"1997":1.046,"1996":1.045,"1995":1.078,"1994":1.072,"1993":1.049,"1992":1.08,"1991":1.018,"1990":0.961,"1989":0.889,"1988":0.859,"1987":0.844,"1986":0.864,"1985":0.855},"1964":{"2000":1.039,"1999":1.046,"1998":1.084,"1997":1.052,"1996":1.051,"1995":1.086,"1994":1.081,"1993":1.059,"1992":1.09,"1991":1.029,"1990":0.972,"1989":0.9,"1988":0.87,"1987":0.855,"1986":0.877,"1985":0.867},"1963":{"2000":1.041,"1999":1.049,"1998":1.089,"1997":1.057,"1996":1.058,"1995":1.094,"1994":1.09,"1993":1.069,"1992":1.102,"1991":1.041,"1990":0.984,"1989":0.912,"1988":0.882,"1987":0.867,"1986":0.89,"1985":0.881},"1962":{"2000":1.043,"1999":1.053,"1998":1.094,"1997":1.064,"1996":1.066,"1995":1.103,"1994":1.101,"1993":1.08,"1992":1.115,"1991":1.053,"1990":0.997,"1989":0.925,"1988":0.895,"1987":0.881,"1986":0.904,"1985":0.896},"1961":{"2000":1.044,"1999":1.056,"1998":1.099,"1997":1.071,"1996":1.074,"1995":1.113,"1994":1.112,"1993":1.093,"1992":1.128,"1991":1.067,"1990":1.011,"1989":0.938,"1988":0.909,"1987":0.895,"1986":0.92,"1985":0.912},"1960":{"2000":1.047,"1999":1.06,"1998":1.105,"1997":1.078,"1996":1.083,"1995":1.124,"1994":1.124,"1993":1.106,"1992":1.143,"1991":1.083,"1990":1.026,"1989":0.954,"1988":0.924,"1987":0.911,"1986":0.937,"1985":0.93},"1959":{"1999":1.065,"1998":1.112,"1997":1.086,"1996":1.093,"1995":1.136,"1994":1.138,"1993":1.121,"1992":1.16,"1991":1.099,"1990":1.043,"1989":0.97,"1988":0.941,"1987":0.929,"1986":0.956,"1985":0.949},"1958":{"1998":1.119,"1997":1.095,"1996":1.104,"1995":1.149,"1994":1.152,"1993":1.137,"1992":1.178,"1991":1.118,"1990":1.062,"1989":0.989,"1988":0.96,"1987":0.948,"1986":0.977,"1985":0.97},"1957":{"1997":1.106,"1996":1.117,"1995":1.164,"1994":1.169,"1993":1.155,"1992":1.198,"1991":1.138,"1990":1.083,"1989":1.009,"1988":0.981,"1987":0.97,"1986":1.0,"1985":0.994},"1956":{"1996":1.13,"1995":1.18,"1994":1.187,"1993":1.174,"1992":1.221,"1991":1.161,"1990":1.106,"1989":1.032,"1988":1.004,"1987":0.994,"1986":1.025,"1985":1.02},"1955":{"1995":1.199,"1994":1.208,"1993":1.197,"1992":1.246,"1991":1.187,"1990":1.132,"1989":1.057,"1988":1.03,"1987":1.02,"1986":1.054,"1985":1.05},"1954":{"1994":1.231,"1993":1.222,"1992":1.274,"1991":1.216,"1990":1.161,"1989":1.086,"1988":1.059,"1987":1.051,"1986":1.086,"1985":1.083},"1953":{"1993":1.251,"1992":1.306,"1991":1.249,"1990":1.194,"1989":1.118,"1988":1.092,"1987":1.085,"1986":1.123,"1985":1.121},"1952":{"1992":1.343,"1991":1.286,"1990":1.232,"1989":1.156,"1988":1.131,"1987":1.124,"1986":1.165,"1985":1.165},"1951":{"1991":1.33,"1990":1.277,"1989":1.2,"1988":1.175,"1987":1.17,"1986":1.214,"1985":1.215},"1950":{"1990":1.277,"1989":1.2,"1988":1.175,"1987":1.17,"1986":1.214,"1985":1.215},"1949":{"1989":1.2,"1988":1.175,"1987":1.17,"1986":1.214,"1985":1.215},"1948":{"1988":1.175,"1987":1.17,"1986":1.214,"1985":1.215},"1947":{"1987":1.17,"1986":1.214,"1985":1.215},"1946":{"1986":1.214,"1985":1.215},"1945":{"1985":1.215}},"2":{"2000":{"2000":1.02},"1999":{"2000":1.021,"1999":1.01},"1998":{"2000":1.021,"1999":1.011,"1998":1.032},"1997":{"2000":1.022,"1999":1.012,"1998":1.033,"1997":0.988},"1996":{"2000":1.022,"1999":1.013,"1998":1.035,"1997":0.99,"1996":0.977},"1995":{"2000":1.023,"1999":1.014,"1998":1.036,"1997":0.992,"1996":0.979,"1995":0.999},"1994":{"2000":1.023,"1999":1.015,"1998":1.038,"1997":0.994,"1996":0.981,"1995":1.002,"1994":0.986},"1993":{"2000":1.024,"1999":1.016,"1998":1.039,"1997":0.996,"1996":0.984,"1995":1.005,"1994":0.989,"1993":0.96},"1992":{"2000":1.024,"1999":1.017,"1998":1.041,"1997":0.998,"1996":0.986,"1995":1.008,"1994":0.993,"1993":0.963,"1992":0.983},"1991":{"2000":1.025,"1999":1.019,"1998":1.043,"1997":1.0,"1996":0.989,"1995":1.011,"1994":0.996,"1993":0.967,"1992":0.987,"1991":0.924},"1990":{"2000":1.026,"1999":1.02,"1998":1.045,"1997":1.002,"1996":0.992,"1995":1.014,"1994":1.0,"1993":0.971,"1992":0.992,"1991":0.928,"1990":0.871},"1989":{"2000":1.026,"1999":1.021,"1998":1.047,"1997":1.005,"1996":0.995,"1995":1.018,"1994":1.004,"1993":0.976,"1992":0.997,"1991":0.933,"1990":0.876,"1989":0.805},"1988":{"2000":1.027,"1999":1.022,"1998":1.049,"1997":1.007,"1996":0.998,"1995":1.022,"1994":1.008,"1993":0.98,"1992":1.002,"1991":0.939,"1990":0.881,"1989":0.81,"1988":0.778},"1987":{"2000":1.028,"1999":1.024,"1998":1.051,"1997":1.01,"1996":1.001,"1995":1.026,"1994":1.013,"1993":0.985,"1992":1.008,"1991":0.944,"1990":0.886,"1989":0.816,"1988":0.784,"1987":0.767},"1986":{"2000":1.029,"1999":1.025,"1998":1.053,"1997":1.013,"1996":1.005,"1995":1.03,"1994":1.018,"1993":0.99,"1992":1.013,"1991":0.95,"1990":0.892,"1989":0.822,"1988":0.79,"1987":0.773,"1986":0.789},"1985":{"2000":1.029,"1999":1.027,"1998":1.056,"1997":1.016,"1996":1.008,"1995":1.034,"1994":1.023,"1993":0.996,"1992":1.019,"1991":0.956,"1990":0.899,"1989":0.828,"1988":0.796,"1987":0.779,"1986":0.796,"1985":0.784},"1984":{"2000":1.03,"1999":1.029,"1998":1.058,"1997":1.019,"1996":1.012,"1995":1.039,"1994":1.028,"1993":1.001,"1992":1.026,"1991":0.963,"1990":0.905,"1989":0.835,"1988":0.803,"1987":0.786,"1986":0.803,"1985":0.791},"1983":{"2000":1.031,"1999":1.031,"1998":1.061,"1997":1.023,"1996":1.016,"1995":1.044,"1994":1.034,"1993":1.008,"1992":1.033,"1991":0.97,"1990":0.912,"1989":0.842,"1988":0.81,"1987":0.794,"1986":0.811,"1985":0.8},"1982":{"2000":1.032,"1999":1.033,"1998":1.064,"1997":1.026,"1996":1.021,"1995":1.049,"1994":1.039,"1993":1.014,"1992":1.04,"1991":0.977,"1990":0.92,"1989":0.849,"1988":0.818,"1987":0.801,"1986":0.819,"1985":0.808},"1981":{"2000":1.033,"1999":1.035,"1998":1.067,"1997":1.03,"1996":1.026,"1995":1.055,"1994":1.046,"1993":1.021,"1992":1.048,"1991":0.985,"1990":0.928,"1989":0.857,"1988":0.826,"1987":0.81,"1986":0.828,"1985":0.817},"1980":{"2000":1.034,"1999":1.037,"1998":1.07,"1997":1.034,"1996":1.031,"1995":1.061,"1994":1.053,"1993":1.028,"1992":1.056,"1991":0.994,"1990":0.937,"1989":0.865,"1988":0.834,"1987":0.818,"1986":0.838,"1985":0.827},"1979":{"2000":1.036,"1999":1.039,"1998":1.074,"1997":1.039,"1996":1.036,"1995":1.067,"1994":1.06,"1993":1.036,"1992":1.065,"1991":1.003,"1990":0.946,"1989":0.874,"1988":0.843,"1987":0.828,"1986":0.848,"1985":0.838},"1978":{"2000":1.037,"1999":1.042,"1998":1.078,"1997":1.044,"1996":1.042,"1995":1.074,"1994":1.068,"1993":1.045,"1992":1.075,"1991":1.013,"1990":0.956,"1989":0.884,"1988":0.853,"1987":0.838,"1986":0.859,"1985":0.849},"1977":{"2000":1.038,"1999":1.045,"1998":1.082,"1997":1.049,"1996":1.048,"1995":1.082,"1994":1.076,"1993":1.054,"1992":1.085,"1991":1.023,"1990":0.966,"1989":0.894,"1988":0.864,"1987":0.849,"1986":0.87,"1985":0.861},"1976":{"2000":1.04,"1999":1.048,"1998":1.086,"1997":1.054,"1996":1.055,"1995":1.09,"1994":1.085,"1993":1.064,"1992":1.096,"1991":1.035,"1990":0.978,"1989":0.906,"1988":0.876,"1987":0.861,"1986":0.883,"1985":0.874},"1975":{"2000":1.042,"1999":1.051,"1998":1.091,"1997":1.061,"1996":1.062,"1995":1.099,"1994":1.095,"1993":1.075,"1992":1.108,"1991":1.047,"1990":0.99,"1989":0.918,"1988":0.888,"1987":0.874,"1986":0.897,"1985":0.888},"1974":{"2000":1.043,"1999":1.054,"1998":1.097,"1997":1.067,"1996":1.07,"1995":1.108,"1994":1.106,"1993":1.086,"1992":1.121,"1991":1.06,"1990":1.004,"1989":0.931,"1988":0.902,"1987":0.888,"1986":0.912,"1985":0.904},"1973":{"2000":1.045,"1999":1.058,"1998":1.102,"1997":1.074,"1996":1.079,"1995":1.119,"1994":1.118,"1993":1.099,"1992":1.136,"1991":1.075,"1990":1.019,"1989":0.946,"1988":0.916,"1987":0.903,"1986":0.928,"1985":0.921},"1972":{"2000":1.048,"1999":1.062,"1998":1.109,"1997":1.082,"1996":1.088,"1995":1.13,"1994":1.131,"1993":1.113,"1992":1.151,"1991":1.091,"1990":1.035,"1989":0.962,"1988":0.933,"1987":0.92,"1986":0.946,"1985":0.939},"1971":{"2000":1.05,"1999":1.067,"1998":1.116,"1997":1.091,"1996":1.099,"1995":1.143,"1994":1.145,"1993":1.128,"1992":1.169,"1991":1.109,"1990":1.052,"1989":0.979,"1988":0.95,"1987":0.938,"1986":0.966,"1985":0.959},"1970":{"2000":1.053,"1999":1.072,"1998":1.123,"1997":1.1,"1996":1.11,"1995":1.157,"1994":1.16,"1993":1.145,"1992":1.188,"1991":1.128,"1990":1.072,"1989":0.999,"1988":0.97,"1987":0.959,"1986":0.988,"1985":0.982},"1969":{"1999":1.078,"1998":1.132,"1997":1.111,"1996":1.123,"1995":1.172,"1994":1.178,"1993":1.164,"1992":1.209,"1991":1.15,"1990":1.094,"1989":1.02,"1988":0.992,"1987":0.981,"1986":1.012,"1985":1.007},"1968":{"1998":1.141,"1997":1.123,"1996":1.138,"1995":1.189,"1994":1.197,"1993":1.185,"1992":1.233,"1991":1.174,"1990":1.118,"1989":1.044,"1988":1.016,"1987":1.007,"1986":1.039,"1985":1.035},"1967":{"1997":1.136,"1996":1.154,"1995":1.209,"1994":1.219,"1993":1.209,"1992":1.259,"1991":1.201,"1990":1.146,"1989":1.071,"1988":1.044,"1987":1.035,"1986":1.07,"1985":1.066},"1966":{"1996":1.172,"1995":1.231,"1994":1.244,"1993":1.236,"1992":1.29,"1991":1.232,"1990":1.177,"1989":1.102,"1988":1.075,"1987":1.067,"1986":1.104,"1985":1.102},"1965":{"1995":1.256,"1994":1.272,"1993":1.267,"1992":1.324,"1991":1.267,"1990":1.213,"1989":1.137,"1988":1.111,"1987":1.104,"1986":1.143,"1985":1.142},"1964":{"1994":1.305,"1993":1.302,"1992":1.364,"1991":1.307,"1990":1.254,"1989":1.177,"1988":1.152,"1987":1.146,"1986":1.189,"1985":1.189},"1963":{"1993":1.343,"1992":1.411,"1991":1.355,"1990":1.301,"1989":1.224,"1988":1.2,"1987":1.196,"1986":1.242,"1985":1.244},"1962":{"1992":1.465,"1991":1.411,"1990":1.358,"1989":1.28,"1988":1.257,"1987":1.255,"1986":1.305,"1985":1.308},"1961":{"1991":1.478,"1990":1.426,"1989":1.346,"1988":1.325,"1987":1.325,"1986":1.38,"1985":1.386},"1960":{"1990":1.426,"1989":1.346,"1988":1.325,"1987":1.325,"1986":1.38,"1985":1.386},"1959":{"1989":1.346,"1988":1.325,"1987":1.325,"1986":1.38,"1985":1.386},"1958":{"1988":1.325,"1987":1.325,"1986":1.38,"1985":1.386},"1957":{"1987":1.325,"1986":1.38,"1985":1.386},"1956":{"1986":1.38,"1985":1.386},"1955":{"1985":1.386}},"3":{"2000":{"2000":1.027},"1999":{"2000":1.028,"1999":1.025},"1998":{"2000":1.029,"1999":1.026,"1998":1.054},"1997":{"2000":1.03,"1999":1.028,"1998":1.057,"1997":1.018},"1996":{"2000":1.031,"1999":1.03,"1998":1.06,"1997":1.021,"1996":1.014},"1995":{"2000":1.032,"1999":1.032,"1998":1.062,"1997":1.024,"1996":1.019,"1995":1.046},"1994":{"2000":1.033,"1999":1.034,"1998":1.065,"1997":1.028,"1996":1.023,"1995":1.052,"1994":1.043},"1993":{"2000":1.034,"1999":1.036,"1998":1.069,"1997":1.032,"1996":1.028,"1995":1.058,"1994":1.049,"1993":1.025},"1992":{"2000":1.035,"1999":1.038,"1998":1.072,"1997":1.037,"1996":1.033,"1995":1.064,"1994":1.056,"1993":1.032,"1992":1.061},"1991":{"2000":1.036,"1999":1.041,"1998":1.076,"1997":1.041,"1996":1.039,"1995":1.071,"1994":1.064,"1993":1.04,"1992":1.07,"1991":1.008},"1990":{"2000":1.038,"1999":1.043,"1998":1.08,"1997":1.046,"1996":1.045,"1995":1.078,"1994":1.072,"1993":1.049,"1992":1.08,"1991":1.018,"1990":0.961},"1989":{"2000":1.039,"1999":1.046,"1998":1.084,"1997":1.052,"1996":1.051,"1995":1.086,"1994":1.081,"1993":1.059,"1992":1.09,"1991":1.029,"1990":0.972,"1989":0.9},"1988":{"2000":1.041,"1999":1.049,"1998":1.089,"1997":1.057,"1996":1.058,"1995":1.094,"1994":1.09,"1993":1.069,"1992":1.102,"1991":1.041,"1990":0.984,"1989":0.912,"1988":0.882},"1987":{"2000":1.043,"1999":1.053,"1998":1.094,"1997":1.064,"1996":1.066,"1995":1.103,"1994":1.101,"1993":1.08,"1992":1.115,"1991":1.053,"1990":0.997,"1989":0.925,"1988":0.895,"1987":0.881},"1986":{"2000":1.044,"1999":1.056,"1998":1.099,"1997":1.071,"1996":1.074,"1995":1.113,"1994":1.112,"1993":1.093,"1992":1.128,"1991":1.067,"1990":1.011,"1989":0.938,"1988":0.909,"1987":0.895,"1986":0.92},"1985":{"2000":1.047,"1999":1.06,"1998":1.105,"1997":1.078,"1996":1.083,"1995":1.124,"1994":1.124,"1993":1.106,"1992":1.143,"1991":1.083,"1990":1.026,"1989":0.954,"1988":0.924,"1987":0.911,"1986":0.937,"1985":0.93},"1984":{"2000":1.049,"1999":1.065,"1998":1.112,"1997":1.086,"1996":1.093,"1995":1.136,"1994":1.138,"1993":1.121,"1992":1.16,"1991":1.099,"1990":1.043,"1989":0.97,"1988":0.941,"1987":0.929,"1986":0.956,"1985":0.949},"1983":{"2000":1.051,"1999":1.069,"1998":1.119,"1997":1.095,"1996":1.104,"1995":1.149,"1994":1.152,"1993":1.137,"1992":1.178,"1991":1.118,"1990":1.062,"1989":0.989,"1988":0.96,"1987":0.948,"1986":0.977,"1985":0.97},"1982":{"2000":1.054,"1999":1.075,"1998":1.127,"1997":1.106,"1996":1.117,"1995":1.164,"1994":1.169,"1993":1.155,"1992":1.198,"1991":1.138,"1990":1.083,"1989":1.009,"1988":0.981,"1987":0.97,"1986":1.0,"1985":0.994},"1981":{"2000":1.057,"1999":1.081,"1998":1.136,"1997":1.117,"1996":1.13,"1995":1.18,"1994":1.187,"1993":1.174,"1992":1.221,"1991":1.161,"1990":1.106,"1989":1.032,"1988":1.004,"1987":0.994,"1986":1.025,"1985":1.02},"1980":{"2000":1.061,"1999":1.088,"1998":1.146,"1997":1.129,"1996":1.145,"1995":1.199,"1994":1.208,"1993":1.197,"1992":1.246,"1991":1.187,"1990":1.132,"1989":1.057,"1988":1.03,"1987":1.02,"1986":1.054,"1985":1.05},"1979":{"1999":1.095,"1998":1.158,"1997":1.144,"1996":1.163,"1995":1.219,"1994":1.231,"1993":1.222,"1992":1.274,"1991":1.216,"1990":1.161,"1989":1.086,"1988":1.059,"1987":1.051,"1986":1.086,"1985":1.083},"1978":{"1998":1.171,"1997":1.16,"1996":1.182,"1995":1.243,"1994":1.257,"1993":1.251,"1992":1.306,"1991":1.249,"1990":1.194,"1989":1.118,"1988":1.092,"1987":1.085,"1986":1.123,"1985":1.121},"1977":{"1997":1.178,"1996":1.205,"1995":1.27,"1994":1.288,"1993":1.284,"1992":1.343,"1991":1.286,"1990":1.232,"1989":1.156,"1988":1.131,"1987":1.124,"1986":1.165,"1985":1.165},"1976":{"1996":1.231,"1995":1.301,"1994":1.323,"1993":1.322,"1992":1.386,"1991":1.33,"1990":1.277,"1989":1.2,"1988":1.175,"1987":1.17,"1986":1.214,"1985":1.215},"1975":{"1995":1.338,"1994":1.364,"1993":1.367,"1992":1.437,"1991":1.382,"1990":1.328,"1989":1.251,"1988":1.227,"1987":1.224,"1986":1.272,"1985":1.275},"1974":{"1994":1.413,"1993":1.42,"1992":1.497,"1991":1.443,"1990":1.39,"1989":1.311,"1988":1.289,"1987":1.288,"1986":1.341,"1985":1.345},"1973":{"1993":1.485,"1992":1.57,"1991":1.517,"1990":1.465,"1989":1.385,"1988":1.364,"1987":1.365,"1986":1.424,"1985":1.431},"1972":{"1992":1.659,"1991":1.608,"1990":1.558,"1989":1.476,"1988":1.457,"1987":1.461,"1986":1.526,"1985":1.536},"1971":{"1991":1.724,"1990":1.675,"1989":1.591,"1988":1.574,"1987":1.582,"1986":1.656,"1985":1.67},"1970":{"1990":1.675,"1989":1.591,"1988":1.574,"1987":1.582,"1986":1.656,"1985":1.67},"1969":{"1989":1.591,"1988":1.574,"1987":1.582,"1986":1.656,"1985":1.67},"1968":{"1988":1.574,"1987":1.582,"1986":1.656,"1985":1.67},"1967":{"1987":1.582,"1986":1.656,"1985":1.67},"1966":{"1986":1.656,"1985":1.67},"1965":{"1985":1.67}}};
+
+    // ===== 건물 기준시가 자동 계산 (국세청 건물 기준시가, 소득세법 제99조①1호나목) =====
+    // ㎡당 금액 = 건물신축가격기준액 × 구조지수 × 용도지수 × 위치지수 × 경과연수별잔가율 (천원 미만 절사, 양도세는 개별특성 조정률 미적용)
+    const BLD_FIRST = 2001, BLD_LAST = 2026;
+    const HOUSE_FIRST_DATE = '2005-04-30'; // 개별주택가격 최초 공시일
+    function bldPerM2(T, year, f, side) {
+        const struct = side === 'tr' ? f.trStruct : f.acqStruct;
+        const use = side === 'tr' ? f.trUse : f.acqUse;
+        let s = T.s[struct], g = T.g[struct] || (struct === 'EPS패널' ? T.g['철골조'] : undefined);
+        const notes = [];
+        if (s == null) { s = 100; notes.push('해당 연도 고시에 없는 구조 → 구조지수 100'); }
+        if (g == null) { g = T.life.length >= 3 ? 3 : T.life.length; notes.push(`잔가율 ${'ⅠⅡⅢⅣ'[g - 1]}그룹 적용`); }
+        const u = use === 'other' || !T.u[use] ? 100 : T.u[use];
+        const lv = T.l.reduce((v, [lo, ix]) => (f.unit >= lo ? ix : v), T.l[0][1]);
+        const fin = T.f[g - 1] / 100, life = T.life[g - 1];
+        const age = year - Number(f.built);
+        const r = Math.max(fin, Math.round((1 - (1 - fin) / life * age) * 10000) / 10000);
+        const raw = T.b * s / 100 * u / 100 * lv / 100 * r;
+        return { per: Math.floor(raw / 1000 + 1e-9) * 1000, s, u, lv, r, g, age, life, notes };
+    }
+    // 층별 기준시가 합계 (year 연도 고시, unit 공시지가, side 구조·용도 시점) → { house, shop, rows, commonText } 또는 { msg }
+    function bldSum(year, unit, side, label, rateOf) {
+        const T = BLD_STD[year];
+        const floors = floorRows().filter(f => f.area > 0);
+        if (!floors.length) return { msg: '층별 면적을 넣어 주세요.' };
+        const noBuilt = floors.find(f => !/^\d{4}$/.test(f.built));
+        if (noBuilt) return { msg: `${noBuilt.name}의 신축연도를 넣어 주세요.` };
+        const rows = [];
+        const sum = { house: 0, shop: 0 }, area = { house: 0, shop: 0 };
+        for (const f of floors.filter(f => f.kind !== 'common')) {
+            const p = bldPerM2(T, year, { ...f, unit }, side);
+            let v = p.per * f.area;
+            if (rateOf) {
+                const rt = rateOf(f, p);
+                if (rt.msg) return { msg: rt.msg };
+                p.rate = rt.rate; p.rateText = rt.text;
+                v = Math.floor(v * rt.rate);
+            }
+            sum[f.kind] += v; area[f.kind] += f.area;
+            rows.push({ f, p, v });
+        }
+        // 공용: 주택·상가 면적 비율로 나누고 각 부분의 평균 ㎡당 금액 적용 (고시 용도지수 적용요령 (4))
+        const common = floors.filter(f => f.kind === 'common').reduce((s, f) => s + f.area, 0);
+        let commonText = '';
+        if (common) {
+            const tot = area.house + area.shop;
+            const hr = tot ? area.house / tot : 0;
+            const avgH = area.house ? sum.house / area.house : 0, avgS = area.shop ? sum.shop / area.shop : 0;
+            sum.house += common * hr * avgH; sum.shop += common * (1 - hr) * avgS;
+            commonText = `공용 ${m2(common)}: 주택 ${m2(common * hr)} × ${won(Math.floor(avgH))} + 상가 ${m2(common * (1 - hr))} × ${won(Math.floor(avgS))} (주용도 면적 비율로 안분)`;
+        }
+        return { year, unit, label, house: Math.floor(sum.house), shop: Math.floor(sum.shop), rows, commonText, lv: rows.length ? rows[0].p.lv : 0, base: T.b };
+    }
+    // side: 'tr' 양도 / 'acq' 취득
+    function bldCalc(side) {
+        const date = side === 'tr' ? $('transferDate').value : $('acquisitionDate').value;
+        const unit = num(side === 'tr' ? 'trLandUnit' : 'acqLandUnit');
+        const name = side === 'tr' ? '양도' : '취득';
+        if (!isDate(date)) return { msg: `아래 4번에서 ${name}일을 넣으면 계산합니다.` };
+        let year = Number(date.slice(0, 4));
+        const floors = floorRows().filter(f => f.area > 0);
+        const future = floors.find(f => /^\d{4}$/.test(f.built) && Number(f.built) > year);
+        if (future) return { msg: `${future.name} 신축연도(${future.built})가 ${name} 연도보다 늦습니다. ${name} 당시 없던 건물이면 직접 입력해 주세요.` };
+        if (year < BLD_FIRST) {
+            // 2000.12.31. 이전 취득: 2001.1.1. 시행 기준시가 × 취득당시 건물기준시가 산정기준율 (소득세법 시행령 제164조⑤)
+            const unit01 = num('base01LandUnit');
+            if (!unit01) return { msg: '2000.12.31. 이전 취득: 아래 "2001.1.1. 당시 개별공시지가"를 넣으면 2001.1.1. 기준시가 × 산정기준율로 계산합니다.' };
+            const acqY = Math.max(1985, year); // 1984.12.31. 이전 취득은 1985년 취득으로 봄
+            const r = bldSum(2001, unit01, 'acq', '2001.1.1. 시행 고시 × 취득당시 산정기준율', (f, p) => {
+                const life = BLD_STD[2001].life[p.g - 1];
+                const built = Math.max(Number(f.built), acqY - life); // 내용연수 종료 연도 이전 신축 → 종료 연도
+                const tbl = BLD_RATE2000[p.g] && BLD_RATE2000[p.g][Math.min(built, 2000)];
+                const rate = tbl && tbl[Math.min(acqY, 2000) > 1985 ? Math.min(acqY, 2000) : 1985];
+                if (!rate) return { msg: `${f.name}: 산정기준율표에 없는 조합(신축 ${built}년·취득 ${acqY}년)입니다. 직접 입력해 주세요.` };
+                return { rate, text: `${'ⅠⅡⅢ'[p.g - 1]}그룹 신축 ${built}·취득 ${acqY} → ${rate}` };
+            });
+            if (r.msg) return r;
+            r.pre2001 = true; r.unit = unit01;
+            return r;
+        }
+        const over = year > BLD_LAST;
+        if (over) year = BLD_LAST;
+        if (!unit) return { msg: `${name} 당시 개별공시지가(㎡당)를 넣으면 위치지수를 정해 계산합니다.` };
+        const r = bldSum(year, unit, side, `${year}.1.1. 시행 고시${over ? ' (최신 고시 적용)' : ''}`);
+        return r;
+    }
+    // 개별주택가격 최초 공시(2005.4.30.) 전 취득: 취득당시 주택가격 환산 (소득세법 시행령 제164조⑦)
+    // 최초 공시 개별주택가격 × 취득당시 (주택 부수토지 기준시가 + 주택 건물 기준시가) / 최초 공시당시 (같은 합계)
+    function housePriceConvert(acq) {
+        const date = $('acquisitionDate').value;
+        if (!isDate(date) || date >= HOUSE_FIRST_DATE) return null;
+        const j = areaJudge();
+        const first = num('firstHousePrice'), unitF = num('firstLandUnit'), unitA = num(Number(date.slice(0, 4)) < BLD_FIRST ? 'acqLandUnit' : 'acqLandUnit');
+        if (!j) return { msg: '면적을 넣어 주세요.' };
+        if (!first || !unitF) return { msg: '2005.4.30. 전 취득: 아래 "최초 공시 개별주택가격"과 "최초 공시 당시 개별공시지가"를 넣으면 취득당시 개별주택가격을 환산합니다.' };
+        if (!unitA) return { msg: '취득 당시 개별공시지가를 넣어 주세요.' };
+        if (!acq || acq.msg) return { msg: '취득 당시 건물 기준시가가 계산되어야 환산할 수 있습니다.' };
+        const atFirst = bldSum(2005, unitF, 'acq', '2005.1.1. 시행 고시 (최초 공시일 2005.4.30.)');
+        if (atFirst.msg) return atFirst;
+        const landA = Math.floor(unitA * j.houseLand), landF = Math.floor(unitF * j.houseLand);
+        const numer = landA + acq.house, denom = landF + atFirst.house;
+        const price = Math.floor(first * numer / denom);
+        return { price, first, landA, landF, bldA: acq.house, bldF: atFirst.house, atFirst, houseLand: j.houseLand };
+    }
+    const USE_LABEL = Object.fromEntries(USES), STRUCT_LABEL = Object.fromEntries(STRUCTS);
+    const n0 = v => Math.round(v).toLocaleString('ko-KR');
+    // 층별 계산표: 층 · 구분 · 기준금액 · 구조(지수) · 용도(지수) · 위치지수 · 잔가율 · ㎡당 금액 · 면적 · 기준시가
+    function bldTable(r, side) {
+        const hasRate = r.rows.some(x => x.p.rate);
+        const cols = `<colgroup><col style="width: 13%"><col style="width: 7%"><col style="width: 9%"><col style="width: 11%"><col style="width: 11%"><col style="width: 6%"><col style="width: 8%">${hasRate ? '<col style="width: 7%">' : ''}<col style="width: 9%"><col style="width: 8%"><col></colgroup>`;
+        const head = `<tr><th>층</th><th>구분</th><th>기준<br>금액</th><th>구조<br>지수</th><th>용도<br>지수</th><th>위치<br>지수</th><th>잔가율</th>${hasRate ? '<th>산정<br>기준율</th>' : ''}<th>㎡당<br>금액</th><th>면적<br>(㎡)</th><th>기준시가</th></tr>`;
+        const body = r.rows.map(({ f, p, v }) => {
+            const st = side === 'tr' ? f.trStruct : f.acqStruct, us = side === 'tr' ? f.trUse : f.acqUse;
+            return `<tr><td>${f.name}</td><td>${f.kind === 'house' ? '주택' : '상가'}</td><td>${n0(r.base)}</td>` +
+                `<td title="${STRUCT_LABEL[st]}">${p.s}<small>${STRUCT_LABEL[st]}</small></td><td title="${USE_LABEL[us] || ''}">${p.u}<small>${USE_LABEL[us] || '-'}</small></td>` +
+                `<td>${p.lv}</td><td>${p.r}<small>${'ⅠⅡⅢⅣ'[p.g - 1]}·${p.age}년</small></td>${hasRate ? `<td>${p.rate || ''}</td>` : ''}` +
+                `<td>${n0(p.per)}</td><td>${(Math.round(f.area * 100) / 100).toLocaleString('ko-KR')}</td><td>${n0(v)}</td></tr>`;
+        }).join('');
+        const span = hasRate ? 10 : 9;
+        const common = r.commonText ? `<tr class="sub"><td colspan="${span + 1}">${r.commonText}</td></tr>` : '';
+        const foot = `<tr class="bsum"><td colspan="${span}">주택 건물 기준시가 합계</td><td>${n0(r.house)}</td></tr>` +
+            `<tr class="bsum"><td colspan="${span}">상가 건물 기준시가 합계</td><td>${n0(r.shop)}</td></tr>`;
+        return `<div class="bld-scroll"><table class="bld-table fixed">${cols}<thead>${head}</thead><tbody>${body}${common}</tbody><tfoot>${foot}</tfoot></table></div>`;
+    }
+    function bldBlock(title, r, side) {
+        return `<div class="bld-side"><div class="bld-title">${title} <small>${r.label} · 위치지수 ${r.lv} (공시지가 ${won(r.unit)}/㎡) · ㎡당 금액 = 기준금액 × 구조지수 × 용도지수 × 위치지수 × 잔가율 (천원 미만 절사)</small></div>${bldTable(r, side)}</div>`;
+    }
+    function renderBld() {
+        const acqDate = $('acquisitionDate').value;
+        const pre2001 = isDate(acqDate) && Number(acqDate.slice(0, 4)) < BLD_FIRST;
+        const preHouse = isDate(acqDate) && acqDate < HOUSE_FIRST_DATE;
+        // 취득일이 정해져 해당 없으면 흐리게 (입력칸은 항상 보이게)
+        const known = isDate(acqDate);
+        $('base01Row').classList.toggle('na-row', known && !pre2001);
+        document.querySelectorAll('.first-row').forEach(el => el.classList.toggle('na-row', known && !preHouse));
+        const res = {}, block = {};
+        [['acq', '취득 당시'], ['tr', '양도 당시']].forEach(([side, title]) => {
+            const r = res[side] = bldCalc(side);
+            if (r.msg) { block[side] = `<div class="bld-side"><div class="bld-title">${title}</div><div class="bld-msg">${r.msg}</div></div>`; return; }
+            // 직접 고치지 않은 칸만 자동으로 채움
+            [['ShopBldg', r.shop], ['HouseBldg', r.house]].forEach(([k, v]) => {
+                const el = $(side + k);
+                if (!el.dataset.manual) el.value = v ? v.toLocaleString('ko-KR') : '';
+            });
+            block[side] = bldBlock(title, r, side);
+        });
+        // 2005.4.30. 전 취득 주택분: 취득당시 개별주택가격 환산
+        let conv = '';
+        if (preHouse) {
+            const c = housePriceConvert(res.acq);
+            if (!c || c.msg) conv = `<div class="bld-side"><div class="bld-title">취득당시 개별주택가격 환산 <small>소득세법 시행령 제164조⑦</small></div><div class="bld-msg">${c ? c.msg : ''}</div></div>`;
+            else {
+                const el = $('acqHousePrice');
+                if (!el.dataset.manual) el.value = c.price.toLocaleString('ko-KR');
+                conv = bldBlock('개별주택가격 최초 공시일(2005.4.30.) 당시', c.atFirst, 'acq') +
+                    `<div class="bld-side"><div class="bld-title">취득당시 개별주택가격 환산 <small>소득세법 시행령 제164조⑦ · 최초 공시 개별주택가격 × 취득당시 (주택 부수토지 + 주택 건물 기준시가) ÷ 최초 공시당시 (같은 합계)</small></div>
+                    <div class="bld-scroll"><table class="bld-table conv"><thead><tr><th></th><th>주택 부수토지 기준시가<small>${m2(c.houseLand)} × 공시지가</small></th><th>주택 건물 기준시가</th><th>합계</th></tr></thead><tbody>
+                    <tr><td>취득 당시</td><td>${n0(c.landA)}</td><td>${n0(c.bldA)}</td><td>${n0(c.landA + c.bldA)}</td></tr>
+                    <tr><td>최초 공시 당시</td><td>${n0(c.landF)}</td><td>${n0(c.bldF)}</td><td>${n0(c.landF + c.bldF)}</td></tr></tbody>
+                    <tfoot><tr class="bsum"><td colspan="3">${n0(c.first)} × ${n0(c.landA + c.bldA)} ÷ ${n0(c.landF + c.bldF)} = 취득당시 개별주택가격</td><td>${n0(c.price)}</td></tr></tfoot></table></div>
+                    <div class="bld-note">결과는 취득 당시 개별주택가격 칸에 자동 입력됩니다.</div></div>`;
+            }
+        }
+        $('bldBox').innerHTML = `<div class="bld-head">건물 기준시가 자동 계산 <small>국세청 건물 기준시가(2001~2026년 고시) · 계산값은 위 칸에 자동 입력되며 직접 고치면 고친 값을 씁니다</small></div>` +
+            block.acq + conv + block.tr;
+    }
+    ['trShopBldg', 'acqShopBldg', 'trHouseBldg', 'acqHouseBldg', 'acqHousePrice'].forEach(id => {
+        $(id).addEventListener('input', () => { $(id).dataset.manual = $(id).value ? '1' : ''; });
+    });
+
+    // 면적으로 미리 판정 (서버 계산과 같은 기준)
+    function areaJudge() {
+        const Ah = areaNum('houseArea'), As = areaNum('shopArea'), L = areaNum('landArea'), F = areaNum('footprint');
+        if (!Ah || !As || !L || !F) return null;
+        const Tw = num('transferPrice');
+        const bigger = Ah > As, allHouse = bigger && Tw > 0 && Tw <= 1200000000;
+        const ratio = Ah / (Ah + As);
+        const houseLand = allHouse ? L : L * ratio, houseFoot = allHouse ? F : F * ratio;
+        const limit = houseFoot * ZONE_MULT[$('zone').value];
+        return { Ah, As, L, F, bigger, allHouse, ratio, houseLand, houseFoot, limit, excess: Math.max(0, houseLand - limit), Tw };
+    }
+
+    function refreshForm() {
+        const tt = $('taxType').value;
+        const addr = $('address').value.trim();
+        if (addr && !$('zone').dataset.manual) $('zone').value = isMetro(addr) ? 'metro_urban' : 'urban';
+        $('zoneMsg').innerText = addr && !$('zone').dataset.manual ? `소재지로 ${isMetro(addr) ? '수도권' : '수도권 밖'} 도시지역으로 골랐습니다. 녹지지역·도시지역 밖이면 바꿔주세요.` : '';
+
+        const noHeavy = !!addr && !isRegulated(addr);
+        document.querySelectorAll('#taxType option[value^="heavy"]').forEach(o => { o.disabled = noHeavy; });
+        let heavyNote = '';
+        if (noHeavy && tt.startsWith('heavy')) { $('taxType').value = 'general'; heavyNote = '조정대상지역이 아닌 주택은 다주택 중과 대상이 아니어서 일반 과세로 바꿨습니다.'; }
+        else if (tt.startsWith('heavy')) heavyNote = '중과는 주택 부분에만 적용되고, 주택 부분 장기보유특별공제가 배제됩니다.';
+        $('heavyMsg').innerText = heavyNote;
+        const single = $('taxType').value === 'single';
+        $('residenceBox').classList.toggle('hidden', !single);
+        $('acqRegBox').classList.toggle('hidden', !single);
+
+        const acq = $('acquisitionDate').value, trf = $('transferDate').value;
+        if (!$('acqRegulated').dataset.manual) $('acqRegulated').checked = isAcqRegulated(addr, acq);
+        const p = period(acq, trf);
+        let pm = '', warn = false;
+        if (isDate(trf) && trf < '2022-01-01') { pm = '※ 이 계산기는 2022년 1월 1일 이후 양도분만 계산합니다.'; warn = true; }
+        else if (isDate(acq) && isDate(trf) && !p) { pm = '※ 양도일이 취득일보다 빠를 수 없습니다.'; warn = true; }
+        else if (p) pm = `보유 기간: ${p.text} → 비과세·장기보유특별공제·세율 판정`;
+        $('periodMsg').innerText = pm;
+        $('periodMsg').classList.toggle('warn', warn);
+        const rp = period($('residenceStartDate').value, $('residenceEndDate').value || trf);
+        $('residenceMsg').innerText = rp ? `거주 기간: ${rp.text}` : '';
+
+        floorTotals();
+        renderBld();
+        const j = areaJudge();
+        const lines = [];
+        let aw = false;
+        if (j) {
+            if (j.F > j.L) { lines.push('※ 정착면적이 토지 면적보다 클 수 없습니다.'); aw = true; }
+            else {
+                lines.push(j.allHouse ? '주택 연면적 > 상가 연면적 · 양도가액 12억 이하 → 전부 주택으로 봅니다.'
+                    : j.bigger ? (j.Tw ? '주택 연면적 > 상가 연면적이지만 양도가액 12억 초과 → 주택 부분만 주택 (2022.1.1 이후 양도분)' : '주택 연면적 > 상가 연면적 → 양도가액 12억 이하면 전부 주택, 초과면 주택 부분만 주택')
+                    : '주택 연면적 ≤ 상가 연면적 → 주택 부분만 주택');
+                if (j.excess > 0) { lines.push(`배율 초과 ${m2(j.excess)} → 비사업용 토지로 따로 계산`); aw = true; }
+            }
+        }
+        // 토지 면적 안분 표 (시행령 제154조④·⑦)
+        const okLand = j && j.F <= j.L;
+        $('landSplit').innerHTML = okLand ? [
+            ['토지 면적', m2(j.L)],
+            [j.allHouse ? '주택 부수토지 (전부 주택)' : `주택 부수토지 (토지 × 주택 연면적 비율 ${(j.ratio * 100).toFixed(2).replace(/\.?0+$/, '')}%)`, m2(j.houseLand), 'final'],
+            ['상가 부수토지', m2(j.L - j.houseLand), 'final'],
+            [`주택 정착면적 (${j.allHouse ? '건물 전체' : '정착면적 × 주택 연면적 비율'})`, m2(j.houseFoot)],
+            [`주택 부수토지 한도 (주택 정착면적 × ${ZONE_MULT[$('zone').value]}배)`, m2(j.limit)],
+            ['배율 초과 토지 (비사업용)', j.excess > 0 ? m2(j.excess) : '없음']
+        ].map(([k, v, c]) => `<div class="${c || ''}"><span>${k}</span><b>${v}</b></div>`).join('') : '';
+        $('areaMsg').innerText = lines.join('\n');
+        $('areaMsg').classList.toggle('warn', aw);
+
+        const converted = $('acqType').value === 'converted';
+        $('acqPriceBox').classList.toggle('hidden', converted);
+        $('expensesLabel').innerHTML = converted ? '자본적지출 <span class="own">본인 몫</span> <span class="hint">(환산 시 필요경비는 개산공제 3% · 자본적지출+양도비용이 더 크면 그 금액)</span>' : '필요경비 <span class="own">본인 몫</span> <span class="hint">(취득세·자본적지출 등)</span>';
+        $('acqTypeMsg').innerText = converted ? '주택 · 상가 토지 · 상가 건물(· 배율 초과 토지)마다 양도가액 × 취득당시 기준시가 ÷ 양도당시 기준시가로 환산하고, 필요경비는 취득당시 기준시가 × 3%(개산공제)로 계산합니다. 3번 기준시가를 모두 넣어 주세요.' : '';
+        const needSplit = !j || !j.allHouse || converted;
+        const needBldg = !!(j && j.excess > 0);
+        $('houseBldgRow').classList.toggle('hidden', !needBldg);
+        document.querySelectorAll('.split-row-std').forEach(el => el.classList.toggle('hidden', !needSplit));
+        $('directBox').classList.toggle('hidden', !$('useDirect').checked || !needSplit);
+        $('useDirect').closest('label').classList.toggle('hidden', !needSplit);
+        $('stdMsg').innerText = !needSplit
+            ? (needBldg ? '전부 주택이라 주택·상가 안분은 필요 없고, 배율 초과 토지 안분용으로 공시지가와 건물 기준시가만 넣으면 됩니다.' : '전부 주택이라 기준시가 안분이 필요 없습니다. 비워 두셔도 됩니다.')
+            : '주택(개별주택가격) · 상가 토지(공시지가 × 상가 부수토지) · 상가 건물(건물 기준시가)의 기준시가 비율로 양도가액·취득가액을 자산별로 나눕니다. 공시가격은 부동산공시가격알리미에서 확인할 수 있습니다.';
+
+        const sh = parseFloat($('share').value);
+        $('shareMsg').innerText = sh > 0 && sh < 100 ? `본인 지분 양도가액 ${won(num('transferPrice') * sh / 100)} · 12억 판정은 전체(지분 100%) 양도가액 기준` : (sh > 100 || sh === 0 ? '※ 지분율은 0 초과 100 이하로 넣어주세요.' : '');
+        $('shareMsg').classList.toggle('warn', sh > 100 || sh === 0);
+    }
+    addFloor('up', '1', 'shop');
+    addFloor('up', '2', 'shop');
+    addFloor('up', '3', 'house');
+    refreshForm();
+
+    let lastInput = null;
+    async function calculateTax(event) {
+        event.preventDefault();
+        const tt = $('taxType').value;
+        const acq = $('acquisitionDate').value, trf = $('transferDate').value;
+        if (!isDate(acq) || !isDate(trf)) { alert('취득일과 양도일을 입력해주세요.'); return; }
+        if (trf < '2022-01-01') { alert('이 계산기는 2022년 1월 1일 이후 양도분만 계산합니다.'); return; }
+        if (trf < acq) { alert('양도일이 취득일보다 빠를 수 없습니다.'); return; }
+        const shareVal = parseFloat($('share').value);
+        if (!(shareVal > 0 && shareVal <= 100)) { alert('지분율은 0 초과 100 이하로 넣어주세요.'); return; }
+        const direct = $('useDirect').checked;
+
+        const btn = $('calcBtn');
+        btn.disabled = true;
+        btn.innerText = '계산 중...';
+        let res;
+        try {
+            lastInput = {
+                taxType: tt === 'single' ? 'single_house' : 'general',
+                heavy: tt === 'heavy20' ? 20 : tt === 'heavy30' ? 30 : 0,
+                acqRegulated: tt === 'single' && $('acqRegulated').checked,
+                address: $('address').value.trim(),
+                zone: $('zone').value,
+                acquisitionDate: acq, transferDate: trf,
+                residenceStartDate: tt === 'single' ? $('residenceStartDate').value : '',
+                residenceEndDate: tt === 'single' ? ($('residenceEndDate').value || trf) : '',
+                floors: floorRows().filter(f => f.area > 0).slice(0, 40),
+                houseArea: areaNum('houseArea'), shopArea: areaNum('shopArea'), landArea: areaNum('landArea'), footprint: areaNum('footprint'),
+                transferPrice: num('transferPrice'), acqType: $('acqType').value, acquisitionPrice: $('acqType').value === 'converted' ? 0 : num('acquisitionPrice'), expenses: num('expenses'), saleExpenses: num('saleExpenses'),
+                share: shareVal,
+                trHousePrice: num('trHousePrice'), trLandUnit: num('trLandUnit'), trShopBldg: num('trShopBldg'), trHouseBldg: num('trHouseBldg'),
+                acqHousePrice: num('acqHousePrice'), acqLandUnit: num('acqLandUnit'), acqShopBldg: num('acqShopBldg'), acqHouseBldg: num('acqHouseBldg'),
+                trHouseDirect: direct ? num('trHouseDirect') : 0, acqHouseDirect: direct ? num('acqHouseDirect') : 0,
+                basicUsed: $('basicUsed').checked
+            };
+            res = await api('/api/calculate', lastInput);
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다.');
+            return;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '예상 양도세 결과보기';
+        }
+        if (!res.ok) {
+            alert(res.data.message || '계산에 실패했습니다.');
+            if (res.status === 401 || res.status === 402) refreshUser();
+            return;
+        }
+        render(res.data.result);
+    }
+
+    function render(r) {
+        const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const row = x => `<div class="result-row${x.value < 0 ? ' minus' : ''}"><span>${esc(x.label)}</span><span>${x.value < 0 ? '− ' + won(-x.value) : won(x.value)}</span></div>`;
+        $('resJudge').innerHTML = r.judge.map(j => `<div class="${j.label === '판정' ? 'key' : ''}"><span>${esc(j.label)}</span><b>${esc(j.text)}</b></div>`).join('');
+        // 자산별 안분표 (열 = 자산, 행 = 기준시가·양도가액·취득가액·필요경비)
+        if (r.alloc && r.alloc.cols.length) {
+            const C = r.alloc.cols, conv = r.alloc.acqType === 'converted';
+            const n0 = v => Math.round(v).toLocaleString('ko-KR');
+            const sum = k => C.reduce((s, c) => s + c[k], 0);
+            const pc = (v, t) => (t ? `<small>${(v / t * 100).toFixed(2)}%</small>` : '');
+            const line = (label, k, withPct) => {
+                const t = sum(k);
+                return `<tr><th>${label}</th>${C.map(c => `<td>${n0(c[k])}${withPct ? pc(c[k], t) : ''}</td>`).join('')}<td class="sum">${n0(t)}</td></tr>`;
+            };
+            const rowsA = [line('취득당시 기준시가', 'stdA', true), line('양도당시 기준시가', 'stdT', true),
+                line(r.alloc.share < 1 ? '양도가액 (본인 지분)' : '양도가액', 'T', true),
+                line(conv ? '환산취득가액' : '취득가액', 'A', !conv), line(conv ? '필요경비 (개산공제 3%)' : '필요경비', 'E', false)];
+            if (sum('S')) rowsA.push(line('양도비용', 'S', false));
+            $('resSplit').innerHTML = `<div class="alloc-title">자산별 안분 <small>${conv ? '환산취득가액 = 양도가액 × 취득당시 기준시가 ÷ 양도당시 기준시가' : '기준시가 비율로 안분'}</small></div>` +
+                `<div class="bld-scroll"><table class="bld-table alloc"><thead><tr><th></th>${C.map(c => `<th>${esc(c.name)}</th>`).join('')}<th>합계</th></tr></thead><tbody>${rowsA.join('')}</tbody></table></div>` +
+                (C.some(c => c.alt) ? '<div class="bld-note">일부 자산은 환산취득가액 + 개산공제보다 자본적지출 + 양도비용이 커서 그 금액을 필요경비로 썼습니다 (제97조②2호 단서).</div>' : '');
+            $('resSplit').classList.remove('hidden');
+        } else {
+            $('resSplit').innerHTML = r.splitRows.map(([k, v]) => `<div class="judge"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+            $('resSplit').classList.toggle('hidden', !r.splitRows.length);
+        }
+        $('resSections').innerHTML = r.sections.map(s => `<div class="res-sec"><h4>${esc(s.title)} <small>${esc(s.sub)}</small></h4>${s.rows.map(row).join('')}</div>`).join('');
+        $('resRows').innerHTML = r.rows.map(row).join('');
+        $('resTotalLabel').innerText = r.totalLabel;
+        $('resTotal').innerText = won(r.total);
+        $('resNotes').innerHTML = r.notes.map(n => `<div>${esc(n)}</div>`).join('');
+        $('resBasis').innerHTML = r.basis.map(n => `<div>${esc(n)}</div>`).join('');
+        $('result').style.display = 'block';
+        if (window.matchMedia('(max-width: 860px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // ===== 신고 의뢰: 성함·연락처와 마지막 계산 내용을 세무사에게 메일로 전달 =====
+    function openFiling() {
+        if (!lastInput) { alert('먼저 계산 결과를 확인해주세요.'); return; }
+        $('filingForm').classList.remove('hidden');
+        $('filingDone').classList.add('hidden');
+        $('filingModal').classList.add('open');
+        setTimeout(() => $('filingName').focus(), 50);
+    }
+    function closeFiling() { $('filingModal').classList.remove('open'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFiling(); });
+    async function submitFiling(event) {
+        event.preventDefault();
+        const btn = $('filingSubmit');
+        btn.disabled = true;
+        btn.innerText = '보내는 중...';
+        try {
+            const res = await api('/api/request-filing', {
+                ...lastInput,
+                name: $('filingName').value.trim(),
+                phone: $('filingPhone').value.trim(),
+                memo: $('filingMemo').value.trim()
+            });
+            if (!res.ok) {
+                alert(res.data.message || '신고 의뢰를 보내지 못했습니다. 010-4454-2429로 연락 주세요.');
+                if (res.status === 401) refreshUser();
+                return;
+            }
+            $('filingForm').classList.add('hidden');
+            $('filingDone').classList.remove('hidden');
+        } catch (error) {
+            console.error('통신 에러:', error);
+            alert('서버와 통신하지 못했습니다. 010-4454-2429로 연락 주세요.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '신고 의뢰 보내기';
+        }
+    }
+  </script>
+</body>
+</html>
