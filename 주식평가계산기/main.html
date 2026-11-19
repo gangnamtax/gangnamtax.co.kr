@@ -1105,6 +1105,23 @@
         e.preventDefault();
         const fields = [...form.querySelectorAll('input[type="text"], input:not([type]), select')]
             .filter(el => !el.disabled && el.offsetParent !== null);
+        // 순손익계산서 표: 같은 연도 칸을 위→아래로, 그 연도 끝이면 다음 연도 맨 위로 (1년 → 2년 → 3년)
+        const em = /^e_(.+)_(\d)$/.exec(t.id);
+        if (em) {
+            const keys = EARN_ROWS.filter(r => r.k).map(r => r.k);
+            const seq = [0, 1, 2].flatMap(c => keys.map(k => $(`e_${k}_${c}`)));
+            const j = seq.indexOf(t) + (e.shiftKey ? -1 : 1);
+            let target = seq[j];
+            if (!target) {
+                // 표의 처음 · 끝을 넘어가면 표 바로 앞 · 뒤 입력칸으로
+                const inSheet = fields.filter(f => seq.includes(f));
+                const edge = e.shiftKey ? fields.indexOf(inSheet[0]) - 1 : fields.indexOf(inSheet[inSheet.length - 1]) + 1;
+                target = fields[edge];
+            }
+            if (target) { target.focus(); if (target.select) target.select(); }
+            else if (!e.shiftKey) form.querySelector('.calc-action-btn').focus();
+            return;
+        }
         const i = fields.indexOf(t);
         const next = fields[i + (e.shiftKey ? -1 : 1)];
         if (next) { next.focus(); if (next.select) next.select(); }
