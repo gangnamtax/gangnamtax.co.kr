@@ -151,6 +151,38 @@
         .calc-layout { display: block; }
         .calculator-card { border: none; box-shadow: none; padding: 0; }
     }
+    /* 결과가 지난 입력값일 때 */
+    .result-box.is-stale > *:not(.stale-note) { opacity: .45; }
+    .stale-note { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; margin-bottom: 12px; }
+    .print-btn { width: 100%; padding: 13px; background: #fff; color: #1e293b; border: 1px solid #94a3b8; border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .print-btn:hover { background: #f8fafc; }
+    /* 평가조서 (인쇄 전용) */
+    #printReport { display: none; }
+    @media print {
+        @page { size: A4; margin: 12mm; }
+        body.print-report { display: block; padding: 0; background: #fff; }
+        body.print-report > *:not(#printReport) { display: none !important; }
+        body.print-report #printReport { display: block; color: #000; font-size: 10.5px; }
+        #printReport h1 { text-align: center; font-size: 20px; letter-spacing: 6px; margin: 0 0 12px; }
+        #printReport h2 { font-size: 13px; margin: 16px 0 6px; border-left: 3px solid #000; padding-left: 6px; }
+        #printReport h2 small { font-weight: normal; font-size: 10px; }
+        #printReport table { width: 100%; border-collapse: collapse; }
+        #printReport th, #printReport td { border: 1px solid #555; padding: 3px 6px; }
+        #printReport th { background: #eee; font-weight: 700; text-align: center; }
+        #printReport .info th { width: 16%; } #printReport .info td { width: 34%; }
+        #printReport .grid td:not(:first-child) { text-align: right; white-space: nowrap; }
+        #printReport .grid.na td:first-child { width: 65%; }
+        #printReport .grid.gw td { text-align: right; }
+        #printReport .grid thead th { font-size: 10px; }
+        #printReport .sum td:nth-child(even) { text-align: right; font-weight: 700; }
+        #printReport .sum td:nth-child(odd) { background: #f5f5f5; width: 25%; }
+        #printReport tr.g td { background: #f5f5f5; font-weight: 700; }
+        #printReport tr.c td { background: #fafafa; font-weight: 700; }
+        #printReport tr.hl td { border-top: 2px solid #000; }
+        #printReport .basis { margin: 6px 0 0; padding-left: 16px; font-size: 10px; }
+        #printReport .foot { margin-top: 14px; font-size: 9.5px; color: #333; text-align: center; }
+        #printReport h2, #printReport table { break-inside: avoid; }
+    }
     /* 계산서 서식 */
     .sheet-wrap { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 10px; }
     .sheet { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 13px; }
@@ -412,6 +444,9 @@
       </div>
     </div>
   </div>
+
+  <!-- 평가조서 출력용 (화면에는 안 보이고 인쇄할 때만) -->
+  <div id="printReport"></div>
 
   <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
     <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 94vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
@@ -1000,16 +1035,20 @@
         });
         const na = { intangibleBook: num('intangibleBook') };
         NA_ROWS.filter(r => r.k).forEach(r => { na[r.k] = num('na_' + r.k); });
-        const r = await runCalc({
+        const payload = {
             mode: 'unlisted', corpName: $('corpName').value.trim().slice(0, 30), baseDate: $('baseDate').value,
             totalShares: d.total, targetShares: d.target, realty: d.realty, years, na,
             exStart: $('exStart').checked, exClose: $('exClose').checked, exStock: $('exStock').checked, exLoss: $('exLoss').checked,
             corpSize: val('corpSize'), majority: val('majority')
-        }, document.querySelector('#stockForm .calc-action-btn'));
+        };
+        const r = await runCalc(payload, document.querySelector('#stockForm .calc-action-btn'));
         if (!r) return;
+        lastReport = { r, p: payload, startDate: $('startDate').value, yearHeads: [0, 1, 2].map(i => $('yh' + i).textContent) };
+        setStale(false);
 
         const name = $('corpName').value.trim();
         $('result').innerHTML = `
+            <div id="staleNote" class="stale-note hidden">왼쪽 입력이 바뀌었어요. <b>[주식 평가하기]</b>를 다시 눌러야 이 결과에 반영돼요.</div>
             <h3>${name ? escapeHtml(name) + ' ' : ''}주식 평가 결과</h3>
             <div>
                 <span class="badge gold">${r.assetOnly ? '순자산가치 평가' : r.heavy ? '부동산과다법인 2 : 3' : '일반법인 3 : 2'}</span>
@@ -1038,8 +1077,123 @@
                 <p>※ 1주당 금액은 원 미만을 절사했습니다. 추정이익 평가, 증자 · 감자 시 환산주식수 계산은 직접 넣은 값을 그대로 씁니다.</p>
                 <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
             </div>
+            <div class="filing" style="margin-top: 14px;">
+                <button type="button" class="print-btn" onclick="printReport()">🖨 평가조서 출력</button>
+            </div>
             ${nextLinks()}`;
         showResult();
+    }
+
+    // ===== 결과가 지난 입력값이면 표시 =====
+    let lastReport = null;
+    function setStale(on) {
+        $('result').classList.toggle('is-stale', on);
+        if ($('staleNote')) $('staleNote').classList.toggle('hidden', !on);
+    }
+    ['input', 'change'].forEach(ev => $('stockForm').addEventListener(ev, e => {
+        if (!lastReport || $('result').classList.contains('hidden') || e.target.type === 'file') return;
+        setStale(true);
+    }));
+
+    // ===== 엔터 → 다음 입력칸 (Shift+엔터 → 앞 칸), 마지막 칸에서는 평가 버튼으로 =====
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' || e.isComposing) return;
+        const t = e.target;
+        if (!(t instanceof HTMLInputElement || t instanceof HTMLSelectElement)) return;
+        const form = t.closest('#stockForm, #listedForm');
+        if (!form || t.type === 'checkbox' || t.type === 'radio' || t.type === 'file') return;
+        e.preventDefault();
+        const fields = [...form.querySelectorAll('input[type="text"], input:not([type]), select')]
+            .filter(el => !el.disabled && el.offsetParent !== null);
+        const i = fields.indexOf(t);
+        const next = fields[i + (e.shiftKey ? -1 : 1)];
+        if (next) { next.focus(); if (next.select) next.select(); }
+        else if (!e.shiftKey) form.querySelector('.calc-action-btn').focus();
+    });
+
+    // ===== 비상장주식 평가조서 출력 =====
+    async function printReport() {
+        if ($('result').classList.contains('is-stale')) {
+            await calcUnlisted({ preventDefault() {} });
+            if (!lastReport || $('result').classList.contains('is-stale')) return;
+        }
+        if (!lastReport) return;
+        $('printReport').innerHTML = buildReport(lastReport);
+        document.body.classList.add('print-report');
+        const done = () => { document.body.classList.remove('print-report'); window.removeEventListener('afterprint', done); };
+        window.addEventListener('afterprint', done);
+        window.print();
+        setTimeout(done, 1000);
+    }
+    function buildReport({ r, p, startDate, yearHeads }) {
+        const n = v => (v === null || v === undefined || v === '' || Number(v) === 0) ? '' : Number(v).toLocaleString('ko-KR');
+        const n0 = v => Number(v || 0).toLocaleString('ko-KR');
+        const esc = s => escapeHtml(String(s || ''));
+        const y = r.years, py = p.years;
+        const calcOf = { addSum: i => y[i].addSum, subSum: i => y[i].subSum, net: i => y[i].net, netAdj: i => y[i].netAdj, eps: i => y[i].eps };
+        // 아래에 내용 줄이 하나도 없는 묶음 제목(예: '자산에 가산')은 빼기
+        const dropEmptyGroups = list => list.filter((h, i) => !(h.startsWith('<tr class="g"') && (!list[i + 1] || /^<tr class="[gc]"/.test(list[i + 1]))));
+        const earnRows = dropEmptyGroups(EARN_ROWS.map(row => {
+            if (row.group) return `<tr class="g"><td colspan="4">${row.group}</td></tr>`;
+            if (row.c) return `<tr class="c"><td>${row.label}</td>${[0, 1, 2].map(i => `<td>${n0(calcOf[row.c](i))}</td>`).join('')}</tr>`;
+            const vals = [0, 1, 2].map(i => row.k === 'income' ? Number(String(py[i].income || '').replace(/[^0-9-]/g, '') || 0) : row.k === 'shares' ? y[i].shares : py[i][row.k]);
+            if (!row.head && row.k !== 'shares' && vals.every(v => !Number(v))) return '';   // 빈 줄은 생략
+            return `<tr><td>${row.label}</td>${vals.map(v => `<td>${n(v)}</td>`).join('')}</tr>`;
+        }).filter(Boolean)).join('');
+        const naCalc = { assetTotal: r.assetTotal, liabTotal: r.liabTotal, beforeGw: r.beforeGw, goodwill: r.goodwillApplied, netAsset: r.netAsset, nav: r.nav };
+        const naRows = dropEmptyGroups(NA_ROWS.map(row => {
+            if (row.group) return `<tr class="g"><td colspan="2">${row.group}</td></tr>`;
+            if (row.c) return `<tr class="c"><td>${row.label}</td><td>${n0(naCalc[row.c])}</td></tr>`;
+            const v = p.na[row.k];
+            if (!row.head && !Number(v)) return '';
+            return `<tr><td>${row.label}</td><td>${n(v)}</td></tr>`;
+        }).filter(Boolean)).join('');
+        const g = r.goodwill;
+        const kind = r.assetOnly ? `순자산가치만 평가 (${r.reasons.join(', ')})` : r.heavy ? '부동산과다법인 (순손익 2 : 순자산 3)' : '일반법인 (순손익 3 : 순자산 2)';
+        const today = new Date().toLocaleDateString('ko-KR');
+        return `
+        <h1>비상장주식 평가조서</h1>
+        <table class="info">
+            <tr><th>법인명</th><td>${esc(p.corpName) || '-'}</td><th>평가기준일</th><td>${esc(p.baseDate) || '-'}</td></tr>
+            <tr><th>사업개시일</th><td>${esc(startDate) || '-'}</td><th>평가법인 종류</th><td>${esc(kind)}</td></tr>
+            <tr><th>발행주식 총수</th><td>${n0(r.totalShares)}주</td><th>평가 주식 수 (지분율)</th><td>${n0(r.target)}주 (${pct(r.target / r.totalShares)})</td></tr>
+            <tr><th>회사 규모</th><td>${p.corpSize === 'sme' ? '중소기업' : '중견 · 일반기업'}</td><th>최대주주 등</th><td>${p.majority === 'yes' ? '예' : '아니오'}${r.premium ? ' (할증 20%)' : ''}</td></tr>
+        </table>
+
+        <h2>1. 평가 결과</h2>
+        <table class="sum">
+            <tr><td>1주당 순손익가치</td><td>${n0(r.epv)}원</td><td>1주당 순자산가치</td><td>${n0(r.nav)}원</td></tr>
+            <tr><td>1주당 가중평균액 ${r.assetOnly ? '' : `(${r.wE} : ${r.wA})`}</td><td>${r.assetOnly ? '-' : n0(r.blended) + '원'}</td><td>순자산가치 80% 하한</td><td>${r.assetOnly ? '-' : n0(r.floor) + '원'}</td></tr>
+            <tr class="hl"><td>1주당 평가액</td><td>${n0(r.perShare)}원</td><td>최대주주 할증 후 1주당</td><td>${n0(r.finalPer)}원</td></tr>
+            <tr class="hl"><td>평가 주식 수</td><td>${n0(r.target)}주</td><td>주식 평가액</td><td><b>${n0(r.total)}원</b></td></tr>
+        </table>
+        <ul class="basis">${r.basis.map(b => `<li>${esc(b)}</li>`).join('')}</ul>
+
+        <h2>2. 순손익계산서 <small>(평가기준일 이전 최근 3개 사업연도)</small></h2>
+        <table class="grid">
+            <thead><tr><th>구 분</th>${[0, 1, 2].map(i => `<th>평가기준일전 ${i + 1}년<br><small>${esc(yearHeads[i])}</small></th>`).join('')}</tr></thead>
+            <tbody>${earnRows}
+                <tr class="c"><td>아. 가중평균액 ((사1×3 + 사2×2 + 사3) ÷ 6)</td><td colspan="3">${n0(r.weighted)}</td></tr>
+                <tr class="c"><td>자. 순손익가치환원율</td><td colspan="3">10%</td></tr>
+                <tr class="c"><td>차. 1주당 순손익가치 (아 ÷ 자)</td><td colspan="3">${n0(r.epv)}</td></tr>
+            </tbody>
+        </table>
+
+        <h2>3. 순자산가액계산서 <small>(평가기준일 현재)</small></h2>
+        <table class="grid na"><tbody>${naRows}</tbody></table>
+
+        <h2>4. 영업권평가조서</h2>
+        <table class="grid gw">
+            <thead><tr><th>평가기준일전 1년 순손익액</th><th>평가기준일전 2년 순손익액</th><th>평가기준일전 3년 순손익액</th><th>가중평균액</th></tr></thead>
+            <tbody><tr>${[0, 1, 2].map(i => `<td>${n0(y[i].netAdj)}</td>`).join('')}<td>${n0(g.netWeighted)}</td></tr></tbody>
+            <thead><tr><th>가중평균액의 50%</th><th>평가기준일 현재 자기자본</th><th>이자율 · 지속연수</th><th>초과이익</th></tr></thead>
+            <tbody><tr><td>${n0(g.half)}</td><td>${n0(g.equity)}</td><td>10% · 5년</td><td>${n0(g.excess)}</td></tr></tbody>
+            <thead><tr><th>영업권 계산액 (× ${Number(g.annuity).toFixed(4)})</th><th>매입 무체재산권 (상각 후)</th><th colspan="2">영업권 평가액</th></tr></thead>
+            <tbody><tr><td>${n0(g.calc)}</td><td>${n(g.intangibleBook) || '-'}</td><td colspan="2"><b>${n0(r.gwExcluded ? 0 : g.value)}</b>${r.gwExcluded ? ' (휴·폐업 · 청산: 제외)' : ''}</td></tr></tbody>
+        </table>
+
+        <p class="foot">상속세 및 증여세법 제63조 · 시행령 제54조~제56조, 제59조에 따른 보충적 평가 · 1주당 금액은 원 미만 절사<br>
+        출력일 ${today} · 세무회계강남 주식평가 계산기 (참고용이며, 신고 전 세무사의 검토가 필요합니다)</p>`;
     }
 
     async function calcListed(e) {
