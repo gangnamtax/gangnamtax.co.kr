@@ -161,7 +161,10 @@
         .calc { background: var(--bg); }
         .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
         .calc-grid.three { grid-template-columns: repeat(3, 1fr); }
-        .calc-part + .calc-part { margin-top: 36px; }
+        .calc-part + .calc-part, .calc-part + .calc-row { margin-top: 36px; }
+        .calc-row { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+        .calc-row .calc-part + .calc-part { margin-top: 0; }
+        .calc-grid.one { grid-template-columns: 1fr; }
         .calc-part-title { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
         .calc-part-title::before { content: ''; width: 4px; height: 18px; background: #b08d57; border-radius: 2px; }
         .calc-part-title::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
@@ -233,6 +236,7 @@
             .cat-row { grid-template-columns: repeat(2, 1fr); }
             .cat-label { grid-column: 1 / -1; padding: 6px; }
             .calc-grid, .calc-grid.three { grid-template-columns: 1fr; }
+            .calc-row { grid-template-columns: 1fr; gap: 36px; }
             .calc-grid.row5 { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 172px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 12px; -webkit-overflow-scrolling: touch; }
             .calc-grid.row5 .calc-card { scroll-snap-align: start; }
             .calc-grid.row5 .calc-card:hover { transform: none; }
@@ -460,6 +464,7 @@
                     </a>
                 </div>
             </div>
+            <div class="calc-row">
             <div class="calc-part">
                 <h3 class="calc-part-title">세무기장</h3>
                 <div class="calc-grid">
@@ -488,6 +493,24 @@
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                 </div>
+            </div>
+            <div class="calc-part">
+                <h3 class="calc-part-title">기업진단</h3>
+                <div class="calc-grid one">
+                    <a href="기업진단계산기/main.html" class="calc-card">
+                        <span class="calc-icon">🏗️</span>
+                        <h3>건설업 기업진단</h3>
+                        <p class="calc-desc">재무상태표만 올리면 실질자본을 계산해 보유 면허의 기준자본금 충족 여부를 알려드려요.</p>
+                        <ul>
+                            <li>재무상태표 자동 입력 (PDF · 엑셀 · 스캔본)</li>
+                            <li>부실자산 · 겸업자산 차감</li>
+                            <li>면허별 기준자본금 · 추가 등록 특례</li>
+                            <li>충족 · 미달 판정, 보고서 출력</li>
+                        </ul>
+                        <span class="calc-go">계산해보기 →</span>
+                    </a>
+                </div>
+            </div>
             </div>
         </div>
     </section>
