@@ -166,6 +166,8 @@
     .kpi .k { font-size: 12px; color: #64748b; } .kpi .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
     .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
     .actions .btn.gold { flex: 1; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .calc:empty, .verdict:empty { display: none; }
     .disclaimer { font-size: 12px; color: #94a3b8; margin: 12px 4px 0; }
 
     /* 보고서 (인쇄 전용) */
@@ -346,11 +348,13 @@
   <!-- 5. 결과 -->
   <div class="card">
     <h2><span class="no">5</span>실질자본 계산 내역 및 판정</h2>
-    <div class="calc" id="calc"></div>
+    <button type="button" class="btn gold big" id="judgeBtn">실질자본 판정하기</button>
+    <div class="live-msg" id="judgeMsg"></div>
+    <div class="calc" id="calc" style="margin-top:16px"></div>
     <ul class="warns" id="warns"></ul>
     <div class="verdict" id="verdict"></div>
     <div class="actions">
-      <button type="button" class="btn gold big" id="reportBtn">📄 보고서 출력 (인쇄 · PDF 저장)</button>
+      <button type="button" class="btn gold big" id="reportBtn" disabled>📄 보고서 출력 (인쇄 · PDF 저장)</button>
       <button type="button" class="btn" id="resetBtn">초기화</button>
     </div>
   </div>
@@ -425,7 +429,9 @@
   const baseUpdateUi = updateUi;
   updateUi = function (user, plan, ...rest) {
     if (plan && !/기업진단 계산기/.test(plan.name)) { showComingSoon(); return; }
-    return baseUpdateUi(user, plan, ...rest);
+    const r = baseUpdateUi(user, plan, ...rest);
+    if (user && user.paid && !window.__diagPaid) { window.__diagPaid = true; if (window.__diagReady) window.__diagReady(); }
+    return r;
   };
 </script>
 
@@ -649,31 +655,9 @@
   $('baseDate').addEventListener('keydown', e => { e.target.dataset.prev = e.target.value; });
   $('baseDate').addEventListener('input', e => { formatDateInput(e.target, e); e.target.classList.remove('auto'); });
 
-  // ================= 계정 처리 기준 =================
-  const RULES = [
-    { re: /가지급금|주임종|주주.*대여|임원.*대여|대여금/, t: 'bad', tip: '특수관계자·임직원 대여성 자산은 부실자산' },
-    { re: /영업권|개발비|무형|소프트웨어|산업재산권|특허|상표/, t: 'bad', tip: '무형자산은 원칙적으로 부실자산 (건설업 관련 특허 등은 예외 검토)' },
-    { re: /이연법인세/, t: 'bad', tip: '부실자산' },
-    { re: /회원권/, t: 'bad', tip: '골프·콘도 회원권 등은 부실(겸업)자산' },
-    { re: /투자부동산|매도가능|지분법|투자주식|장기투자증권|관계기업|종속기업|출자금(?!.*공제조합)/, t: 'side', tip: '건설업과 무관한 투자는 겸업자산' },
-    { re: /공제조합|조합출자/, t: 'ok', tip: '출자증권 확인 · 담보 제공분은 차감' },
-    { re: /현금/, t: 'ok', tip: '진단기준일 실사로 잔액 확인' },
-    { re: /예금|금융상품/, t: 'ok', tip: '예금 거래내역·잔액증명 확인 · 질권설정·일시 입금분은 부실' },
-    { re: /공사미수|매출채권|외상매출|받을어음/, t: 'ok', tip: '실재성·회수가능성 검토 · 장기 미회수분은 부실' },
-    { re: /선급금/, t: 'ok', tip: '하도급 등 건설업 관련분만 인정' },
-    { re: /미수금|미수수익/, t: 'ok', tip: '건설업 무관·회수불능분은 부실' },
-    { re: /토지|건물|구축물/, t: 'ok', tip: '건설업 사용분 인정 · 임대·비업무용은 겸업자산' },
-    { re: /보증금/, t: 'ok', tip: '계약서 확인' },
-    { re: /재고|원재료|미성공사|용지|상품|제품/, t: 'ok', tip: '실재성 확인 · 겸업(분양 등) 관련이면 겸업자산' },
-  ];
-  const LIAB_RULES = [
-    { re: /임대보증금/, t: 'ok', tip: '겸업(임대) 관련이면 겸업부채' },
-  ];
-  function ruleFor(name, kind) {
-    const flat = name.replace(/\s/g, '');
-    const r = (kind === 'asset' ? RULES : LIAB_RULES).find(r => r.re.test(flat));
-    return r ? { t: r.t, tip: r.tip } : { t: 'ok', tip: '' };
-  }
+  // ================= 계정 처리 기본값 =================
+  // 계정별 처리 기본값(인정 · 부실 · 겸업)과 검토 안내는 서버(Diag.gs)가 정해서 돌려줌
+  const NO_RULE = { t: 'ok', tip: '' };
   const DEFAULT_ASSETS = ['현금및현금성자산', '단기금융상품', '공사미수금', '미수금', '선급금', '가지급금', '단기대여금', '재고자산',
     '건설공제조합출자금', '장기대여금', '토지', '건물', '차량운반구·비품', '임차보증금', '무형자산', '이연법인세자산'];
   const DEFAULT_LIABS = ['공사미지급금', '미지급금', '예수금', '단기차입금', '선수금', '미지급법인세', '장기차입금', '퇴직급여충당부채'];
@@ -682,8 +666,8 @@
   const ASSET_OPTS = [['ok', '인정'], ['bad', '부실(전액)'], ['side', '겸업(전액)'], ['part', '일부 차감']];
   const LIAB_OPTS = [['ok', '인정'], ['side', '겸업부채(제외)'], ['part', '일부 제외']];
 
-  function acctRow(kind, name, amount, auto) {
-    const r = ruleFor(name || '', kind), opts = kind === 'asset' ? ASSET_OPTS : LIAB_OPTS;
+  function acctRow(kind, name, amount, auto, rule) {
+    const r = rule || NO_RULE, opts = kind === 'asset' ? ASSET_OPTS : LIAB_OPTS;
     const tr = document.createElement('tr'); tr.className = 'acct'; tr.dataset.kind = kind;
     tr.innerHTML = `<td><input type="text" class="name" value="${esc(name || '')}" placeholder="계정과목"><span class="tip">${esc(r.tip)}</span></td>
       <td><input type="text" class="num amt${auto ? ' auto' : ''}" inputmode="numeric" placeholder="0" value="${amount != null ? fmt(amount) : ''}"></td>
@@ -692,7 +676,30 @@
       <td><button type="button" class="x" aria-label="삭제">&times;</button></td>`;
     $(kind === 'asset' ? 'assetBody' : 'liabBody').appendChild(tr);
     syncRow(tr);
+    return tr;
   }
+  // 계정명으로 처리 기본값 받아오기 (사용자가 처리를 직접 바꾼 줄은 그대로 둠)
+  async function classifyRows(trs) {
+    trs = trs.filter(tr => tr.isConnected && tr.querySelector('.name').value.trim());
+    if (!trs.length || typeof window.api !== 'function') return;
+    let res;
+    try { res = await window.api('/api/calculate', { mode: 'classify', items: trs.map(tr => ({ name: tr.querySelector('.name').value.trim(), kind: tr.dataset.kind })) }); }
+    catch (e) { return; }
+    if (!res.ok || !res.data.result) return;
+    (res.data.result.items || []).forEach((r, i) => {
+      const tr = trs[i]; if (!tr || !tr.isConnected) return;
+      tr.querySelector('.tip').textContent = r.tip || '';
+      if (!tr.dataset.userTreat) { const sel = tr.querySelector('.treat'); if ([...sel.options].some(o => o.value === r.t)) sel.value = r.t; syncRow(tr); }
+    });
+    recalc();
+  }
+  let classifyTimer = null, classifyQueue = new Set();
+  function classifyLater(tr) {
+    classifyQueue.add(tr); clearTimeout(classifyTimer);
+    classifyTimer = setTimeout(() => { const list = [...classifyQueue]; classifyQueue.clear(); classifyRows(list); }, 700);
+  }
+  // 로그인 · 이용권 확인이 끝나면 기본 계정들의 처리 기본값을 받아옴
+  window.__diagReady = () => classifyRows([...document.querySelectorAll('tr.acct')]);
   function offRow(name) {
     const tr = document.createElement('tr'); tr.className = 'off';
     tr.innerHTML = `<td><input type="text" class="name" value="${esc(name || '')}" placeholder="내용"></td>
@@ -727,85 +734,103 @@
     }
     if (el.classList.contains('name')) {
       const tr = el.closest('tr.acct');
-      if (tr) tr.querySelector('.tip').textContent = ruleFor(el.value, tr.dataset.kind).tip;
+      if (tr) classifyLater(tr);
     }
     const tr = el.closest('tr.acct'); if (tr) syncRow(tr);
     recalc();
   });
   document.querySelector('.wrapper').addEventListener('change', e => {
-    const tr = e.target.closest('tr.acct'); if (tr) syncRow(tr);
-    if (e.target.id === 'unit' || tr) recalc();
+    const tr = e.target.closest('tr.acct');
+    if (tr && e.target.classList.contains('treat')) tr.dataset.userTreat = '1';
+    if (tr) syncRow(tr);
+    recalc();
   });
   document.querySelector('.wrapper').addEventListener('click', e => {
     if (e.target.classList.contains('x') && e.target.closest('tr')) { e.target.closest('tr').remove(); recalc(); }
   });
 
-  // ================= 계산 =================
+  // ================= 표 합계 · 판정 =================
   function collect(kind) {
-    const o = { total: 0, bad: 0, side: 0, part: 0, rows: [] };
+    const o = { total: 0, ded: 0, rows: [] };
     document.querySelectorAll(`tr.acct[data-kind="${kind}"]`).forEach(tr => {
       const name = tr.querySelector('.name').value.trim(), amt = toNum(tr.querySelector('.amt').value), t = tr.querySelector('.treat').value;
-      let ded = 0;
-      if (t === 'bad') { ded = amt; o.bad += amt; }
-      else if (t === 'side') { ded = amt; o.side += amt; }
-      else if (t === 'part') { ded = toNum(tr.querySelector('.ded').value); o.part += ded; }
-      o.total += amt;
-      if (name || amt) o.rows.push({ name: name || '(계정명 없음)', amt, t, ded });
+      const ded = t === 'ok' ? 0 : t === 'part' ? toNum(tr.querySelector('.ded').value) : amt;
+      o.total += amt; o.ded += ded;
+      if (name || amt) o.rows.push({ name, amt, t, ded: t === 'part' ? ded : 0 });
     });
-    o.ded = o.bad + o.side + o.part;
     return o;
   }
-  let last = null;
+  let result = null, judgedKey = '';
+  const inputKey = () => JSON.stringify(payload());
+  function payload() {
+    const A = collect('asset'), L = collect('liab');
+    return {
+      mode: 'calc', unit: unitMul(),
+      assets: A.rows, liabs: L.rows,
+      off: [...document.querySelectorAll('tr.off')].map(tr => ({ name: tr.querySelector('.name').value.trim(), amt: toNum(tr.querySelector('.amt').value) })).filter(r => r.amt),
+      licenses: licenses.map(l => ({ name: l.name, group: l.group, cap: licCap(l), add: !!l.add })),
+      bsAssetTotal: toNum($('bsAssetTotal').value), bsLiabTotal: toNum($('bsLiabTotal').value)
+    };
+  }
+  // 입력이 바뀔 때: 표 합계만 바로 고치고, 판정 결과가 있으면 '다시 판정' 안내
   function recalc() {
     const A = collect('asset'), L = collect('liab');
-    const offRows = [...document.querySelectorAll('tr.off')].map(tr => ({ name: tr.querySelector('.name').value.trim(), amt: toNum(tr.querySelector('.amt').value) })).filter(r => r.amt);
-    const off = offRows.reduce((s, r) => s + r.amt, 0);
     $('assetSum').textContent = fmt(A.total); $('assetDed').textContent = fmt(A.ded);
     $('liabSum').textContent = fmt(L.total); $('liabDed').textContent = fmt(L.ded);
-    const realA = A.total - A.ded, realL = L.total - L.ded + off, realCap = realA - realL;
-    const capWon = realCap * unitMul();
-    const reqWon = reqInfo().net * EOK;
-    const u = unitName();
-    last = { A, L, off, offRows, realA, realL, realCap, capWon, reqWon, u };
-
+    if (result) {
+      const stale = inputKey() !== judgedKey;
+      $('judgeMsg').className = 'live-msg warn';
+      $('judgeMsg').textContent = stale ? '입력이 바뀌었어요. [실질자본 판정하기]를 다시 눌러 주세요.' : '';
+      $('reportBtn').disabled = stale;
+    }
+  }
+  $('judgeBtn').addEventListener('click', async () => {
+    const btn = $('judgeBtn');
+    if (typeof window.api !== 'function') { $('judgeMsg').className = 'live-msg warn'; $('judgeMsg').textContent = '로그인 후 이용할 수 있습니다.'; return; }
+    const body = payload();
+    btn.disabled = true; btn.textContent = '판정 중...';
+    try {
+      const res = await window.api('/api/calculate', body);
+      if (res.status === 401 || res.status === 402) { if (window.refreshUser) window.refreshUser(); throw new Error(res.data.message || '로그인이 필요합니다.'); }
+      if (!res.ok || !res.data.result) throw new Error(res.data.message || '판정하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      result = res.data.result; judgedKey = JSON.stringify(body);
+      renderResult(result);
+      $('judgeMsg').textContent = '';
+      $('reportBtn').disabled = false;
+    } catch (e) {
+      $('judgeMsg').className = 'live-msg warn'; $('judgeMsg').textContent = e.message || '판정하지 못했습니다.';
+    } finally {
+      btn.disabled = false; btn.textContent = '실질자본 판정하기';
+    }
+  });
+  function renderResult(d) {
+    const u = d.uName;
     const ln = (k, v, c) => `<div class="line ${c || ''}"><span>${k}</span><span>${v}</span></div>`;
     $('calc').innerHTML =
-      ln('자산총계 (장부)', fmt(A.total) + ' ' + u) +
-      ln('부실자산 차감', '− ' + fmt(A.bad) + ' ' + u, 'ind') +
-      ln('겸업자산 차감', '− ' + fmt(A.side) + ' ' + u, 'ind') +
-      (A.part ? ln('일부 차감', '− ' + fmt(A.part) + ' ' + u, 'ind') : '') +
-      ln('실질자산', fmt(realA) + ' ' + u, 'st') +
-      ln('부채총계 (장부)', fmt(L.total) + ' ' + u) +
-      ln('겸업부채 등 제외', '− ' + fmt(L.ded) + ' ' + u, 'ind') +
-      ln('부외부채 가산', '+ ' + fmt(off) + ' ' + u, 'ind') +
-      ln('실질부채', fmt(realL) + ' ' + u, 'st') +
-      ln('실질자본 (실질자산 − 실질부채)', fmt(realCap) + ' ' + u + ` <span style="font-weight:500;color:#64748b">(${wonText(capWon)})</span>`, 'total') +
-      ln('<span style="color:#94a3b8">참고: 장부상 자본총계</span>', `<span style="color:#94a3b8">${fmt(A.total - L.total)} ${u}</span>`);
-
-    const w = [];
-    const bsA = toNum($('bsAssetTotal').value), bsL = toNum($('bsLiabTotal').value);
-    if (bsA && Math.round(bsA) !== Math.round(A.total)) w.push(`입력한 자산 합계가 재무상태표 자산총계와 ${fmt(bsA - A.total)} ${u} 차이납니다. 누락·중복 계정을 확인하세요.`);
-    if (bsL && Math.round(bsL) !== Math.round(L.total)) w.push(`입력한 부채 합계가 재무상태표 부채총계와 ${fmt(bsL - L.total)} ${u} 차이납니다.`);
-    if (A.side > 0 && L.side === 0) w.push('겸업자산이 있는데 겸업부채가 없습니다. 겸업 관련 부채(임대보증금·차입금 등)가 있는지 확인하세요.');
-    if (A.total > 0 && A.bad / A.total > 0.2) w.push('부실자산이 자산총계의 20%를 넘습니다. 가지급금·대여금 정리 여부를 검토하세요.');
-    A.rows.filter(r => r.t === 'part' && r.ded > r.amt).forEach(r => w.push(`‘${r.name}’의 차감액이 장부금액보다 큽니다.`));
-    $('warns').innerHTML = w.map(x => `<li>${esc(x)}</li>`).join('');
-    last.warns = w;
-
+      ln('자산총계 (장부)', fmt(d.A.total) + ' ' + u) +
+      ln('부실자산 차감', '− ' + fmt(d.A.bad) + ' ' + u, 'ind') +
+      ln('겸업자산 차감', '− ' + fmt(d.A.side) + ' ' + u, 'ind') +
+      (d.A.part ? ln('일부 차감', '− ' + fmt(d.A.part) + ' ' + u, 'ind') : '') +
+      ln('실질자산', fmt(d.realA) + ' ' + u, 'st') +
+      ln('부채총계 (장부)', fmt(d.L.total) + ' ' + u) +
+      ln('겸업부채 등 제외', '− ' + fmt(d.L.ded) + ' ' + u, 'ind') +
+      ln('부외부채 가산', '+ ' + fmt(d.off) + ' ' + u, 'ind') +
+      ln('실질부채', fmt(d.realL) + ' ' + u, 'st') +
+      ln('실질자본 (실질자산 − 실질부채)', fmt(d.realCap) + ' ' + u + ` <span style="font-weight:500;color:#64748b">(${wonText(d.capWon)})</span>`, 'total') +
+      ln('<span style="color:#94a3b8">참고: 장부상 자본총계</span>', `<span style="color:#94a3b8">${fmt(d.bookCap)} ${u}</span>`);
+    $('warns').innerHTML = (d.warns || []).map(x => `<li>${esc(x)}</li>`).join('');
     const v = $('verdict');
     const kpi = (k, val, color) => `<div class="kpi"><div class="k">${k}</div><div class="v"${color ? ` style="color:${color}"` : ''}>${val}</div></div>`;
-    if (!licenses.length) {
+    if (!d.judged) {
       v.className = 'verdict';
-      v.innerHTML = `<div class="head muted">2번에서 보유 면허를 추가하면 충족 여부를 판정합니다</div><div class="kpis">${kpi('실질자본', wonText(capWon))}</div>`;
-      last.ok = null; return;
+      v.innerHTML = `<div class="head muted">2번에서 보유 면허를 고르면 충족 여부를 판정합니다</div><div class="kpis">${kpi('실질자본', wonText(d.capWon))}</div>`;
+      return;
     }
-    const ok = capWon >= reqWon, diff = capWon - reqWon;
-    last.ok = ok; last.diff = diff;
-    v.className = 'verdict ' + (ok ? 'ok' : 'bad');
-    v.innerHTML = `<div class="head">${ok ? '✔ 실질자본금 충족' : '✖ 실질자본금 미달'}</div>
-      <div class="kpis">${kpi('실질자본', wonText(capWon))}${kpi('기준자본금 합계', wonText(reqWon))}
-      ${kpi(ok ? '여유액' : '부족액', wonText(Math.abs(diff)), ok ? '#047857' : '#b91c1c')}${kpi('충족률', reqWon ? (capWon / reqWon * 100).toFixed(1) + '%' : '-')}</div>
-      ${ok ? '' : `<div style="margin-top:12px;font-size:13px;color:#7f1d1d">부족액 ${wonText(-diff)} 이상을 증자하거나 부실자산(가지급금 등)을 회수·정리해야 기준을 충족합니다.</div>`}`;
+    v.className = 'verdict ' + (d.ok ? 'ok' : 'bad');
+    v.innerHTML = `<div class="head">${d.ok ? '✔ 실질자본금 충족' : '✖ 실질자본금 미달'}</div>
+      <div class="kpis">${kpi('실질자본', wonText(d.capWon))}${kpi('기준자본금 합계', wonText(d.reqWon))}
+      ${kpi(d.ok ? '여유액' : '부족액', wonText(Math.abs(d.diff)), d.ok ? '#047857' : '#b91c1c')}${kpi('충족률', d.rate != null ? (d.rate * 100).toFixed(1) + '%' : '-')}</div>
+      ${d.ok ? '' : `<div style="margin-top:12px;font-size:13px;color:#7f1d1d">부족액 ${wonText(-d.diff)} 이상을 증자하거나 부실자산(가지급금 등)을 회수·정리해야 기준을 충족합니다.</div>`}`;
   }
 
   // ================= 재무제표 파일 읽기 =================
@@ -877,79 +902,6 @@
     }).filter(Boolean).join('   ')).filter(Boolean).join('\n');
   }
 
-  // ---- 재무상태표 해석 ----
-  const AMT = /(△|▲|-|\()?\s*(\d{1,3}(?:,\d{3})+|\d{4,})(\))?(?![\d,])/;
-  const SUBTOTAL = /^(유동자산|비유동자산|당좌자산|투자자산|유형자산|기타비유동자산|유동부채|비유동부채|자산|부채|자본|자본금|자본잉여금|이익잉여금|자본조정|기타포괄손익누계액|과목|계정과목)$/;
-  const MAYBE_SUBTOTAL = /^(재고자산|무형자산)$/;
-  const CONTRA_ASSET = /충당금$|대손충당|상각누계|감가상각|손상차손누계|정부보조금|국고보조금|현재가치할인차금/;
-  const CONTRA_LIAB = /퇴직연금운용자산|국민연금전환금|퇴직보험예치금|사채할인발행차금/;
-  function parseAmountMatch(m) { const n = Number(m[2].replace(/,/g, '')); return m[1] ? -n : n; }
-  function cleanName(s) {
-    return s.replace(/^[\s\dⅠ-ⅿ①-⑳㉑-㊿.)(\-·ㆍ*]+/, '').replace(/\(\s*주\s*\d+[^)]*\)/g, '').replace(/주\s*\d+(,\s*\d+)*\s*$/, '')
-      .replace(/\s+/g, '').replace(/[.:：]+$/, '');
-  }
-  // 문자 인식(OCR) 결과에서 과목만 있는 줄 바로 다음 줄이 금액뿐이면 한 줄로 이음
-  function joinSplitLines(text) {
-    const lines = text.split('\n'), out = [];
-    for (let i = 0; i < lines.length; i++) {
-      const cur = lines[i], next = lines[i + 1];
-      if (next !== undefined && /[가-힣]{2,}/.test(cur) && !AMT.test(cur) && !/[가-힣]/.test(next) && AMT.test(next)) { out.push(cur + '   ' + next); i++; }
-      else out.push(cur);
-    }
-    return out.join('\n');
-  }
-  function parseBalanceSheet(text) {
-    text = joinSplitLines(text);
-    const out = { assets: [], liabs: [], totalAssets: null, totalLiabs: null, unit: null, companyName: null, asOf: null };
-    const u = /단\s*위\s*[:：]?\s*(백\s*만\s*원|천\s*원|원)/.exec(text);
-    if (u) out.unit = /백/.test(u[1]) ? 1000000 : /천/.test(u[1]) ? 1000 : 1;
-    const D = '(\\d{4})\\s*[.\\-/년]\\s*(\\d{1,2})\\s*[.\\-/월]\\s*(\\d{1,2})\\s*일?';
-    const pad = n => String(n).padStart(2, '0');
-    let d = new RegExp(`${D}\\s*현\\s*재`).exec(text) || new RegExp(`${D}\\s*(?:까\\s*지|\\))`).exec(text);
-    if (d) out.asOf = `${d[1]}-${pad(d[2])}-${pad(d[3])}`;
-    const nm = /(?:회\s*사\s*명|법\s*인\s*명|상\s*호)\s*[:：]?\s*([^\n]{2,30}?)(?:\s{2,}|\n|\(단|$)/.exec(text)
-      || /((?:주식회사|㈜|\(주\))\s*[가-힣A-Za-z0-9]+|[가-힣A-Za-z0-9]+\s*(?:주식회사|㈜|\(주\)))/.exec(text);
-    if (nm) out.companyName = nm[1].trim();
-
-    let section = 'asset';
-    const items = [];
-    text.split('\n').forEach(line => {
-      const flat = line.replace(/\s+/g, '');
-      if (!flat) return;
-      if (/부채와자본총계|부채및자본총계|자본총계/.test(flat)) { section = 'equity'; return; }
-      const m = AMT.exec(line);
-      if (/자산총계|자산합계/.test(flat)) { if (m && out.totalAssets == null) out.totalAssets = parseAmountMatch(m); section = 'liab'; return; }
-      if (/부채총계|부채합계/.test(flat)) { if (m && out.totalLiabs == null) out.totalLiabs = parseAmountMatch(m); section = 'equity'; return; }
-      if (section === 'equity' || !m) return;
-      const rawName = line.slice(0, m.index);
-      const name = cleanName(rawName);
-      if (!/[가-힣]{2,}/.test(name) || name.length > 30) return;
-      if (/^[\s]*[Ⅰ-ⅿ]/.test(rawName) || /^\s*\(\s*\d+\s*\)/.test(rawName) || SUBTOTAL.test(name)) return;   // 구분 합계 줄
-      items.push({ section, name, amount: parseAmountMatch(m), header: MAYBE_SUBTOTAL.test(name) });
-    });
-    // 대손충당금 · 감가상각누계액 등 차감 계정은 바로 위 계정에서 빼서 순액으로
-    const list = { asset: [], liab: [] };
-    items.forEach((it, i) => {
-      const arr = list[it.section];
-      const contra = it.section === 'asset' ? CONTRA_ASSET.test(it.name) : CONTRA_LIAB.test(it.name);
-      if (contra && arr.length) { const p = arr[arr.length - 1]; p.amount -= Math.abs(it.amount); p.net = true; return; }
-      arr.push(Object.assign({}, it));
-    });
-    // '재고자산' · '무형자산'이 아래 계정들의 소계이면 빼기
-    ['asset'].forEach(k => {
-      const arr = list[k];
-      for (let i = arr.length - 1; i >= 0; i--) {
-        if (!arr[i].header) continue;
-        let s = 0;
-        for (let j = i + 1; j < arr.length; j++) { s += arr[j].amount; if (s === arr[i].amount && j > i) { arr.splice(i, 1); break; } if (s > arr[i].amount) break; }
-      }
-    });
-    // 같은 이름이 두 번(당기·전기 표가 따로 있는 경우) 나오면 처음 것만
-    ['asset', 'liab'].forEach(k => { const seen = new Set(); list[k] = list[k].filter(a => !seen.has(a.name) && seen.add(a.name)); });
-    out.assets = list.asset; out.liabs = list.liab;
-    return out;
-  }
-
   // ---- 스캔본: 쪽 이미지를 만들어 홈페이지 서버(구글 드라이브 OCR)로 보냄 ----
   const OCR_PER_CALL = 2, MIN_TEXT = 20;
   const canvasJpeg = c => ({ mediaType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] });
@@ -1008,6 +960,7 @@
       // 글자가 없는 쪽만 문자 인식 (글자 있는 쪽에서 재무상태표를 이미 찾았으면 건너뜀)
       const failed = [];
       let stop = null;
+      if (typeof window.api !== 'function') throw new Error('로그인 후 이용할 수 있습니다.');
       if (queue.length && !pages.some(isBS)) {
         if (typeof window.api !== 'function') throw new Error('스캔본을 읽으려면 홈페이지 로그인 기능이 필요합니다. 홈페이지 주소로 접속해 주세요.');
         let done = 0, next = 0;
@@ -1047,7 +1000,11 @@
         throw new Error(failed.length ? `문자 인식에 실패했습니다. ${failed.slice(0, 3).join(' / ')}`
           : '파일에서 재무상태표(자산총계 · 부채총계)를 찾지 못했습니다. 재무상태표 쪽이 들어 있는지 확인해 주세요.');
       }
-      const bs = parseBalanceSheet(bsPages.join('\n'));
+      progress(1, 1, '재무상태표 계정을 읽는 중...');
+      const pr = await window.api('/api/calculate', { mode: 'parse', text: bsPages.join('\n').slice(0, 300000) });
+      if (pr.status === 401 || pr.status === 402) { if (window.refreshUser) window.refreshUser(); throw new Error(pr.data.message || '로그인이 필요합니다.'); }
+      if (!pr.ok || !pr.data.result) throw new Error(pr.data.message || '재무상태표를 읽지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      const bs = pr.data.result.bs;
       if (!bs.assets.length && !bs.liabs.length) throw new Error('재무상태표의 계정과목을 읽지 못했습니다. 아래 표에 직접 입력해 주세요.');
       applyBS(bs, queue.length > 0);
       if (failed.length) $('extractMsg').innerHTML += `<br><span style="color:#b45309">읽지 못한 쪽: ${esc(failed.slice(0, 5).join(' / '))}</span>`;
@@ -1062,16 +1019,16 @@
     if (bs.companyName && !$('corpName').value.trim()) { $('corpName').value = bs.companyName.slice(0, 40); $('corpName').classList.add('auto'); }
     if (bs.asOf && !$('baseDate').value) { $('baseDate').value = bs.asOf; $('baseDate').classList.add('auto'); }
     $('assetBody').innerHTML = $('liabBody').innerHTML = '';
-    bs.assets.forEach(a => acctRow('asset', a.name, a.amount, true));
-    bs.liabs.forEach(a => acctRow('liab', a.name, a.amount, true));
-    if (!bs.liabs.length) DEFAULT_LIABS.forEach(n => acctRow('liab', n));
+    bs.assets.forEach(a => acctRow('asset', a.name, a.amount, true, a));
+    bs.liabs.forEach(a => acctRow('liab', a.name, a.amount, true, a));
+    if (!bs.liabs.length) classifyRows(DEFAULT_LIABS.map(n => acctRow('liab', n)));
     const setChk = (id, v) => { if (v != null) { $(id).value = fmt(v); $(id).classList.add('auto'); } };
     setChk('bsAssetTotal', bs.totalAssets); setChk('bsLiabTotal', bs.totalLiabs);
     recalc();
-    const A = last.A.total, L = last.L.total;
+    const A = collect('asset').total, L = collect('liab').total;
     const okA = bs.totalAssets == null || Math.round(bs.totalAssets) === Math.round(A);
     const okL = bs.totalLiabs == null || Math.round(bs.totalLiabs) === Math.round(L);
-    const flagged = last.A.rows.filter(r => r.t !== 'ok').length;
+    const flagged = bs.assets.filter(r => r.t !== 'ok').length;
     msg(okA && okL ? 'ok' : 'warn',
       `자산 <b>${bs.assets.length}개</b>, 부채 <b>${bs.liabs.length}개</b> 계정을 읽었어요` + (bs.unit ? ` (단위: ${unitName()})` : '') + '.<br>' +
       (okA && okL ? '읽은 금액의 합계가 재무상태표 총계와 일치합니다. ' : '읽은 금액의 합계가 재무상태표 총계와 다릅니다. 4번 표에서 빠지거나 겹친 계정을 확인해 주세요. ') +
@@ -1082,14 +1039,14 @@
   // ================= 보고서 =================
   const TREAT = { ok: '인정', bad: '부실자산', side: '겸업', part: '일부 차감' };
   function buildReport() {
-    recalc();
-    const d = last, u = d.u;
+    const d = result;
+    if (!d) { $('report').innerHTML = '<p>[실질자본 판정하기]를 먼저 눌러 주세요.</p>'; return; }
+    const u = d.uName;
     const ent = entity() === 'corp' ? '법인' : '개인';
     const name = $('corpName').value.trim() || '-';
     const base = $('baseDate').value || '-';
     const today = new Date(); const ymd = `${today.getFullYear()}. ${today.getMonth() + 1}. ${today.getDate()}.`;
     const rowsHtml = (rows, isLiab) => rows.map(r => `<tr><td>${esc(r.name)}</td><td class="r">${fmt(r.amt)}</td><td style="text-align:center">${r.t === 'side' && isLiab ? '겸업부채' : TREAT[r.t]}</td><td class="r">${r.ded ? fmt(r.ded) : ''}</td><td class="r">${fmt(r.amt - r.ded)}</td></tr>`).join('');
-    const rq = reqInfo();
     $('report').innerHTML = `
       <h1>실질자본 진단 결과 보고서</h1>
       <div class="sub">건설업 기업진단 사전검토 (참고용)</div>
@@ -1098,15 +1055,15 @@
       <tr><th>진단기준일</th><td>${esc(base)}</td><th>금액 단위</th><td>${u}</td></tr></table>
       <h2>2. 보유 면허 및 기준자본금</h2>
       <table><tr><th>구분</th><th>면허</th><th>기준자본금</th></tr>
-      ${licenses.length ? licenses.map(l => `<tr><td style="text-align:center">${esc(l.group)}</td><td>${esc(l.name)}${l.add ? ' (추가 등록)' : ''}</td><td class="r">${eokText(licCap(l))}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center">입력한 면허 없음</td></tr>'}
-      ${rq.reduction ? `<tr><td colspan="2">추가 등록 특례 (${esc(rq.added.name)} 기준자본금 50% 중복 인정)</td><td class="r">− ${eokText(rq.reduction)}</td></tr>` : ''}
-      <tr class="tot"><td colspan="2" style="text-align:center">충족해야 할 기준자본금</td><td class="r">${licenses.length ? eokText(rq.net) : '-'}</td></tr></table>
+      ${d.licenses.length ? d.licenses.map(l => `<tr><td style="text-align:center">${esc(l.group)}</td><td>${esc(l.name)}${l.add ? ' (추가 등록)' : ''}</td><td class="r">${eokText(l.cap)}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center">입력한 면허 없음</td></tr>'}
+      ${d.reduction ? `<tr><td colspan="2">추가 등록 특례 (${esc(d.added)} 기준자본금 50% 중복 인정)</td><td class="r">− ${eokText(d.reduction)}</td></tr>` : ''}
+      <tr class="tot"><td colspan="2" style="text-align:center">충족해야 할 기준자본금</td><td class="r">${d.judged ? eokText(d.reqEok) : '-'}</td></tr></table>
       <h2>3. 자산 검토</h2>
       <table><tr><th>계정과목</th><th>장부금액</th><th>처리</th><th>차감액</th><th>실질금액</th></tr>
-      ${rowsHtml(d.A.rows)}<tr class="tot"><td style="text-align:center">합계</td><td class="r">${fmt(d.A.total)}</td><td></td><td class="r">${fmt(d.A.ded)}</td><td class="r">${fmt(d.realA)}</td></tr></table>
+      ${rowsHtml(d.assets)}<tr class="tot"><td style="text-align:center">합계</td><td class="r">${fmt(d.A.total)}</td><td></td><td class="r">${fmt(d.A.ded)}</td><td class="r">${fmt(d.realA)}</td></tr></table>
       <h2>4. 부채 검토</h2>
       <table><tr><th>계정과목</th><th>장부금액</th><th>처리</th><th>제외액</th><th>실질금액</th></tr>
-      ${rowsHtml(d.L.rows, true)}
+      ${rowsHtml(d.liabs, true)}
       ${d.offRows.map(r => `<tr><td>${esc(r.name || '부외부채')}</td><td class="r">-</td><td style="text-align:center">부외부채 가산</td><td></td><td class="r">${fmt(r.amt)}</td></tr>`).join('')}
       <tr class="tot"><td style="text-align:center">합계</td><td class="r">${fmt(d.L.total)}</td><td></td><td class="r">${fmt(d.L.ded)}</td><td class="r">${fmt(d.realL)}</td></tr></table>
       <h2>5. 실질자본 계산</h2>
@@ -1121,24 +1078,27 @@
         <tr><td>&nbsp;&nbsp;(+) 부외부채</td><td class="r">${fmt(d.off)}</td></tr>
         <tr class="tot"><td>실질부채 ②</td><td class="r">${fmt(d.realL)}</td></tr>
         <tr class="tot"><td>실질자본 (① − ②)</td><td class="r">${fmt(d.realCap)} (${wonText(d.capWon)})</td></tr>
-        <tr><td>기준자본금 합계</td><td class="r">${licenses.length ? wonText(d.reqWon) : '-'}</td></tr>
+        <tr><td>기준자본금 합계</td><td class="r">${d.judged ? wonText(d.reqWon) : '-'}</td></tr>
       </table>
-      <div class="verdict-box">판정 : ${d.ok == null ? '면허 미입력 (판정 불가)' : d.ok ? `기준자본금 충족 (여유액 ${wonText(d.diff)})` : `기준자본금 미달 (부족액 ${wonText(-d.diff)})`}</div>
+      <div class="verdict-box">판정 : ${!d.judged ? '면허 미입력 (판정 불가)' : d.ok ? `기준자본금 충족 (여유액 ${wonText(d.diff)})` : `기준자본금 미달 (부족액 ${wonText(-d.diff)})`}</div>
       ${d.warns.length ? `<h2>6. 확인 필요 사항</h2><ul style="margin:0;padding-left:18px">${d.warns.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       <div class="foot">※ 본 보고서는 입력된 재무상태표와 처리 기준을 바탕으로 자동 계산한 사전검토 자료이며, 「건설업 관련 기업진단지침」에 따른 공식 기업진단보고서가 아닙니다. 실제 진단 결과는 진단자의 실사(예금 거래내역, 채권 실재성 등)에 따라 달라질 수 있습니다.</div>
       <div class="sign">작성일 ${ymd}<br><b>세무회계강남</b></div>`;
   }
-  $('reportBtn').addEventListener('click', () => { buildReport(); window.print(); });
+  $('reportBtn').addEventListener('click', () => { if (!result) return; buildReport(); window.print(); });
   window.addEventListener('beforeprint', buildReport);
 
   $('resetBtn').addEventListener('click', () => {
     if (!confirm('입력한 내용을 모두 지울까요?')) return;
     licRows = [{ key: '' }]; licenses = []; files = [];
     ['corpName', 'baseDate', 'bsAssetTotal', 'bsLiabTotal'].forEach(id => { $(id).value = ''; $(id).classList.remove('auto'); });
+    result = null; judgedKey = '';
+    ['calc', 'warns', 'verdict', 'judgeMsg'].forEach(id => { $(id).innerHTML = ''; });
+    $('verdict').className = 'verdict'; $('reportBtn').disabled = true;
     renderFiles(); buildDefaults(); renderLicenses(); recalc();
+    if (window.__diagPaid) window.__diagReady();
   });
 
-  window.__bsParse = parseBalanceSheet;   // 확인용
   buildDefaults(); renderLicenses(); recalc();
 })();
 </script>
