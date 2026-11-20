@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세무회계강남 기업진단 계산기 · 건설업 실질자본금 판정</title>
+  <meta name="description" content="건설업 기업진단 계산기. 재무상태표 파일을 올리면 계정을 자동으로 읽어 부실·겸업자산을 차감한 실질자본을 계산하고, 보유 면허의 기준자본금 충족 여부를 판정합니다 - 세무회계강남">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <link rel="stylesheet" href="../양도세계산기/css/login.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #f4f6fa; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #1e293b; margin: 0; padding: 40px 20px; font-size: 14px; line-height: 1.55; }
+    .wrapper { max-width: 1100px; margin: 0 auto; }
+    .home-link { display: inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px; }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    #authButtons { display: flex; align-items: center; gap: 6px; }
+    .header { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; padding: 24px 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .header .eyebrow { display: block; font-size: 12px; font-weight: 500; color: #a08452; letter-spacing: .5px; margin-bottom: 4px; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -.5px; }
+    .header h1 small { font-size: 15px; font-weight: 500; color: #64748b; }
+    .header p { margin: 8px 0 0; color: #64748b; font-size: 13px; }
+
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px 32px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(15,23,42,.06); }
+    .card h2 { margin: 0 0 4px; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card h2 .no { width: 24px; height: 24px; border-radius: 50%; background: #8a6d3b; color: #fff; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+    .hint { color: #64748b; font-size: 13px; margin: 0 0 16px; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 5px; }
+    input[type=text], input[type=date], select { width: 100%; font: inherit; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #1e293b; }
+    input:focus, select:focus { outline: none; border-color: #b08d57; box-shadow: 0 0 0 3px rgba(176,141,87,.15); }
+    input.num { text-align: right; font-variant-numeric: tabular-nums; }
+    input:disabled { background: #f1f5f9; color: #94a3b8; }
+    input.auto { background: #fffbeb; border-color: #f2c94c; }
+    .seg { display: flex; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
+    .seg label { flex: 1; margin: 0; text-align: center; padding: 9px 0; cursor: pointer; font-weight: 500; color: #475569; }
+    .seg input { display: none; }
+    .seg label:has(input:checked) { background: #8a6d3b; color: #fff; }
+
+    .btn { font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; cursor: pointer; color: #334155; white-space: nowrap; }
+    .btn:hover { background: #f8fafc; }
+    .btn.gold { background: #8a6d3b; border-color: #8a6d3b; color: #fff; }
+    .btn.gold:hover { background: #74592e; }
+    .btn.big { padding: 14px 20px; font-size: 15px; width: 100%; }
+
+    /* 면허 */
+    .lic-add { display: flex; gap: 8px; flex-wrap: wrap; }
+    .lic-add select { flex: 1; min-width: 220px; }
+    .lic-list { margin-top: 14px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .lic-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+    .lic-row:last-child { border-bottom: none; }
+    .lic-row { flex-wrap: wrap; }
+    .lic-row .lic-sel { flex: 1; min-width: 220px; }
+    .lic-row .lic-sel.unset { color: #94a3b8; }
+    .lic-row .lic-sel option, .lic-row .lic-sel optgroup { color: #1e293b; text-align: left; }
+    .lic-row .lic-sel option:disabled { color: #94a3b8; }
+    .lic-row .lic-cname { flex: 1; min-width: 160px; }
+    .lic-row .capw { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 13px; white-space: nowrap; }
+    .lic-row input[type=checkbox] { width: 16px; height: 16px; margin: 0; accent-color: #8a6d3b; }
+    .lic-row .addw { cursor: pointer; }
+    .lic-row .addw.off { color: #cbd5e1; cursor: default; }
+    .lic-addbtn { margin-top: 10px; width: 100%; padding: 12px; border: 1px dashed #b08d57; background: #fdfbf7; color: #74592e; font-size: 14px; }
+    .lic-addbtn:hover { background: #fbf6ea; }
+    .lic-row input { width: 80px; padding: 5px 8px; }
+    .lic-row .x { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; line-height: 1; }
+    .lic-row .x:hover { color: #b45309; }
+    .req-box { margin-top: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: #fdfbf7; border: 1px solid #ecdfc6; border-radius: 10px; padding: 14px 18px; }
+    .req-box .k { color: #74592e; font-weight: 600; }
+    .req-box .v { font-size: 22px; font-weight: 900; color: #1e293b; }
+    .req-box small { display: block; color: #94a3b8; font-weight: 400; font-size: 12px; }
+
+    /* 업로드 */
+    .upload-box { border: 1px dashed #b08d57; background: #fdfbf7; border-radius: 10px; padding: 22px; text-align: center; }
+    .upload-box.drag { border-style: solid; border-width: 2px; background: #fbf6ea; }
+    .upload-box .big-t { font-weight: 700; color: #74592e; margin-bottom: 4px; }
+    .upload-box .sm { color: #94a3b8; font-size: 12px; }
+    .file-list { margin-top: 12px; text-align: left; font-size: 13px; }
+    .file-list div { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid #f1ece2; }
+    .file-list .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-list span { color: #94a3b8; font-size: 12px; }
+    .file-list button { background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; }
+    .live-msg { font-size: 13px; color: #475569; font-weight: 600; margin-top: 10px; line-height: 1.6; text-align: left; }
+    .live-msg.warn { color: #b45309; }
+    .live-msg.ok { color: #047857; }
+    .live-msg:empty { display: none; }
+    .hidden { display: none !important; }
+
+    /* 날짜 입력 + 달력 (양도세 계산기와 같은 날짜 선택 팝업) */
+    .date-input-wrapper { position: relative; }
+    .date-input-wrapper input[type="text"] { padding-right: 40px; }
+    .cal-btn { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 6px; border-radius: 6px; cursor: pointer; color: #8a6d3b; display: flex; }
+    .cal-btn:hover { background-color: #f1f5f9; }
+    .dp { position: absolute; z-index: 200; width: 296px; background: #fff; border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; border-radius: 10px; box-shadow: 0 10px 28px rgba(15,23,42,.14); padding: 14px; display: none; font-family: inherit; }
+    .dp.open { display: block; }
+    .dp-head { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+    .dp-head select { flex: 1; width: auto; padding: 7px 8px; font-size: 14px; font-weight: 600; color: #1e293b; border-radius: 6px; cursor: pointer; }
+    .dp-nav { flex: 0 0 30px; height: 32px; background: none; border: 1px solid #e2e8f0; border-radius: 6px; color: #8a6d3b; font-size: 18px; line-height: 1; cursor: pointer; }
+    .dp-nav:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-week, .dp-days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+    .dp-week span { font-size: 12px; color: #64748b; padding: 4px 0 6px; font-weight: 500; }
+    .dp-week span:first-child { color: #b45309; }
+    .dp-days { gap: 2px; }
+    .dp-day { height: 34px; background: none; border: 1px solid transparent; border-radius: 6px; font-size: 14px; color: #1e293b; cursor: pointer; font-family: inherit; }
+    .dp-day.sun { color: #b45309; }
+    .dp-day:hover { background: #faf7f1; border-color: #eadfc9; }
+    .dp-day.today { border-color: #cbd5e1; font-weight: 700; }
+    .dp-day.sel, .dp-day.sel:hover { background: #8a6d3b; border-color: #8a6d3b; color: #fff; font-weight: 700; }
+    .dp-foot { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9; }
+    .dp-foot button { background: none; border: none; font-size: 13px; color: #8a6d3b; font-weight: 600; cursor: pointer; padding: 4px 6px; font-family: inherit; }
+    .dp-foot .dp-close { color: #64748b; }
+
+    /* 로그인 · 이용권 (../양도세계산기/js/login.js) */
+    #calcArea { position: relative; min-height: 560px; }
+    .lock-overlay { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.95); border-radius: 12px; z-index: 10; text-align: center; padding: 120px 20px 20px; }
+    .lock-overlay > div { position: sticky; top: 120px; }
+    .lock-overlay h3 { color: #1e293b; font-weight: 700; margin: 0 0 8px; }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; font-family: inherit; }
+    .tab-btn.active { color: #8a6d3b; border-bottom: 2px solid #8a6d3b; margin-bottom: -2px; }
+    .btn-login { background-color: #8a6d3b; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: inherit; }
+    .btn-login:hover { background-color: #74592e; }
+    .btn-outline { background-color: transparent; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: inherit; }
+    .btn-outline:hover { background-color: #f1f5f9; }
+    .btn-logout { background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-family: inherit; }
+    .btn-logout:hover { background: #8a6d3b; color: #fff; }
+    #authModal label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    input[type=password], input[type=email] { width: 100%; font: inherit; padding: 9px 11px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    .progress { height: 6px; background: #ece4d4; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .progress i { display: block; height: 100%; background: #8a6d3b; transition: width .3s; }
+
+    /* 표 */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    th, td { padding: 7px 6px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    th { font-size: 12px; color: #64748b; font-weight: 600; text-align: left; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    th.r, td.r { text-align: right; }
+    td .tip { display: block; font-size: 11.5px; color: #94a3b8; margin-top: 2px; }
+    td .x { background: none; border: none; color: #cbd5e1; font-size: 18px; cursor: pointer; }
+    td .x:hover { color: #b45309; }
+    tr.sum td { font-weight: 700; background: #f8fafc; border-top: 1px solid #e2e8f0; font-variant-numeric: tabular-nums; }
+    select.treat.bad { color: #b91c1c; } select.treat.side { color: #b45309; } select.treat.part { color: #1d4ed8; }
+    .tbl-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+    .tbl-foot .chk { margin-left: auto; display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 13px; }
+    .tbl-foot .chk input { width: 160px; }
+    h3.sub { font-size: 14px; margin: 24px 0 8px; }
+
+    /* 결과 */
+    .calc .line { display: flex; justify-content: space-between; padding: 7px 4px; border-bottom: 1px dashed #e2e8f0; font-variant-numeric: tabular-nums; }
+    .calc .line.ind span:first-child { padding-left: 16px; color: #64748b; }
+    .calc .line.st { font-weight: 700; background: #f8fafc; }
+    .calc .line.total { font-weight: 900; font-size: 16px; border-bottom: 2px solid #1e293b; border-top: 2px solid #1e293b; margin-top: 6px; }
+    .warns { margin: 12px 0 0; padding-left: 18px; color: #b45309; font-size: 13px; }
+    .warns:empty { display: none; }
+    .verdict { margin-top: 20px; border-radius: 12px; padding: 22px 24px; border: 2px solid #e2e8f0; background: #f8fafc; }
+    .verdict.ok { border-color: #059669; background: #ecfdf5; }
+    .verdict.bad { border-color: #dc2626; background: #fef2f2; }
+    .verdict .head { font-size: 22px; font-weight: 900; margin-bottom: 14px; }
+    .verdict.ok .head { color: #047857; } .verdict.bad .head { color: #b91c1c; } .verdict .head.muted { color: #94a3b8; font-size: 16px; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+    .kpi { background: rgba(255,255,255,.75); border-radius: 10px; padding: 10px 12px; }
+    .kpi .k { font-size: 12px; color: #64748b; } .kpi .v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .actions { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+    .actions .btn.gold { flex: 1; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .calc:empty, .verdict:empty { display: none; }
+    .disclaimer { font-size: 12px; color: #94a3b8; margin: 12px 4px 0; }
+
+    /* 보고서 (인쇄 전용) */
+    #report { display: none; }
+    @media print {
+      @page { size: A4; margin: 15mm 14mm; }
+      body { background: #fff; padding: 0; font-size: 11.5px; }
+      .wrapper { display: none !important; }
+      #report { display: block; color: #111; }
+      #report h1 { font-size: 20px; text-align: center; margin: 0 0 4px; letter-spacing: 2px; }
+      #report .sub { text-align: center; color: #555; margin-bottom: 18px; }
+      #report h2 { font-size: 13px; margin: 18px 0 6px; padding-left: 8px; border-left: 4px solid #8a6d3b; }
+      #report table { min-width: 0; width: 100%; border-collapse: collapse; }
+      #report th, #report td { border: 1px solid #999; padding: 4px 6px; background: none; color: #111; font-size: 11px; }
+      #report th { background: #f1ece2 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; text-align: center; }
+      #report td.r { text-align: right; }
+      #report tr.tot td { font-weight: 700; }
+      #report .verdict-box { border: 2px solid #111; padding: 10px 14px; margin-top: 8px; font-size: 14px; font-weight: 700; text-align: center; }
+      #report .foot { margin-top: 18px; font-size: 10px; color: #555; }
+      #report .sign { margin-top: 24px; text-align: right; font-size: 12px; }
+      #report tr { page-break-inside: avoid; }
+    }
+    @media (max-width: 640px) {
+      body { padding: 16px 12px; }
+      .header, .card { padding: 18px 16px; }
+      .header h1 { font-size: 20px; }
+      .tbl-foot .chk { margin-left: 0; width: 100%; }
+      .tbl-foot .chk input { flex: 1; width: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <a href="/" class="home-link">← 세무회계강남 홈</a>
+  <div class="header">
+    <div>
+      <span class="eyebrow">세무회계강남 · 건설업 기업진단</span>
+      <h1>기업진단 계산기 <small>실질자본금 충족 판정</small></h1>
+      <p>재무상태표 파일을 올리면 계정과 금액을 자동으로 읽어 실질자본을 계산하고, 보유 면허의 기준자본금 충족 여부를 판정합니다.</p>
+    </div>
+    <div id="authButtons">
+      <a id="adminLink" href="../양도세계산기/admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
+      <span id="planStatus" style="font-size: 12px; color: #8a6d3b; font-weight: 600; margin-right: 6px;"></span>
+      <button id="loginBtn" class="btn btn-login" onclick="openModal('login')" style="display:none;">로그인</button>
+      <button id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;">회원가입</button>
+      <button id="logoutBtn" class="btn-logout" onclick="handleLogout()" style="display:none;">로그아웃</button>
+    </div>
+  </div>
+
+  <div id="calcArea">
+  <div id="lockOverlay" class="lock-overlay">
+    <div id="lockReady" style="display: none;">
+      <h3>기업진단 계산기 서비스 준비 중</h3>
+      <p style="color: #666; margin-bottom: 20px;">더 정확한 계산 서비스로 곧 찾아뵙겠습니다.</p>
+      <a href="/" class="btn btn-outline" style="text-decoration: none;">홈으로 가기</a>
+    </div>
+    <div id="lockChecking"><h3>로그인 상태 확인 중...</h3></div>
+    <div id="lockLogin" style="display: none;">
+      <h3>로그인 후 이용 가능합니다</h3>
+      <p style="color: #666; margin-bottom: 20px;">회원가입 후 로그인하시면 기업진단 계산기를 이용하실 수 있습니다.<br><span style="font-size: 13px;">다른 계산기와 같은 회원 계정을 사용합니다.</span></p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button class="btn btn-login" onclick="openModal('login')">로그인</button>
+        <button class="btn btn-outline" onclick="openModal('signup')">회원가입</button>
+      </div>
+    </div>
+    <div id="lockWait" style="display: none;">
+      <div id="applyBefore">
+        <h3>인가 신청 후 이용 가능합니다</h3>
+        <p id="waitInfo" style="color: #666; margin-bottom: 6px;">기업진단 계산기 이용권을 계좌이체로 결제하시면 확인 후 승인해 드립니다.</p>
+        <p id="applyPlan" style="font-weight: 700; margin-bottom: 18px;"></p>
+        <button class="btn btn-login" onclick="applyAccess()" style="padding: 12px 24px;">인가 신청하기</button>
+      </div>
+      <div id="applyAfter" style="display: none;">
+        <h3>아래 계좌로 입금해 주세요</h3>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 12px auto; max-width: 360px; text-align: left; line-height: 1.8;">
+          <div><span style="color: #64748b;">입금 계좌</span> <strong id="bankLine" style="white-space: nowrap;"></strong></div>
+          <div><span style="color: #64748b;">예금주</span> <strong id="bankHolder"></strong></div>
+          <div><span style="color: #64748b;">금액</span> <strong id="bankAmount"></strong></div>
+        </div>
+        <p style="color: #666; font-size: 14px; margin-bottom: 6px;">입금자명은 가입하신 이름과 같게 해주세요.<br>입금 확인 후 승인되면 바로 이용하실 수 있습니다.</p>
+      </div>
+      <p style="color: #666; font-size: 14px;">문의: <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 600;">010-4454-2429</a></p>
+    </div>
+    <div id="lockPay" style="display: none;">
+      <h3>이용권 결제 후 이용 가능합니다</h3>
+      <p id="planInfo" style="color: #666; margin-bottom: 20px;"></p>
+      <button class="btn btn-login" onclick="startPayment()" style="padding: 12px 24px;">카드로 결제하기</button>
+    </div>
+  </div>
+  <!-- 1. 기본 정보 -->
+  <div class="card">
+    <h2><span class="no">1</span>기본 정보</h2>
+    <p class="hint">개인사업자는 종합공사업 기준자본금이 법인의 2배입니다.</p>
+    <div class="form-grid">
+      <div class="field">
+        <label>사업자 유형</label>
+        <div class="seg">
+          <label><input type="radio" name="entity" value="corp" checked>법인</label>
+          <label><input type="radio" name="entity" value="indiv">개인</label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="corpName" id="corpNameLabel">법인명</label>
+        <input type="text" id="corpName" placeholder="예: ㈜세무건설" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="baseDate">진단기준일</label>
+        <div class="date-input-wrapper"><input type="text" id="baseDate" placeholder="YYYY-MM-DD" maxlength="10" inputmode="numeric" autocomplete="off"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 보유 면허 -->
+  <div class="card">
+    <h2><span class="no">2</span>보유(등록) 면허</h2>
+    <p class="hint">보유하고 있거나 새로 등록하려는 면허를 모두 추가하세요. 여러 면허를 겸업하면 기준자본금을 합산합니다.</p>
+    <div class="lic-list" id="licList"></div>
+    <button type="button" class="btn lic-addbtn" id="licAddBtn">+ 면허 추가</button>
+    <div class="req-box">
+      <div class="k">충족해야 할 기준자본금 합계<small id="reqDetail">면허를 추가하면 표시됩니다</small></div>
+      <div class="v" id="reqTotal">-</div>
+    </div>
+  </div>
+
+  <!-- 3. 재무제표 업로드 -->
+  <div class="card">
+    <h2><span class="no">3</span>재무제표 파일로 자동 입력</h2>
+    <p class="hint">진단기준일 현재 재무상태표(PDF · 엑셀 · 사진)를 올리면 계정과목과 금액을 아래 표에 채웁니다. 글자가 있는 PDF와 엑셀은 이 브라우저에서 바로 읽고, 스캔본(사진) 쪽만 문자 인식(OCR)을 위해 서버로 보냅니다.</p>
+    <div class="upload-box" id="dropZone">
+      <div class="big-t">📎 파일을 여기에 끌어다 놓거나 <a href="#" id="pickLink" style="color:#8a6d3b">파일 선택</a></div>
+      <div class="sm">PDF(출력본 · 스캔본) · 엑셀(xlsx, xls) · CSV · 사진(JPG, PNG)</div>
+      <input type="file" id="fileInput" multiple accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" class="hidden">
+      <div class="file-list" id="fileList"></div>
+      <button type="button" class="btn gold big hidden" id="extractBtn" style="margin-top:12px">올린 파일로 자동 입력</button>
+      <div class="live-msg" id="extractMsg"></div>
+    </div>
+  </div>
+
+  <!-- 4. 재무상태표 -->
+  <div class="card">
+    <h2><span class="no">4</span>재무상태표 · 부실자산 검토</h2>
+    <p class="hint">자동 입력된 <b style="background:#fffbeb">노란 칸</b>은 원본과 대조해 주세요. 계정별 처리 기본값은 기업진단지침의 일반 기준이며, 실사 결과에 따라 바꿀 수 있습니다.</p>
+    <div class="field" style="max-width:220px;margin-bottom:12px">
+      <label for="unit">금액 단위</label>
+      <select id="unit"><option value="1">원</option><option value="1000">천원</option><option value="1000000">백만원</option></select>
+    </div>
+
+    <h3 class="sub">자산</h3>
+    <div class="table-scroll"><table>
+      <thead><tr><th style="width:36%">계정과목</th><th class="r" style="width:20%">장부금액</th><th style="width:17%">처리</th><th class="r" style="width:20%">차감액</th><th></th></tr></thead>
+      <tbody id="assetBody"></tbody>
+      <tbody><tr class="sum"><td>자산 합계</td><td class="r" id="assetSum">0</td><td></td><td class="r" id="assetDed">0</td><td></td></tr></tbody>
+    </table></div>
+    <div class="tbl-foot">
+      <button type="button" class="btn" data-add="asset">+ 자산 계정 추가</button>
+      <label class="chk">재무상태표 자산총계 <input type="text" id="bsAssetTotal" class="num" placeholder="대조용"></label>
+    </div>
+
+    <h3 class="sub">부채</h3>
+    <div class="table-scroll"><table>
+      <thead><tr><th style="width:36%">계정과목</th><th class="r" style="width:20%">장부금액</th><th style="width:17%">처리</th><th class="r" style="width:20%">제외액</th><th></th></tr></thead>
+      <tbody id="liabBody"></tbody>
+      <tbody><tr class="sum"><td>부채 합계</td><td class="r" id="liabSum">0</td><td></td><td class="r" id="liabDed">0</td><td></td></tr></tbody>
+    </table></div>
+    <div class="tbl-foot">
+      <button type="button" class="btn" data-add="liab">+ 부채 계정 추가</button>
+      <label class="chk">재무상태표 부채총계 <input type="text" id="bsLiabTotal" class="num" placeholder="대조용"></label>
+    </div>
+
+    <h3 class="sub">부외부채 가산 <span style="font-weight:400;color:#94a3b8;font-size:12px">장부에 없지만 실사에서 확인된 부채</span></h3>
+    <div class="table-scroll"><table>
+      <thead><tr><th style="width:56%">내용</th><th class="r" style="width:40%">금액</th><th></th></tr></thead>
+      <tbody id="offBody"></tbody>
+    </table></div>
+    <div class="tbl-foot"><button type="button" class="btn" data-add="off">+ 부외부채 추가</button></div>
+  </div>
+
+  <!-- 5. 결과 -->
+  <div class="card">
+    <h2><span class="no">5</span>실질자본 계산 내역 및 판정</h2>
+    <button type="button" class="btn gold big" id="judgeBtn">실질자본 판정하기</button>
+    <div class="live-msg" id="judgeMsg"></div>
+    <div class="calc" id="calc" style="margin-top:16px"></div>
+    <ul class="warns" id="warns"></ul>
+    <div class="verdict" id="verdict"></div>
+    <div class="actions">
+      <button type="button" class="btn gold big" id="reportBtn" disabled>📄 보고서 출력 (인쇄 · PDF 저장)</button>
+      <button type="button" class="btn" id="resetBtn">초기화</button>
+    </div>
+  </div>
+
+  </div><!-- /calcArea -->
+
+  <p class="disclaimer">※ 본 계산기는 「건설업 관련 기업진단지침」의 일반 원칙을 단순화한 참고용 도구입니다. 실제 기업진단은 공인회계사·세무사 등 진단자가 예금 거래내역, 채권의 실재성·회수가능성, 겸업 여부 등을 실사하여 판단하므로 결과가 달라질 수 있습니다. 기준자본금은 법령 개정에 따라 바뀔 수 있으니 최신 법령을 확인하세요.</p>
+</div>
+
+<div id="report"></div>
+<div id="result" style="display: none;"></div><!-- login.js가 찾는 칸 (이 계산기에서는 쓰지 않음) -->
+
+<div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+  <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+    <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+    
+    <div class="modal-tabs">
+      <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+      <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+    </div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="display:block; font-size:14px; font-weight:bold; margin-bottom:5px;">아이디 (이메일)</label>
+        <input type="text" id="loginId" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label style="display:block; font-size:14px; font-weight:bold; margin-bottom:5px;">비밀번호</label>
+        <input type="password" id="loginPw" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+      </div>
+      <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">로그인</button>
+    </form>
+
+    <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">이름</label>
+        <input type="text" id="signupName" placeholder="홍길동" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">연락처 (휴대폰 번호)</label>
+        <input type="text" id="signupPhone" placeholder="010-0000-0000" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">아이디 (이메일)</label>
+        <div style="display: flex; gap: 5px;">
+          <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1; padding: 9px; border:1px solid #ddd; border-radius:6px;" required>
+          <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px; cursor:pointer;">인증요청</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">인증번호 입력</label>
+        <div style="display: flex; gap: 5px;">
+          <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1; padding: 9px; border:1px solid #ddd; border-radius:6px;">
+          <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px; cursor:pointer;">인증확인</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label style="display:block; font-size:13px; font-weight:bold; margin-bottom:4px;">비밀번호</label>
+        <input type="password" id="signupPw" style="width:100%; padding:9px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;" required>
+      </div>
+      <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">가입 완료</button>
+    </form>
+  </div>
+</div>
+<!-- login.js가 찾는 결제 팝업 (이 계산기는 계좌이체 인가만 사용) -->
+<div id="payModal" style="display: none;"><h3 id="payTitle"></h3><div id="payment-method"></div><div id="agreement"></div></div>
+
+<script>window.CALC_PRODUCT = 'diag';</script>
+<script src="../양도세계산기/js/login.js"></script>
+<script>
+  // Apps Script가 아직 기업진단 이용권을 모르는 예전 버전이면 '준비 중' 표시
+  const baseUpdateUi = updateUi;
+  updateUi = function (user, plan, ...rest) {
+    if (plan && !/기업진단 계산기/.test(plan.name)) { showComingSoon(); return; }
+    const r = baseUpdateUi(user, plan, ...rest);
+    if (user && user.paid && !window.__diagPaid) { window.__diagPaid = true; if (window.__diagReady) window.__diagReady(); }
+    return r;
+  };
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const toNum = v => { const s = String(v == null ? '' : v).trim(); const neg = /^[-△▲(]/.test(s); const n = Number(s.replace(/[^\d.]/g, '')); return isFinite(n) ? (neg ? -n : n) : 0; };
+  const fmt = n => Math.round(n).toLocaleString('ko-KR');
+  const EOK = 1e8;
+  const unitMul = () => Number($('unit').value);
+  const unitName = () => $('unit').options[$('unit').selectedIndex].text;
+  const entity = () => document.querySelector('input[name=entity]:checked').value;
+  function wonText(w) {
+    const s = w < 0 ? '-' : ''; w = Math.abs(Math.round(w));
+    if (w >= EOK) { const e = Math.floor(w / EOK), m = Math.round((w % EOK) / 1e4); return s + e.toLocaleString() + '억' + (m ? ' ' + m.toLocaleString() + '만' : '') + '원'; }
+    if (w >= 1e4) return s + Math.round(w / 1e4).toLocaleString() + '만원';
+    return s + w.toLocaleString() + '원';
+  }
+  const eokText = e => (Math.round(e * 100) / 100).toLocaleString('ko-KR') + '억원';
+
+  // ================= 면허 · 기준자본금 =================
+  // 화면에는 면허 이름만 있고, 업종별 기준자본금과 추가 등록 특례 계산은 서버(Diag.gs)에서 받아옴
+  const LIC_GROUPS = [
+    { g: '종합공사업', items: ['토목공사업', '건축공사업', '토목건축공사업', '산업·환경설비공사업', '조경공사업'] },
+    { g: '전문공사업', items: ['지반조성·포장공사업', '실내건축공사업', '금속창호·지붕건축물조립공사업', '도장·습식·방수·석공사업', '조경식재·시설물공사업', '철근·콘크리트공사업', '구조물해체·비계공사업', '상·하수도설비공사업', '철도·궤도공사업', '철강구조물공사업', '수중·준설공사업', '승강기·삭도공사업', '기계가스설비공사업', '가스난방공사업'] },
+    { g: '기타 법령 면허', items: ['전기공사업', '정보통신공사업', '전문소방시설공사업', '일반소방시설공사업(기계)', '일반소방시설공사업(전기)'] }
+  ];
+  // licRows: 화면의 면허 줄 { key('gi:ii' | 'custom' | ''), name, group, cap(직접 고친 값|null), std(서버가 알려준 기준자본금) }
+  // licenses: 그중 면허를 고른 줄 (= 보유 면허)
+  let licRows = [{ key: '' }], licenses = [];
+  const licShown = l => !l.key ? '' : l.cap != null ? l.cap : l.std != null ? l.std : '';
+  const syncHeld = () => { licenses = licRows.filter(l => l.key && l.name); };
+  function licOptions(cur) {
+    const taken = new Set(licRows.map(l => l.key).filter(k => k && k !== 'custom' && k !== cur));
+    return `<option value="">면허를 선택하세요</option>` + LIC_GROUPS.map((g, gi) =>
+      `<optgroup label="${g.g}">${g.items.map((nm, ii) => { const k = `${gi}:${ii}`;
+        return `<option value="${k}"${k === cur ? ' selected' : ''}${taken.has(k) ? ' disabled' : ''}>${nm}${taken.has(k) ? ' (선택됨)' : ''}</option>`; }).join('')}</optgroup>`).join('') +
+      `<optgroup label="기타"><option value="custom"${cur === 'custom' ? ' selected' : ''}>직접 입력</option></optgroup>`;
+  }
+  function renderLicenses() {
+    syncHeld();
+    $('licList').innerHTML = licRows.map((l, i) => `<div class="lic-row">
+        <select class="lic-sel${l.key ? '' : ' unset'}" data-sel="${i}" aria-label="면허 ${i + 1}">${licOptions(l.key)}</select>
+        ${l.key === 'custom' ? `<input type="text" class="lic-cname" data-cname="${i}" placeholder="면허명 입력" value="${esc(l.cname || '')}">` : ''}
+        <span class="capw">기준자본금 <input type="text" class="num" data-lic="${i}" value="${licShown(l)}" placeholder="${l.key && l.key !== 'custom' ? '…' : '0'}"${l.key ? '' : ' disabled'}> 억원</span>
+        <label class="capw addw${l.key && licenses.length >= 2 ? '' : ' off'}" title="기존 업종 자본금으로 추가 업종 기준자본금의 50%까지 중복 인정 (1회) · 면허를 2개 이상 고르면 선택할 수 있어요"><input type="checkbox" data-addlic="${i}"${l.add ? ' checked' : ''}${l.key && licenses.length >= 2 ? '' : ' disabled'}> 추가 등록 (50% 특례)</label>
+        <button type="button" class="x" data-licdel="${i}" aria-label="면허 ${i + 1} 삭제">&times;</button></div>`).join('');
+    updateReq();
+  }
+  // 서버에 면허 목록을 보내 면허별 기준자본금 · 합계(특례 차감 후)를 받아 표시
+  let reqSeq = 0, reqTimer = null;
+  function updateReq() {
+    syncHeld();
+    clearTimeout(reqTimer);
+    if (!licenses.length) { $('reqTotal').textContent = '-'; $('reqDetail').textContent = '면허를 선택하면 표시됩니다'; return; }
+    $('reqDetail').textContent = '기준자본금을 확인하는 중...';
+    reqTimer = setTimeout(requestReq, 250);
+  }
+  async function requestReq() {
+    if (typeof window.api !== 'function') { $('reqDetail').textContent = '로그인 후 표시됩니다'; return; }
+    const seq = ++reqSeq, held = licenses.slice();
+    let res;
+    try { res = await window.api('/api/calculate', { mode: 'req', entity: entity(), licenses: held.map(l => ({ name: l.name, group: l.group, cap: l.cap, add: !!l.add })) }); }
+    catch (e) { res = { ok: false, data: {} }; }
+    if (seq !== reqSeq) return;
+    if (!res.ok || !res.data.result) { $('reqDetail').textContent = (res.data && res.data.message) || '기준자본금을 불러오지 못했습니다.'; return; }
+    const r = res.data.result;
+    held.forEach((l, i) => { l.std = r.licenses[i] ? r.licenses[i].std : null; });
+    licRows.forEach((l, i) => {
+      const inp = document.querySelector(`[data-lic="${i}"]`);
+      if (inp && document.activeElement !== inp && l.key) inp.value = licShown(l);
+    });
+    $('reqTotal').textContent = eokText(r.reqEok);
+    $('reqDetail').textContent = `${entity() === 'corp' ? '법인' : '개인'} 기준 · ${r.held.map(l => `${l.name} ${eokText(l.cap)}`).join(' + ')}`
+      + (r.reduction ? ` − 추가 등록 특례 ${eokText(r.reduction)} (${r.added} 50% 중복 인정)` : '');
+  }
+  $('licAddBtn').addEventListener('click', () => {
+    licRows.push({ key: '' }); renderLicenses();
+    const sels = document.querySelectorAll('.lic-sel'); sels[sels.length - 1].focus();
+  });
+  $('licList').addEventListener('change', e => {
+    const i = e.target.dataset.sel; if (i == null) return;
+    const v = e.target.value, row = { key: v };
+    if (v === 'custom') Object.assign(row, { name: '', cname: '', group: '직접 입력', cap: null, std: null });
+    else if (v) { const [gi, ii] = v.split(':').map(Number); Object.assign(row, { name: LIC_GROUPS[gi].items[ii], group: LIC_GROUPS[gi].g, cap: null, std: null }); }
+    licRows[i] = row;
+    renderLicenses(); recalc();
+    if (v === 'custom') document.querySelector(`[data-cname="${i}"]`).focus();
+  });
+  $('licList').addEventListener('input', e => {
+    const d = e.target.dataset;
+    if (d.addlic != null) { licRows.forEach((l, k) => { l.add = k === Number(d.addlic) && e.target.checked; }); renderLicenses(); recalc(); return; }
+    if (d.lic != null) licRows[d.lic].cap = e.target.value.trim() === '' ? null : toNum(e.target.value);
+    else if (d.cname != null) licRows[d.cname].name = licRows[d.cname].cname = e.target.value.trim();
+    else return;
+    updateReq(); recalc();
+  });
+  $('licList').addEventListener('click', e => {
+    const i = e.target.dataset.licdel; if (i == null) return;
+    licRows.splice(Number(i), 1);
+    if (!licRows.length) licRows.push({ key: '' });
+    renderLicenses(); recalc();
+  });
+  document.querySelectorAll('input[name=entity]').forEach(r => r.addEventListener('change', () => {
+    licRows.forEach(l => { if (l.key !== 'custom') { l.cap = null; l.std = null; } });
+    $('corpNameLabel').textContent = entity() === 'corp' ? '법인명' : '상호(대표자)';
+    renderLicenses(); recalc();
+  }));
+
+  // ================= 진단기준일: 양도세 계산기와 같은 날짜 입력 · 달력 =================
+  const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+  const CAL_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+  const pad2 = n => String(n).padStart(2, '0');
+  const THIS_YEAR = new Date().getFullYear(), FIRST_YEAR = 1960, LAST_YEAR = THIS_YEAR + 5;
+  let dpTarget = null, dpYear, dpMonth; // dpMonth: 1~12
+  const dp = document.createElement('div');
+  dp.className = 'dp';
+  dp.setAttribute('role', 'dialog');
+  dp.setAttribute('aria-label', '날짜 선택');
+  dp.innerHTML = `
+      <div class="dp-head">
+          <button type="button" class="dp-nav" data-step="-1" aria-label="이전 달">&#8249;</button>
+          <select class="dp-year" aria-label="년">${Array.from({ length: LAST_YEAR - FIRST_YEAR + 1 }, (_, i) => LAST_YEAR - i).map(y => `<option value="${y}">${y}년</option>`).join('')}</select>
+          <select class="dp-month" aria-label="월">${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('')}</select>
+          <button type="button" class="dp-nav" data-step="1" aria-label="다음 달">&#8250;</button>
+      </div>
+      <div class="dp-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="dp-days"></div>
+      <div class="dp-foot"><button type="button" class="dp-today">오늘</button><button type="button" class="dp-close">닫기</button></div>`;
+  document.body.appendChild(dp);
+  const dpYearSel = dp.querySelector('.dp-year'), dpMonthSel = dp.querySelector('.dp-month');
+  function dpRender() {
+    if (dpYear < FIRST_YEAR) { dpYear = FIRST_YEAR; dpMonth = 1; }
+    if (dpYear > LAST_YEAR) { dpYear = LAST_YEAR; dpMonth = 12; }
+    dpYearSel.value = dpYear; dpMonthSel.value = dpMonth;
+    const first = new Date(dpYear, dpMonth - 1, 1).getDay(), last = new Date(dpYear, dpMonth, 0).getDate();
+    const sel = dpTarget && isDate(dpTarget.value) ? dpTarget.value : '';
+    const t = new Date(), today = `${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`;
+    let html = '<span></span>'.repeat(first);
+    for (let d = 1; d <= last; d++) {
+      const v = `${dpYear}-${pad2(dpMonth)}-${pad2(d)}`, dow = (first + d - 1) % 7;
+      const cls = ['dp-day', v === sel ? 'sel' : '', v === today ? 'today' : '', dow === 0 ? 'sun' : '', dow === 6 ? 'sat' : ''].filter(Boolean).join(' ');
+      html += `<button type="button" class="${cls}" data-v="${v}">${d}</button>`;
+    }
+    dp.querySelector('.dp-days').innerHTML = html;
+  }
+  function dpPlace() {
+    const r = dpTarget.getBoundingClientRect(), w = dp.offsetWidth, h = dp.offsetHeight;
+    let left = r.left + window.scrollX;
+    left = Math.max(8 + window.scrollX, Math.min(left, window.scrollX + document.documentElement.clientWidth - w - 8));
+    let top = r.bottom + window.scrollY + 6;
+    if (r.bottom + h + 6 > window.innerHeight && r.top - h - 6 > 0) top = r.top + window.scrollY - h - 6;
+    dp.style.left = left + 'px'; dp.style.top = top + 'px';
+  }
+  function dpOpen(input) {
+    dpTarget = input;
+    const v = isDate(input.value) ? input.value : '', t = new Date();
+    dpYear = v ? Number(v.slice(0, 4)) : t.getFullYear();
+    dpMonth = v ? Number(v.slice(5, 7)) : t.getMonth() + 1;
+    dpRender(); dp.classList.add('open'); dpPlace();
+  }
+  function dpClose() { dp.classList.remove('open'); dpTarget = null; }
+  function dpPick(v) {
+    const input = dpTarget;
+    input.value = v; input.dataset.prev = v; input.classList.remove('auto');
+    dpClose();
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  dpYearSel.addEventListener('change', () => { dpYear = Number(dpYearSel.value); dpRender(); });
+  dpMonthSel.addEventListener('change', () => { dpMonth = Number(dpMonthSel.value); dpRender(); });
+  dp.addEventListener('click', e => {
+    const nav = e.target.closest('.dp-nav');
+    if (nav) {
+      dpMonth += Number(nav.dataset.step);
+      if (dpMonth < 1) { dpMonth = 12; dpYear--; }
+      if (dpMonth > 12) { dpMonth = 1; dpYear++; }
+      dpRender();
+    } else if (e.target.closest('.dp-day')) dpPick(e.target.closest('.dp-day').dataset.v);
+    else if (e.target.closest('.dp-today')) { const t = new Date(); dpPick(`${t.getFullYear()}-${pad2(t.getMonth() + 1)}-${pad2(t.getDate())}`); }
+    else if (e.target.closest('.dp-close')) dpClose();
+  });
+  document.addEventListener('mousedown', e => { if (dpTarget && !dp.contains(e.target) && !e.target.closest('.cal-btn')) dpClose(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && dpTarget) dpClose(); });
+  window.addEventListener('resize', () => { if (dpTarget) dpPlace(); });
+  document.querySelectorAll('.date-input-wrapper').forEach(wrapper => {
+    const textInput = wrapper.querySelector('input[type="text"]');
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'cal-btn'; btn.innerHTML = CAL_ICON;
+    btn.setAttribute('aria-label', '달력에서 날짜 선택');
+    btn.addEventListener('click', () => { if (dpTarget === textInput) dpClose(); else dpOpen(textInput); });
+    wrapper.append(btn);
+  });
+
+  // 날짜 직접 입력: 숫자만 쳐도 YYYY-MM-DD, 년·월·일 칸을 각각 고칠 수 있게 (커서 위치 유지)
+  function formatDateInput(input, ev) {
+    const prev = input.dataset.prev || '';
+    let v = input.value, caret = input.selectionStart == null ? v.length : input.selectionStart;
+    const dashes = s => (s.match(/-/g) || []).length;
+    // '-'만 지운 경우 → 그 옆 숫자를 지움
+    if (prev.length === v.length + 1 && dashes(prev) === dashes(v) + 1) {
+      let i = 0; while (i < v.length && v[i] === prev[i]) i++;
+      if (prev[i] === '-') {
+        if (ev.inputType === 'deleteContentForward') { v = prev.slice(0, i + 1) + prev.slice(i + 2); caret = i + 1; }
+        else if (i > 0) { v = prev.slice(0, i - 1) + prev.slice(i); caret = i - 1; }
+      }
+    }
+    const before = v.slice(0, caret), digitsBefore = before.replace(/\D/g, '').length, afterDash = before.endsWith('-');
+    let out;
+    if (v.indexOf('-') < 0) {
+      const d = v.replace(/\D/g, '').slice(0, 8);
+      out = d.length > 6 ? d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6) : d.length > 4 ? d.slice(0, 4) + '-' + d.slice(4) : d;
+    } else {
+      const raw = v.split('-');
+      const parts = [raw[0], raw[1] || '', raw.slice(2).join('')].map(x => x.replace(/\D/g, ''));
+      const caps = [4, 2, 2], segs = [];
+      let carry = '';
+      for (let i = 0; i < 3; i++) {
+        let x = parts[i];
+        if (carry && !x) x = carry;
+        carry = '';
+        if (x.length > caps[i]) { if (i < 2 && !parts[i + 1]) carry = x.slice(caps[i]); x = x.slice(0, caps[i]); }
+        segs.push(x);
+        if (i >= raw.length - 1 && !carry) break;
+      }
+      out = segs.join('-');
+    }
+    let pos = 0, n = 0;
+    while (pos < out.length && n < digitsBefore) { if (/\d/.test(out[pos])) n++; pos++; }
+    if (afterDash && out[pos] === '-') pos++;
+    input.value = out; input.dataset.prev = out;
+    if (document.activeElement === input) input.setSelectionRange(pos, pos);
+  }
+  $('baseDate').addEventListener('keydown', e => { e.target.dataset.prev = e.target.value; });
+  $('baseDate').addEventListener('input', e => { formatDateInput(e.target, e); e.target.classList.remove('auto'); });
+
+  // ================= 계정 처리 기본값 =================
+  // 계정별 처리 기본값(인정 · 부실 · 겸업)과 검토 안내는 서버(Diag.gs)가 정해서 돌려줌
+  const NO_RULE = { t: 'ok', tip: '' };
+  const DEFAULT_ASSETS = ['현금및현금성자산', '단기금융상품', '공사미수금', '미수금', '선급금', '가지급금', '단기대여금', '재고자산',
+    '건설공제조합출자금', '장기대여금', '토지', '건물', '차량운반구·비품', '임차보증금', '무형자산', '이연법인세자산'];
+  const DEFAULT_LIABS = ['공사미지급금', '미지급금', '예수금', '단기차입금', '선수금', '미지급법인세', '장기차입금', '퇴직급여충당부채'];
+  const DEFAULT_OFF = ['퇴직급여충당부채 과소계상분', '미계상 미지급 세금·4대보험료'];
+
+  const ASSET_OPTS = [['ok', '인정'], ['bad', '부실(전액)'], ['side', '겸업(전액)'], ['part', '일부 차감']];
+  const LIAB_OPTS = [['ok', '인정'], ['side', '겸업부채(제외)'], ['part', '일부 제외']];
+
+  function acctRow(kind, name, amount, auto, rule) {
+    const r = rule || NO_RULE, opts = kind === 'asset' ? ASSET_OPTS : LIAB_OPTS;
+    const tr = document.createElement('tr'); tr.className = 'acct'; tr.dataset.kind = kind;
+    tr.innerHTML = `<td><input type="text" class="name" value="${esc(name || '')}" placeholder="계정과목"><span class="tip">${esc(r.tip)}</span></td>
+      <td><input type="text" class="num amt${auto ? ' auto' : ''}" inputmode="numeric" placeholder="0" value="${amount != null ? fmt(amount) : ''}"></td>
+      <td><select class="treat">${opts.map(([v, l]) => `<option value="${v}"${r.t === v ? ' selected' : ''}>${l}</option>`).join('')}</select></td>
+      <td><input type="text" class="num ded" inputmode="numeric" placeholder="0" disabled></td>
+      <td><button type="button" class="x" aria-label="삭제">&times;</button></td>`;
+    $(kind === 'asset' ? 'assetBody' : 'liabBody').appendChild(tr);
+    syncRow(tr);
+    return tr;
+  }
+  // 계정명으로 처리 기본값 받아오기 (사용자가 처리를 직접 바꾼 줄은 그대로 둠)
+  async function classifyRows(trs) {
+    trs = trs.filter(tr => tr.isConnected && tr.querySelector('.name').value.trim());
+    if (!trs.length || typeof window.api !== 'function') return;
+    let res;
+    try { res = await window.api('/api/calculate', { mode: 'classify', items: trs.map(tr => ({ name: tr.querySelector('.name').value.trim(), kind: tr.dataset.kind })) }); }
+    catch (e) { return; }
+    if (!res.ok || !res.data.result) return;
+    (res.data.result.items || []).forEach((r, i) => {
+      const tr = trs[i]; if (!tr || !tr.isConnected) return;
+      tr.querySelector('.tip').textContent = r.tip || '';
+      if (!tr.dataset.userTreat) { const sel = tr.querySelector('.treat'); if ([...sel.options].some(o => o.value === r.t)) sel.value = r.t; syncRow(tr); }
+    });
+    recalc();
+  }
+  let classifyTimer = null, classifyQueue = new Set();
+  function classifyLater(tr) {
+    classifyQueue.add(tr); clearTimeout(classifyTimer);
+    classifyTimer = setTimeout(() => { const list = [...classifyQueue]; classifyQueue.clear(); classifyRows(list); }, 700);
+  }
+  // 로그인 · 이용권 확인이 끝나면 기본 계정들의 처리 기본값을 받아옴
+  window.__diagReady = () => { classifyRows([...document.querySelectorAll('tr.acct')]); updateReq(); };
+  function offRow(name) {
+    const tr = document.createElement('tr'); tr.className = 'off';
+    tr.innerHTML = `<td><input type="text" class="name" value="${esc(name || '')}" placeholder="내용"></td>
+      <td><input type="text" class="num amt" inputmode="numeric" placeholder="0"></td>
+      <td><button type="button" class="x" aria-label="삭제">&times;</button></td>`;
+    $('offBody').appendChild(tr);
+  }
+  function syncRow(tr) {
+    const sel = tr.querySelector('.treat'), t = sel.value, amt = toNum(tr.querySelector('.amt').value), ded = tr.querySelector('.ded');
+    sel.className = 'treat ' + t;
+    if (t === 'part') ded.disabled = false;
+    else { ded.disabled = true; ded.value = t === 'ok' || !amt ? '' : fmt(amt); }
+  }
+  function buildDefaults() {
+    $('assetBody').innerHTML = $('liabBody').innerHTML = $('offBody').innerHTML = '';
+    DEFAULT_ASSETS.forEach(n => acctRow('asset', n));
+    DEFAULT_LIABS.forEach(n => acctRow('liab', n));
+    DEFAULT_OFF.forEach(n => offRow(n));
+  }
+  document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.add === 'off') offRow(); else acctRow(b.dataset.add, '');
+    recalc();
+  }));
+
+  // 입력 공통 처리
+  document.querySelector('.wrapper').addEventListener('input', e => {
+    const el = e.target;
+    if (el.classList.contains('num') && !el.dataset.lic && el.id !== 'licCustomCap') {
+      const neg = /^\s*-/.test(el.value), d = el.value.replace(/[^\d]/g, '');
+      el.value = d ? (neg ? '-' : '') + Number(d).toLocaleString('ko-KR') : (neg ? '-' : '');
+      el.classList.remove('auto');
+    }
+    if (el.classList.contains('name')) {
+      const tr = el.closest('tr.acct');
+      if (tr) classifyLater(tr);
+    }
+    const tr = el.closest('tr.acct'); if (tr) syncRow(tr);
+    recalc();
+  });
+  document.querySelector('.wrapper').addEventListener('change', e => {
+    const tr = e.target.closest('tr.acct');
+    if (tr && e.target.classList.contains('treat')) tr.dataset.userTreat = '1';
+    if (tr) syncRow(tr);
+    recalc();
+  });
+  document.querySelector('.wrapper').addEventListener('click', e => {
+    if (e.target.classList.contains('x') && e.target.closest('tr')) { e.target.closest('tr').remove(); recalc(); }
+  });
+
+  // ================= 표 합계 · 판정 =================
+  function collect(kind) {
+    const rows = [];
+    document.querySelectorAll(`tr.acct[data-kind="${kind}"]`).forEach(tr => {
+      const name = tr.querySelector('.name').value.trim(), amt = toNum(tr.querySelector('.amt').value), t = tr.querySelector('.treat').value;
+      if (name || amt) rows.push({ name, amt, t, ded: t === 'part' ? toNum(tr.querySelector('.ded').value) : 0 });
+    });
+    return rows;
+  }
+  let result = null, judgedKey = '';
+  const inputKey = () => JSON.stringify(payload());
+  function payload() {
+    return {
+      mode: 'calc', unit: unitMul(), entity: entity(),
+      assets: collect('asset'), liabs: collect('liab'),
+      off: [...document.querySelectorAll('tr.off')].map(tr => ({ name: tr.querySelector('.name').value.trim(), amt: toNum(tr.querySelector('.amt').value) })).filter(r => r.amt),
+      licenses: licenses.map(l => ({ name: l.name, group: l.group, cap: l.cap, add: !!l.add })),
+      bsAssetTotal: toNum($('bsAssetTotal').value), bsLiabTotal: toNum($('bsLiabTotal').value)
+    };
+  }
+  // 입력이 바뀔 때: 표 합계만 바로 고치고, 판정 결과가 있으면 '다시 판정' 안내
+  function showSums(d) {
+    $('assetSum').textContent = d ? fmt(d.A.total) : '-'; $('assetDed').textContent = d ? fmt(d.A.ded) : '-';
+    $('liabSum').textContent = d ? fmt(d.L.total) : '-'; $('liabDed').textContent = d ? fmt(d.L.ded) : '-';
+  }
+  function recalc() {
+    if (result) {
+      const stale = inputKey() !== judgedKey;
+      showSums(stale ? null : result);
+      $('judgeMsg').className = 'live-msg warn';
+      $('judgeMsg').textContent = stale ? '입력이 바뀌었어요. [실질자본 판정하기]를 다시 눌러 주세요.' : '';
+      $('reportBtn').disabled = stale;
+    }
+  }
+  $('judgeBtn').addEventListener('click', async () => {
+    const btn = $('judgeBtn');
+    if (typeof window.api !== 'function') { $('judgeMsg').className = 'live-msg warn'; $('judgeMsg').textContent = '로그인 후 이용할 수 있습니다.'; return; }
+    const body = payload();
+    btn.disabled = true; btn.textContent = '판정 중...';
+    try {
+      const res = await window.api('/api/calculate', body);
+      if (res.status === 401 || res.status === 402) { if (window.refreshUser) window.refreshUser(); throw new Error(res.data.message || '로그인이 필요합니다.'); }
+      if (!res.ok || !res.data.result) throw new Error(res.data.message || '판정하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      result = res.data.result; judgedKey = JSON.stringify(body);
+      renderResult(result);
+      $('judgeMsg').textContent = '';
+      $('reportBtn').disabled = false;
+    } catch (e) {
+      $('judgeMsg').className = 'live-msg warn'; $('judgeMsg').textContent = e.message || '판정하지 못했습니다.';
+    } finally {
+      btn.disabled = false; btn.textContent = '실질자본 판정하기';
+    }
+  });
+  function renderResult(d) {
+    showSums(d);
+    const u = d.uName;
+    const ln = (k, v, c) => `<div class="line ${c || ''}"><span>${k}</span><span>${v}</span></div>`;
+    $('calc').innerHTML =
+      ln('자산총계 (장부)', fmt(d.A.total) + ' ' + u) +
+      ln('부실자산 차감', '− ' + fmt(d.A.bad) + ' ' + u, 'ind') +
+      ln('겸업자산 차감', '− ' + fmt(d.A.side) + ' ' + u, 'ind') +
+      (d.A.part ? ln('일부 차감', '− ' + fmt(d.A.part) + ' ' + u, 'ind') : '') +
+      ln('실질자산', fmt(d.realA) + ' ' + u, 'st') +
+      ln('부채총계 (장부)', fmt(d.L.total) + ' ' + u) +
+      ln('겸업부채 등 제외', '− ' + fmt(d.L.ded) + ' ' + u, 'ind') +
+      ln('부외부채 가산', '+ ' + fmt(d.off) + ' ' + u, 'ind') +
+      ln('실질부채', fmt(d.realL) + ' ' + u, 'st') +
+      ln('실질자본 (실질자산 − 실질부채)', fmt(d.realCap) + ' ' + u + ` <span style="font-weight:500;color:#64748b">(${wonText(d.capWon)})</span>`, 'total') +
+      ln('<span style="color:#94a3b8">참고: 장부상 자본총계</span>', `<span style="color:#94a3b8">${fmt(d.bookCap)} ${u}</span>`);
+    $('warns').innerHTML = (d.warns || []).map(x => `<li>${esc(x)}</li>`).join('');
+    const v = $('verdict');
+    const kpi = (k, val, color) => `<div class="kpi"><div class="k">${k}</div><div class="v"${color ? ` style="color:${color}"` : ''}>${val}</div></div>`;
+    if (!d.judged) {
+      v.className = 'verdict';
+      v.innerHTML = `<div class="head muted">2번에서 보유 면허를 고르면 충족 여부를 판정합니다</div><div class="kpis">${kpi('실질자본', wonText(d.capWon))}</div>`;
+      return;
+    }
+    v.className = 'verdict ' + (d.ok ? 'ok' : 'bad');
+    v.innerHTML = `<div class="head">${d.ok ? '✔ 실질자본금 충족' : '✖ 실질자본금 미달'}</div>
+      <div class="kpis">${kpi('실질자본', wonText(d.capWon))}${kpi('기준자본금 합계', wonText(d.reqWon))}
+      ${kpi(d.ok ? '여유액' : '부족액', wonText(Math.abs(d.diff)), d.ok ? '#047857' : '#b91c1c')}${kpi('충족률', d.rate != null ? (d.rate * 100).toFixed(1) + '%' : '-')}</div>
+      ${d.ok ? '' : `<div style="margin-top:12px;font-size:13px;color:#7f1d1d">부족액 ${wonText(-d.diff)} 이상을 증자하거나 부실자산(가지급금 등)을 회수·정리해야 기준을 충족합니다.</div>`}`;
+  }
+
+  // ================= 재무제표 파일 읽기 =================
+  let files = [];
+  const OK_EXT = /\.(pdf|xlsx|xls|csv|jpe?g|png)$/i;
+  function addFiles(list) {
+    const skipped = [];
+    [...list].forEach(f => {
+      if (!OK_EXT.test(f.name)) { skipped.push(f.name); return; }
+      if (!files.some(x => x.name === f.name && x.size === f.size)) files.push(f);
+    });
+    renderFiles();
+    if (skipped.length) msg('warn', `PDF · 엑셀 · CSV · JPG · PNG만 올릴 수 있어요: ${skipped.join(', ')}`);
+  }
+  function renderFiles() {
+    $('fileList').innerHTML = files.map((f, i) => `<div><span>${/pdf$/i.test(f.name) ? '📄' : /(jpe?g|png)$/i.test(f.name) ? '🖼️' : '📊'}</span><span class="fname" style="color:#334155">${esc(f.name)}</span><span>${(f.size / 1048576).toFixed(1)}MB</span><button type="button" data-fdel="${i}" aria-label="빼기">&times;</button></div>`).join('');
+    $('extractBtn').classList.toggle('hidden', !files.length);
+    msg('', '');
+  }
+  function msg(cls, html) { $('extractMsg').className = 'live-msg ' + cls; $('extractMsg').innerHTML = html; }
+  $('fileList').addEventListener('click', e => { const i = e.target.dataset.fdel; if (i != null) { files.splice(Number(i), 1); renderFiles(); } });
+  $('pickLink').addEventListener('click', e => { e.preventDefault(); $('fileInput').click(); });
+  $('fileInput').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+  (() => {
+    const zone = $('dropZone'); let depth = 0;
+    const isFiles = e => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
+    zone.addEventListener('dragenter', e => { if (!isFiles(e)) return; e.preventDefault(); depth++; zone.classList.add('drag'); });
+    zone.addEventListener('dragover', e => { if (isFiles(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } });
+    zone.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; zone.classList.remove('drag'); } });
+    zone.addEventListener('drop', e => { e.preventDefault(); depth = 0; zone.classList.remove('drag'); addFiles(e.dataTransfer.files); });
+    window.addEventListener('dragover', e => { if (isFiles(e)) e.preventDefault(); });
+    window.addEventListener('drop', e => { if (isFiles(e)) e.preventDefault(); });
+  })();
+
+  function loadScript(src) {
+    return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => fail(new Error('파일 읽기 도구를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.')); document.head.appendChild(s); });
+  }
+  let pdfReady = null, xlsxReady = null;
+  const loadPdfJs = () => window.pdfjsLib ? Promise.resolve() : (pdfReady = pdfReady || loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js').then(() => {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }));
+  const loadXlsx = () => window.XLSX ? Promise.resolve() : (xlsxReady = xlsxReady || loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'));
+
+  // PDF 한 쪽 → 줄 단위 글자 (주식평가 계산기와 같은 방식: 같은 높이 글자를 잇고, 칸 사이는 공백 3개)
+  async function pageText(page) {
+    const tc = await page.getTextContent(), rows = [];
+    tc.items.forEach(it => {
+      if (!it.str || !it.str.trim()) return;
+      const y = it.transform[5], x = it.transform[4], h = Math.abs(it.transform[3]) || Math.abs(it.transform[0]) || 8;
+      let row = rows.find(r => Math.abs(r.y - y) < h * 0.5);
+      if (!row) rows.push(row = { y, items: [] });
+      row.items.push({ x, w: it.width || 0, h, s: it.str.trim() });
+    });
+    rows.sort((a, b) => b.y - a.y);
+    return rows.map(r => {
+      let out = '', end = null;
+      r.items.sort((a, b) => a.x - b.x).forEach(i => {
+        if (end !== null) { const gap = i.x - end; out += gap < i.h * 0.3 ? '' : gap > i.h * 1.2 ? '   ' : ' '; }
+        out += i.s; end = i.x + (i.w || i.s.length * i.h * 0.6);
+      });
+      return out;
+    }).join('\n');
+  }
+  // 엑셀 시트 → 줄 단위 글자 (숫자 칸은 쉼표를 붙여 PDF와 같은 모양으로)
+  function sheetText(ws) {
+    return XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' }).map(row => row.map(c => {
+      if (typeof c === 'number') return (c < 0 ? '-' : '') + Math.abs(Math.round(c)).toLocaleString('en-US');
+      return String(c).trim();
+    }).filter(Boolean).join('   ')).filter(Boolean).join('\n');
+  }
+
+  // ---- 스캔본: 쪽 이미지를 만들어 홈페이지 서버(구글 드라이브 OCR)로 보냄 ----
+  const OCR_PER_CALL = 2, MIN_TEXT = 20;
+  const canvasJpeg = c => ({ mediaType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] });
+  async function renderPage(page) {
+    const v1 = page.getViewport({ scale: 1 });
+    const vp = page.getViewport({ scale: Math.min(3, 2340 / Math.max(v1.width, v1.height)) });
+    const c = document.createElement('canvas');
+    c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: g, viewport: vp, intent: 'print' }).promise;
+    return canvasJpeg(c);
+  }
+  async function imageForOcr(file) {
+    const url = await new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(file); });
+    const img = await new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = url; });
+    const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    return canvasJpeg(c);
+  }
+  function progress(done, total, text) {
+    msg('', `${esc(text)}<div class="progress"><i style="width:${total ? Math.round(done / total * 100) : 0}%"></i></div>`);
+  }
+  const isBS = t => /재무상태표|대차대조표/.test(t.replace(/\s/g, '')) || /자산총계/.test(t.replace(/\s/g, ''));
+
+  $('extractBtn').addEventListener('click', async () => {
+    if (!files.length) return;
+    if (files.reduce((a, f) => a + f.size, 0) > 80 * 1048576) { msg('warn', '파일이 너무 큽니다. 합계 80MB 이하로 올려주세요.'); return; }
+    const btn = $('extractBtn'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = '읽는 중...';
+    try {
+      const pages = [], queue = [];   // queue: 글자가 없어 문자 인식할 쪽 { idx, label, make() }
+      for (const f of files) {
+        progress(0, 1, `${f.name} 읽는 중...`);
+        if (/\.pdf$/i.test(f.name)) {
+          await loadPdfJs();
+          let pdf;
+          try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise; }
+          catch (e) { throw new Error(`${f.name}을(를) 열지 못했습니다. 암호가 걸린 PDF면 암호를 풀어서 올려주세요.`); }
+          for (let n = 1; n <= pdf.numPages; n++) {
+            const page = await pdf.getPage(n), t = await pageText(page);
+            pages.push(t);
+            if (t.replace(/\s/g, '').length < MIN_TEXT) queue.push({ idx: pages.length - 1, label: `${f.name} ${n}쪽`, make: () => renderPage(page) });
+          }
+        } else if (/\.(jpe?g|png)$/i.test(f.name)) {
+          pages.push('');
+          queue.push({ idx: pages.length - 1, label: f.name, make: () => imageForOcr(f) });
+        } else {
+          await loadXlsx();
+          const wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array' });
+          wb.SheetNames.forEach(sn => pages.push(sheetText(wb.Sheets[sn])));
+        }
+      }
+
+      // 글자가 없는 쪽만 문자 인식 (글자 있는 쪽에서 재무상태표를 이미 찾았으면 건너뜀)
+      const failed = [];
+      let stop = null;
+      if (typeof window.api !== 'function') throw new Error('로그인 후 이용할 수 있습니다.');
+      if (queue.length && !pages.some(isBS)) {
+        if (typeof window.api !== 'function') throw new Error('스캔본을 읽으려면 홈페이지 로그인 기능이 필요합니다. 홈페이지 주소로 접속해 주세요.');
+        let done = 0, next = 0;
+        progress(0, queue.length, `스캔본 문자 인식 중 (0/${queue.length}쪽)`);
+        const worker = async () => {
+          while (next < queue.length && !stop) {
+            // 앞쪽에서 재무상태표 자산 · 부채총계를 다 찾았으면 나머지 쪽은 건너뜀
+            const joined = pages.join('\n').replace(/\s/g, '');
+            if (/자산총계/.test(joined) && /부채총계/.test(joined)) { next = queue.length; break; }
+            const batch = queue.slice(next, next + OCR_PER_CALL); next += batch.length;
+            const images = [];
+            for (const it of batch) images.push(await it.make());
+            let res;
+            try { res = await window.api('/api/calculate', { mode: 'ocr', images }); }
+            catch (e) { res = { ok: false, data: { message: '서버와 통신하지 못했습니다.' } }; }
+            if (res.status === 401 || res.status === 402) { stop = res.data.message || '로그인이 필요합니다.'; if (window.refreshUser) window.refreshUser(); return; }
+            if (!res.ok) batch.forEach(it => failed.push(`${it.label}: ${res.data.message || '문자 인식 실패'}`));
+            else {
+              const r = res.data.result || {};
+              batch.forEach((it, k) => {
+                const t = (r.texts || [])[k] || '', why = (r.errors || [])[k] || '';
+                if (why) failed.push(`${it.label}: ${why}`); else pages[it.idx] = t;
+              });
+            }
+            done += batch.length;
+            progress(done, queue.length, `스캔본 문자 인식 중 (${done}/${queue.length}쪽)`);
+          }
+        };
+        await Promise.all([worker(), worker(), worker()]);
+        if (stop) throw new Error(stop);
+      }
+
+      // 재무상태표 쪽만 (없으면 자산총계가 있는 쪽)
+      let bsPages = pages.filter(t => /재무상태표|대차대조표/.test(t.replace(/\s/g, '')) && !/손익계산서/.test(t.replace(/\s/g, '').slice(0, 40)));
+      if (!bsPages.length) bsPages = pages.filter(t => /자산총계/.test(t.replace(/\s/g, '')));
+      if (!bsPages.length) {
+        throw new Error(failed.length ? `문자 인식에 실패했습니다. ${failed.slice(0, 3).join(' / ')}`
+          : '파일에서 재무상태표(자산총계 · 부채총계)를 찾지 못했습니다. 재무상태표 쪽이 들어 있는지 확인해 주세요.');
+      }
+      progress(1, 1, '재무상태표 계정을 읽는 중...');
+      const pr = await window.api('/api/calculate', { mode: 'parse', text: bsPages.join('\n').slice(0, 300000) });
+      if (pr.status === 401 || pr.status === 402) { if (window.refreshUser) window.refreshUser(); throw new Error(pr.data.message || '로그인이 필요합니다.'); }
+      if (!pr.ok || !pr.data.result) throw new Error(pr.data.message || '재무상태표를 읽지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      const bs = pr.data.result.bs;
+      if (!bs.assets.length && !bs.liabs.length) throw new Error('재무상태표의 계정과목을 읽지 못했습니다. 아래 표에 직접 입력해 주세요.');
+      applyBS(bs, queue.length > 0);
+      if (failed.length) $('extractMsg').innerHTML += `<br><span style="color:#b45309">읽지 못한 쪽: ${esc(failed.slice(0, 5).join(' / '))}</span>`;
+    } catch (e) {
+      msg('warn', esc(e.message || '파일을 읽지 못했습니다.'));
+    } finally {
+      btn.disabled = false; btn.textContent = label;
+    }
+  });
+  function applyBS(bs, ocr) {
+    if (bs.unit) $('unit').value = String(bs.unit);
+    if (bs.companyName && !$('corpName').value.trim()) { $('corpName').value = bs.companyName.slice(0, 40); $('corpName').classList.add('auto'); }
+    if (bs.asOf && !$('baseDate').value) { $('baseDate').value = bs.asOf; $('baseDate').classList.add('auto'); }
+    $('assetBody').innerHTML = $('liabBody').innerHTML = '';
+    bs.assets.forEach(a => acctRow('asset', a.name, a.amount, true, a));
+    bs.liabs.forEach(a => acctRow('liab', a.name, a.amount, true, a));
+    if (!bs.liabs.length) classifyRows(DEFAULT_LIABS.map(n => acctRow('liab', n)));
+    const setChk = (id, v) => { if (v != null) { $(id).value = fmt(v); $(id).classList.add('auto'); } };
+    setChk('bsAssetTotal', bs.totalAssets); setChk('bsLiabTotal', bs.totalLiabs);
+    recalc();
+    const okA = bs.matchAssets, okL = bs.matchLiabs, flagged = bs.flagged;
+    msg(okA && okL ? 'ok' : 'warn',
+      `자산 <b>${bs.assets.length}개</b>, 부채 <b>${bs.liabs.length}개</b> 계정을 읽었어요` + (bs.unit ? ` (단위: ${unitName()})` : '') + '.<br>' +
+      (okA && okL ? '읽은 금액의 합계가 재무상태표 총계와 일치합니다. ' : '읽은 금액의 합계가 재무상태표 총계와 다릅니다. 4번 표에서 빠지거나 겹친 계정을 확인해 주세요. ') +
+      (flagged ? `부실·겸업으로 분류된 계정 ${flagged}개를 확인하세요.` : '') +
+      (ocr ? '<br>스캔본은 문자 인식으로 읽어 숫자·계정명이 틀릴 수 있으니 노란 칸을 원본과 꼭 대조해 주세요.' : ''));
+  }
+
+  // ================= 보고서 =================
+  const TREAT = { ok: '인정', bad: '부실자산', side: '겸업', part: '일부 차감' };
+  function buildReport() {
+    const d = result;
+    if (!d) { $('report').innerHTML = '<p>[실질자본 판정하기]를 먼저 눌러 주세요.</p>'; return; }
+    const u = d.uName;
+    const ent = entity() === 'corp' ? '법인' : '개인';
+    const name = $('corpName').value.trim() || '-';
+    const base = $('baseDate').value || '-';
+    const today = new Date(); const ymd = `${today.getFullYear()}. ${today.getMonth() + 1}. ${today.getDate()}.`;
+    const rowsHtml = (rows, isLiab) => rows.map(r => `<tr><td>${esc(r.name)}</td><td class="r">${fmt(r.amt)}</td><td style="text-align:center">${r.t === 'side' && isLiab ? '겸업부채' : TREAT[r.t]}</td><td class="r">${r.ded ? fmt(r.ded) : ''}</td><td class="r">${fmt(r.real)}</td></tr>`).join('');
+    $('report').innerHTML = `
+      <h1>실질자본 진단 결과 보고서</h1>
+      <div class="sub">건설업 기업진단 사전검토 (참고용)</div>
+      <h2>1. 기본 사항</h2>
+      <table><tr><th style="width:18%">${ent === '법인' ? '법인명' : '상호'}</th><td>${esc(name)}</td><th style="width:18%">사업자 유형</th><td>${ent}</td></tr>
+      <tr><th>진단기준일</th><td>${esc(base)}</td><th>금액 단위</th><td>${u}</td></tr></table>
+      <h2>2. 보유 면허 및 기준자본금</h2>
+      <table><tr><th>구분</th><th>면허</th><th>기준자본금</th></tr>
+      ${d.licenses.length ? d.licenses.map(l => `<tr><td style="text-align:center">${esc(l.group)}</td><td>${esc(l.name)}${l.add ? ' (추가 등록)' : ''}</td><td class="r">${eokText(l.cap)}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center">입력한 면허 없음</td></tr>'}
+      ${d.reduction ? `<tr><td colspan="2">추가 등록 특례 (${esc(d.added)} 기준자본금 50% 중복 인정)</td><td class="r">− ${eokText(d.reduction)}</td></tr>` : ''}
+      <tr class="tot"><td colspan="2" style="text-align:center">충족해야 할 기준자본금</td><td class="r">${d.judged ? eokText(d.reqEok) : '-'}</td></tr></table>
+      <h2>3. 자산 검토</h2>
+      <table><tr><th>계정과목</th><th>장부금액</th><th>처리</th><th>차감액</th><th>실질금액</th></tr>
+      ${rowsHtml(d.assets)}<tr class="tot"><td style="text-align:center">합계</td><td class="r">${fmt(d.A.total)}</td><td></td><td class="r">${fmt(d.A.ded)}</td><td class="r">${fmt(d.realA)}</td></tr></table>
+      <h2>4. 부채 검토</h2>
+      <table><tr><th>계정과목</th><th>장부금액</th><th>처리</th><th>제외액</th><th>실질금액</th></tr>
+      ${rowsHtml(d.liabs, true)}
+      ${d.offRows.map(r => `<tr><td>${esc(r.name || '부외부채')}</td><td class="r">-</td><td style="text-align:center">부외부채 가산</td><td></td><td class="r">${fmt(r.amt)}</td></tr>`).join('')}
+      <tr class="tot"><td style="text-align:center">합계</td><td class="r">${fmt(d.L.total)}</td><td></td><td class="r">${fmt(d.L.ded)}</td><td class="r">${fmt(d.realL)}</td></tr></table>
+      <h2>5. 실질자본 계산</h2>
+      <table>
+        <tr><td>자산총계 (장부)</td><td class="r">${fmt(d.A.total)}</td></tr>
+        <tr><td>&nbsp;&nbsp;(−) 부실자산</td><td class="r">${fmt(d.A.bad)}</td></tr>
+        <tr><td>&nbsp;&nbsp;(−) 겸업자산</td><td class="r">${fmt(d.A.side)}</td></tr>
+        ${d.A.part ? `<tr><td>&nbsp;&nbsp;(−) 일부 차감</td><td class="r">${fmt(d.A.part)}</td></tr>` : ''}
+        <tr class="tot"><td>실질자산 ①</td><td class="r">${fmt(d.realA)}</td></tr>
+        <tr><td>부채총계 (장부)</td><td class="r">${fmt(d.L.total)}</td></tr>
+        <tr><td>&nbsp;&nbsp;(−) 겸업부채 등</td><td class="r">${fmt(d.L.ded)}</td></tr>
+        <tr><td>&nbsp;&nbsp;(+) 부외부채</td><td class="r">${fmt(d.off)}</td></tr>
+        <tr class="tot"><td>실질부채 ②</td><td class="r">${fmt(d.realL)}</td></tr>
+        <tr class="tot"><td>실질자본 (① − ②)</td><td class="r">${fmt(d.realCap)} (${wonText(d.capWon)})</td></tr>
+        <tr><td>기준자본금 합계</td><td class="r">${d.judged ? wonText(d.reqWon) : '-'}</td></tr>
+      </table>
+      <div class="verdict-box">판정 : ${!d.judged ? '면허 미입력 (판정 불가)' : d.ok ? `기준자본금 충족 (여유액 ${wonText(d.diff)})` : `기준자본금 미달 (부족액 ${wonText(-d.diff)})`}</div>
+      ${d.warns.length ? `<h2>6. 확인 필요 사항</h2><ul style="margin:0;padding-left:18px">${d.warns.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+      <div class="foot">※ 본 보고서는 입력된 재무상태표와 처리 기준을 바탕으로 자동 계산한 사전검토 자료이며, 「건설업 관련 기업진단지침」에 따른 공식 기업진단보고서가 아닙니다. 실제 진단 결과는 진단자의 실사(예금 거래내역, 채권 실재성 등)에 따라 달라질 수 있습니다.</div>
+      <div class="sign">작성일 ${ymd}<br><b>세무회계강남</b></div>`;
+  }
+  $('reportBtn').addEventListener('click', () => { if (!result) return; buildReport(); window.print(); });
+  window.addEventListener('beforeprint', buildReport);
+
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm('입력한 내용을 모두 지울까요?')) return;
+    licRows = [{ key: '' }]; licenses = []; files = [];
+    ['corpName', 'baseDate', 'bsAssetTotal', 'bsLiabTotal'].forEach(id => { $(id).value = ''; $(id).classList.remove('auto'); });
+    result = null; judgedKey = '';
+    ['calc', 'warns', 'verdict', 'judgeMsg'].forEach(id => { $(id).innerHTML = ''; });
+    $('verdict').className = 'verdict'; $('reportBtn').disabled = true;
+    renderFiles(); buildDefaults(); renderLicenses(); recalc(); showSums(null);
+    if (window.__diagPaid) window.__diagReady();
+  });
+
+  buildDefaults(); renderLicenses(); recalc(); showSums(null);
+})();
+</script>
+</body>
+</html>
