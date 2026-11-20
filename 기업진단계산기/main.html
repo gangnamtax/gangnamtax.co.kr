@@ -295,7 +295,7 @@
   <!-- 3. 재무제표 업로드 -->
   <div class="card">
     <h2><span class="no">3</span>재무제표 파일로 자동 입력</h2>
-    <p class="hint">진단기준일 현재 재무상태표(PDF · 엑셀 · 사진)를 올리면 계정과목과 금액을 아래 표에 채웁니다. 글자가 있는 PDF와 엑셀은 이 브라우저에서 바로 읽고, 스캔본(사진) 쪽만 문자 인식(OCR)을 위해 서버로 보냅니다.</p>
+    <p class="hint">진단기준일 현재 재무상태표(PDF · 엑셀 · 사진)를 올리면 계정과목과 금액을 아래 표에 채웁니다. 파일은 이 브라우저에서 읽고(스캔본도 이 브라우저에서 문자 인식), 서버에는 파일이 아니라 재무상태표 글자만 보내 계정과 금액을 정리합니다.</p>
     <div class="upload-box" id="dropZone">
       <div class="big-t">📎 파일을 여기에 끌어다 놓거나 <a href="#" id="pickLink" style="color:#8a6d3b">파일 선택</a></div>
       <div class="sm">PDF(출력본 · 스캔본) · 엑셀(xlsx, xls) · CSV · 사진(JPG, PNG)</div>
@@ -916,30 +916,44 @@
     }).filter(Boolean).join('   ')).filter(Boolean).join('\n');
   }
 
-  // ---- 스캔본: 쪽 이미지를 만들어 홈페이지 서버(구글 드라이브 OCR)로 보냄 ----
-  const OCR_PER_CALL = 2, MIN_TEXT = 20;
+  // ---- 스캔본: 이 브라우저에서 문자 인식 (줄 · 칸 위치를 지켜서 '계정명  금액  금액' 줄로 읽음, 파일은 밖으로 나가지 않음) ----
+  // 구글 드라이브 문자 인식은 글자 사이가 벌어진 계정명(현   금)을 세로로 읽어 표가 흩어지므로, 표는 이 방식으로 읽음
+  const MIN_TEXT = 20, OCR_SIDE = 3000;
   const canvasJpeg = c => ({ mediaType: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] });
   async function renderPage(page) {
     const v1 = page.getViewport({ scale: 1 });
-    const vp = page.getViewport({ scale: Math.min(3, 2340 / Math.max(v1.width, v1.height)) });
+    const vp = page.getViewport({ scale: OCR_SIDE / Math.max(v1.width, v1.height) });
     const c = document.createElement('canvas');
     c.width = Math.round(vp.width); c.height = Math.round(vp.height);
     const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
     await page.render({ canvasContext: g, viewport: vp, intent: 'print' }).promise;
-    return canvasJpeg(c);
+    return c;
   }
-  async function imageForOcr(file) {
+  async function imageCanvas(file) {
     const url = await new Promise((ok, fail) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = fail; r.readAsDataURL(file); });
     const img = await new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = url; });
-    const scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const scale = Math.min(1.5, OCR_SIDE / Math.max(img.width, img.height));
     const c = document.createElement('canvas');
     c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
     const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
-    return canvasJpeg(c);
+    return c;
+  }
+  let ocrWorker = null;
+  const loadTesseract = () => window.Tesseract ? Promise.resolve() : loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+  async function ocrCanvas(c) {
+    await loadTesseract();
+    if (!ocrWorker) {
+      ocrWorker = await Tesseract.createWorker('kor');
+      await ocrWorker.setParameters({ preserve_interword_spaces: '1', tessedit_pageseg_mode: '6' });
+    }
+    const r = await ocrWorker.recognize(c);
+    return (r.data.text || '').replace(/ {2,}/g, '   ');
   }
   function progress(done, total, text) {
     msg('', `${esc(text)}<div class="progress"><i style="width:${total ? Math.round(done / total * 100) : 0}%"></i></div>`);
   }
+  // 재무상태표를 다 읽었는지: 제목 뒤로 자산총계 · 부채총계가 모두 나왔으면
+  const bsDone = pages => { const flat = pages.join('\n').replace(/\s/g, ''); const t = flat.search(/재무상태표|대차대조표/); return t >= 0 && /자산총계/.test(flat.slice(t)) && /부채총계/.test(flat.slice(t)); };
   const isBS = t => /재무상태표|대차대조표/.test(t.replace(/\s/g, '')) || /자산총계/.test(t.replace(/\s/g, ''));
 
   $('extractBtn').addEventListener('click', async () => {
@@ -963,7 +977,7 @@
           }
         } else if (/\.(jpe?g|png)$/i.test(f.name)) {
           pages.push('');
-          queue.push({ idx: pages.length - 1, label: f.name, make: () => imageForOcr(f) });
+          queue.push({ idx: pages.length - 1, label: f.name, make: () => imageCanvas(f) });
         } else {
           await loadXlsx();
           const wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array' });
@@ -971,45 +985,28 @@
         }
       }
 
-      // 글자가 없는 쪽만 문자 인식 (글자 있는 쪽에서 재무상태표를 이미 찾았으면 건너뜀)
+      // 글자가 없는 쪽만 앞에서부터 문자 인식, 재무상태표(자산총계 · 부채총계)를 다 읽으면 멈춤
       const failed = [];
-      let stop = null;
       if (typeof window.api !== 'function') throw new Error('로그인 후 이용할 수 있습니다.');
-      if (queue.length && !pages.some(isBS)) {
-        if (typeof window.api !== 'function') throw new Error('스캔본을 읽으려면 홈페이지 로그인 기능이 필요합니다. 홈페이지 주소로 접속해 주세요.');
-        let done = 0, next = 0;
-        progress(0, queue.length, `스캔본 문자 인식 중 (0/${queue.length}쪽)`);
-        const worker = async () => {
-          while (next < queue.length && !stop) {
-            // 앞쪽에서 재무상태표 자산 · 부채총계를 다 찾았으면 나머지 쪽은 건너뜀
-            const joined = pages.join('\n').replace(/\s/g, '');
-            if (/자산총계/.test(joined) && /부채총계/.test(joined)) { next = queue.length; break; }
-            const batch = queue.slice(next, next + OCR_PER_CALL); next += batch.length;
-            const images = [];
-            for (const it of batch) images.push(await it.make());
-            let res;
-            try { res = await window.api('/api/calculate', { mode: 'ocr', images }); }
-            catch (e) { res = { ok: false, data: { message: '서버와 통신하지 못했습니다.' } }; }
-            if (res.status === 401 || res.status === 402) { stop = res.data.message || '로그인이 필요합니다.'; if (window.refreshUser) window.refreshUser(); return; }
-            if (!res.ok) batch.forEach(it => failed.push(`${it.label}: ${res.data.message || '문자 인식 실패'}`));
-            else {
-              const r = res.data.result || {};
-              batch.forEach((it, k) => {
-                const t = (r.texts || [])[k] || '', why = (r.errors || [])[k] || '';
-                if (why) failed.push(`${it.label}: ${why}`); else pages[it.idx] = t;
-              });
-            }
-            done += batch.length;
-            progress(done, queue.length, `스캔본 문자 인식 중 (${done}/${queue.length}쪽)`);
-          }
-        };
-        await Promise.all([worker(), worker(), worker()]);
-        if (stop) throw new Error(stop);
+      if (queue.length && !bsDone(pages)) {
+        try { await loadTesseract(); }
+        catch (e) { throw new Error('문자 인식 도구를 불러오지 못했습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.'); }
+        for (let k = 0; k < queue.length; k++) {
+          progress(k, queue.length, `스캔본 문자 인식 중 (${k + 1}/${queue.length}쪽)${k === 0 ? ' · 처음에는 한글 인식 자료를 받느라 조금 더 걸려요' : ''}`);
+          try { pages[queue[k].idx] = await ocrCanvas(await queue[k].make()); }
+          catch (e) { failed.push(`${queue[k].label}: 문자 인식 실패`); }
+          if (bsDone(pages)) break;
+        }
       }
 
       // 재무상태표 쪽만 (없으면 자산총계가 있는 쪽)
-      let bsPages = pages.filter(t => /재무상태표|대차대조표/.test(t.replace(/\s/g, '')) && !/손익계산서/.test(t.replace(/\s/g, '').slice(0, 40)));
-      if (!bsPages.length) bsPages = pages.filter(t => /자산총계/.test(t.replace(/\s/g, '')));
+      let bsPages = [];
+      const flatOf = t => t.replace(/\s/g, '');
+      const first = pages.findIndex(t => /재무상태표|대차대조표/.test(flatOf(t)) && /자산|과목|현재/.test(flatOf(t)) && !/손익계산서/.test(flatOf(t).slice(0, 40)) && /\d{1,3}(,\d{3})+/.test(t));
+      if (first >= 0) {
+        for (let k = first; k < pages.length; k++) { bsPages.push(pages[k]); if (/부채총계/.test(flatOf(pages[k])) || k - first >= 3) break; }
+      }
+      if (!bsPages.length) bsPages = pages.filter(t => /자산총계|부채총계/.test(flatOf(t)));
       if (!bsPages.length) {
         throw new Error(failed.length ? `문자 인식에 실패했습니다. ${failed.slice(0, 3).join(' / ')}`
           : '파일에서 재무상태표(자산총계 · 부채총계)를 찾지 못했습니다. 재무상태표 쪽이 들어 있는지 확인해 주세요.');
@@ -1033,18 +1030,25 @@
     if (bs.companyName && !$('corpName').value.trim()) { $('corpName').value = bs.companyName.slice(0, 40); $('corpName').classList.add('auto'); }
     if (bs.asOf && !$('baseDate').value) { $('baseDate').value = bs.asOf; $('baseDate').classList.add('auto'); }
     $('assetBody').innerHTML = $('liabBody').innerHTML = '';
-    bs.assets.forEach(a => acctRow('asset', a.name, a.amount, true, a));
-    bs.liabs.forEach(a => acctRow('liab', a.name, a.amount, true, a));
+    const note = a => a.estimated ? Object.assign({}, a, { tip: '⚠ 글자가 깨져 총계와의 차이로 채운 금액 · 원본 확인' + (a.tip ? ' / ' + a.tip : '') }) : a;
+    bs.assets.forEach(a => acctRow('asset', a.name, a.amount, true, note(a)));
+    bs.liabs.forEach(a => acctRow('liab', a.name, a.amount, true, note(a)));
     if (!bs.liabs.length) classifyRows(DEFAULT_LIABS.map(n => acctRow('liab', n)));
     const setChk = (id, v) => { if (v != null) { $(id).value = fmt(v); $(id).classList.add('auto'); } };
     setChk('bsAssetTotal', bs.totalAssets); setChk('bsLiabTotal', bs.totalLiabs);
     recalc();
     const okA = bs.matchAssets, okL = bs.matchLiabs, flagged = bs.flagged;
-    msg(okA && okL ? 'ok' : 'warn',
-      `자산 <b>${bs.assets.length}개</b>, 부채 <b>${bs.liabs.length}개</b> 계정을 읽었어요` + (bs.unit ? ` (단위: ${unitName()})` : '') + '.<br>' +
-      (okA && okL ? '읽은 금액의 합계가 재무상태표 총계와 일치합니다. ' : '읽은 금액의 합계가 재무상태표 총계와 다릅니다. 4번 표에서 빠지거나 겹친 계정을 확인해 주세요. ') +
-      (flagged ? `부실·겸업으로 분류된 계정 ${flagged}개를 확인하세요.` : '') +
-      (ocr ? '<br>스캔본은 문자 인식으로 읽어 숫자·계정명이 틀릴 수 있으니 노란 칸을 원본과 꼭 대조해 주세요.' : ''));
+    const lines = [`자산 <b>${bs.assets.length}개</b>, 부채 <b>${bs.liabs.length}개</b> 계정을 읽었어요` + (bs.unit ? ` (단위: ${unitName()})` : '') + '.'];
+    if (!bs.foundTotals) lines.push('재무상태표의 자산총계 · 부채총계를 찾지 못해 금액이 맞는지 확인할 수 없어요. 원본과 꼭 대조해 주세요.');
+    else {
+      lines.push(okA ? '✔ 자산 합계가 재무상태표 자산총계와 일치합니다.' : `✖ 자산 합계가 자산총계와 ${fmt(Math.abs(bs.diffAssets))} 차이납니다 (읽은 금액이 ${bs.diffAssets > 0 ? '부족' : '많음'}). 빠지거나 겹친 계정을 확인해 주세요.`);
+      lines.push(okL ? '✔ 부채 합계가 재무상태표 부채총계와 일치합니다.' : `✖ 부채 합계가 부채총계와 ${fmt(Math.abs(bs.diffLiabs))} 차이납니다 (읽은 금액이 ${bs.diffLiabs > 0 ? '부족' : '많음'}). 빠지거나 겹친 계정을 확인해 주세요.`);
+    }
+    if (bs.estimated && bs.estimated.length) lines.push(`글자가 깨져 총계와의 차이로 채운 금액: <b>${bs.estimated.map(esc).join(', ')}</b> — 원본과 확인해 주세요.`);
+    if (bs.unread && bs.unread.length) lines.push(`금액을 읽지 못한 계정: <b>${bs.unread.map(esc).join(', ')}</b> — 직접 입력해 주세요.`);
+    if (flagged) lines.push(`부실·겸업으로 분류된 계정 ${flagged}개를 확인하세요.`);
+    if (ocr) lines.push('스캔본은 문자 인식으로 읽어 계정명·숫자가 틀릴 수 있으니 노란 칸을 원본과 꼭 대조해 주세요.');
+    msg(bs.foundTotals && okA && okL ? 'ok' : 'warn', lines.join('<br>'));
   }
 
   // ================= 보고서 =================
