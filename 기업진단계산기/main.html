@@ -454,47 +454,61 @@
   }
   const eokText = e => (Math.round(e * 100) / 100).toLocaleString('ko-KR') + '억원';
 
-  // ================= 면허 · 기준자본금 (억원) =================
+  // ================= 면허 · 기준자본금 =================
+  // 화면에는 면허 이름만 있고, 업종별 기준자본금과 추가 등록 특례 계산은 서버(Diag.gs)에서 받아옴
   const LIC_GROUPS = [
-    { g: '종합공사업', items: [['토목공사업', 5, 10], ['건축공사업', 3.5, 7], ['토목건축공사업', 8.5, 17], ['산업·환경설비공사업', 8.5, 17], ['조경공사업', 5, 10]] },
-    { g: '전문공사업', items: [['지반조성·포장공사업'], ['실내건축공사업'], ['금속창호·지붕건축물조립공사업'], ['도장·습식·방수·석공사업'], ['조경식재·시설물공사업'], ['철근·콘크리트공사업'], ['구조물해체·비계공사업'], ['상·하수도설비공사업'], ['철도·궤도공사업'], ['철강구조물공사업'], ['수중·준설공사업'], ['승강기·삭도공사업'], ['기계가스설비공사업'], ['가스난방공사업']].map(a => [a[0], 1.5, 1.5]) },
-    { g: '기타 법령 면허', items: [['전기공사업', 1.5, 1.5], ['정보통신공사업', 1.5, 1.5], ['전문소방시설공사업', 1, 1], ['일반소방시설공사업(기계)', 1, 1], ['일반소방시설공사업(전기)', 1, 1]] }
+    { g: '종합공사업', items: ['토목공사업', '건축공사업', '토목건축공사업', '산업·환경설비공사업', '조경공사업'] },
+    { g: '전문공사업', items: ['지반조성·포장공사업', '실내건축공사업', '금속창호·지붕건축물조립공사업', '도장·습식·방수·석공사업', '조경식재·시설물공사업', '철근·콘크리트공사업', '구조물해체·비계공사업', '상·하수도설비공사업', '철도·궤도공사업', '철강구조물공사업', '수중·준설공사업', '승강기·삭도공사업', '기계가스설비공사업', '가스난방공사업'] },
+    { g: '기타 법령 면허', items: ['전기공사업', '정보통신공사업', '전문소방시설공사업', '일반소방시설공사업(기계)', '일반소방시설공사업(전기)'] }
   ];
-  // licRows: 화면의 면허 줄 { key('gi:ii' | 'custom' | ''), name, group, corp, indiv, cap(사용자 수정값|null) }
+  // licRows: 화면의 면허 줄 { key('gi:ii' | 'custom' | ''), name, group, cap(직접 고친 값|null), std(서버가 알려준 기준자본금) }
   // licenses: 그중 면허를 고른 줄 (= 보유 면허)
   let licRows = [{ key: '' }], licenses = [];
-  const licCap = l => !l.key ? 0 : l.cap != null ? l.cap : (entity() === 'corp' ? l.corp : l.indiv) || 0;
+  const licShown = l => !l.key ? '' : l.cap != null ? l.cap : l.std != null ? l.std : '';
   const syncHeld = () => { licenses = licRows.filter(l => l.key && l.name); };
   function licOptions(cur) {
     const taken = new Set(licRows.map(l => l.key).filter(k => k && k !== 'custom' && k !== cur));
     return `<option value="">면허를 선택하세요</option>` + LIC_GROUPS.map((g, gi) =>
-      `<optgroup label="${g.g}">${g.items.map((it, ii) => { const k = `${gi}:${ii}`;
-        return `<option value="${k}"${k === cur ? ' selected' : ''}${taken.has(k) ? ' disabled' : ''}>${it[0]}${taken.has(k) ? ' (선택됨)' : ''}</option>`; }).join('')}</optgroup>`).join('') +
+      `<optgroup label="${g.g}">${g.items.map((nm, ii) => { const k = `${gi}:${ii}`;
+        return `<option value="${k}"${k === cur ? ' selected' : ''}${taken.has(k) ? ' disabled' : ''}>${nm}${taken.has(k) ? ' (선택됨)' : ''}</option>`; }).join('')}</optgroup>`).join('') +
       `<optgroup label="기타"><option value="custom"${cur === 'custom' ? ' selected' : ''}>직접 입력</option></optgroup>`;
-  }
-  // 추가 등록 특례: 기존 업종 자본금으로 추가 업종 기준자본금의 50%까지 중복 인정 (1회, 기존 업종 중 최대 자본금의 50% 한도)
-  function reqInfo() {
-    const gross = licenses.reduce((s, l) => s + licCap(l), 0);
-    const added = licenses.find(l => l.add), others = licenses.filter(l => !l.add);
-    const reduction = added && others.length ? Math.min(licCap(added) * 0.5, Math.max(...others.map(licCap)) * 0.5) : 0;
-    return { gross, reduction, net: gross - reduction, added };
   }
   function renderLicenses() {
     syncHeld();
     $('licList').innerHTML = licRows.map((l, i) => `<div class="lic-row">
         <select class="lic-sel${l.key ? '' : ' unset'}" data-sel="${i}" aria-label="면허 ${i + 1}">${licOptions(l.key)}</select>
         ${l.key === 'custom' ? `<input type="text" class="lic-cname" data-cname="${i}" placeholder="면허명 입력" value="${esc(l.cname || '')}">` : ''}
-        <span class="capw">기준자본금 <input type="text" class="num" data-lic="${i}" value="${l.key ? licCap(l) || '' : ''}" placeholder="0"${l.key ? '' : ' disabled'}> 억원</span>
+        <span class="capw">기준자본금 <input type="text" class="num" data-lic="${i}" value="${licShown(l)}" placeholder="${l.key && l.key !== 'custom' ? '…' : '0'}"${l.key ? '' : ' disabled'}> 억원</span>
         <label class="capw addw${l.key && licenses.length >= 2 ? '' : ' off'}" title="기존 업종 자본금으로 추가 업종 기준자본금의 50%까지 중복 인정 (1회) · 면허를 2개 이상 고르면 선택할 수 있어요"><input type="checkbox" data-addlic="${i}"${l.add ? ' checked' : ''}${l.key && licenses.length >= 2 ? '' : ' disabled'}> 추가 등록 (50% 특례)</label>
         <button type="button" class="x" data-licdel="${i}" aria-label="면허 ${i + 1} 삭제">&times;</button></div>`).join('');
     updateReq();
   }
+  // 서버에 면허 목록을 보내 면허별 기준자본금 · 합계(특례 차감 후)를 받아 표시
+  let reqSeq = 0, reqTimer = null;
   function updateReq() {
     syncHeld();
-    const r = reqInfo();
-    $('reqTotal').textContent = licenses.length ? eokText(r.net) : '-';
-    $('reqDetail').textContent = licenses.length ? `${entity() === 'corp' ? '법인' : '개인'} 기준 · ${licenses.map(l => `${l.name} ${eokText(licCap(l))}`).join(' + ')}`
-      + (r.reduction ? ` − 추가 등록 특례 ${eokText(r.reduction)} (${r.added.name} 50% 중복 인정)` : '') : '면허를 선택하면 표시됩니다';
+    clearTimeout(reqTimer);
+    if (!licenses.length) { $('reqTotal').textContent = '-'; $('reqDetail').textContent = '면허를 선택하면 표시됩니다'; return; }
+    $('reqDetail').textContent = '기준자본금을 확인하는 중...';
+    reqTimer = setTimeout(requestReq, 250);
+  }
+  async function requestReq() {
+    if (typeof window.api !== 'function') { $('reqDetail').textContent = '로그인 후 표시됩니다'; return; }
+    const seq = ++reqSeq, held = licenses.slice();
+    let res;
+    try { res = await window.api('/api/calculate', { mode: 'req', entity: entity(), licenses: held.map(l => ({ name: l.name, group: l.group, cap: l.cap, add: !!l.add })) }); }
+    catch (e) { res = { ok: false, data: {} }; }
+    if (seq !== reqSeq) return;
+    if (!res.ok || !res.data.result) { $('reqDetail').textContent = (res.data && res.data.message) || '기준자본금을 불러오지 못했습니다.'; return; }
+    const r = res.data.result;
+    held.forEach((l, i) => { l.std = r.licenses[i] ? r.licenses[i].std : null; });
+    licRows.forEach((l, i) => {
+      const inp = document.querySelector(`[data-lic="${i}"]`);
+      if (inp && document.activeElement !== inp && l.key) inp.value = licShown(l);
+    });
+    $('reqTotal').textContent = eokText(r.reqEok);
+    $('reqDetail').textContent = `${entity() === 'corp' ? '법인' : '개인'} 기준 · ${r.held.map(l => `${l.name} ${eokText(l.cap)}`).join(' + ')}`
+      + (r.reduction ? ` − 추가 등록 특례 ${eokText(r.reduction)} (${r.added} 50% 중복 인정)` : '');
   }
   $('licAddBtn').addEventListener('click', () => {
     licRows.push({ key: '' }); renderLicenses();
@@ -503,8 +517,8 @@
   $('licList').addEventListener('change', e => {
     const i = e.target.dataset.sel; if (i == null) return;
     const v = e.target.value, row = { key: v };
-    if (v === 'custom') Object.assign(row, { name: '', cname: '', group: '직접 입력', corp: 0, indiv: 0, cap: null });
-    else if (v) { const [gi, ii] = v.split(':').map(Number), it = LIC_GROUPS[gi].items[ii]; Object.assign(row, { name: it[0], group: LIC_GROUPS[gi].g, corp: it[1], indiv: it[2], cap: null }); }
+    if (v === 'custom') Object.assign(row, { name: '', cname: '', group: '직접 입력', cap: null, std: null });
+    else if (v) { const [gi, ii] = v.split(':').map(Number); Object.assign(row, { name: LIC_GROUPS[gi].items[ii], group: LIC_GROUPS[gi].g, cap: null, std: null }); }
     licRows[i] = row;
     renderLicenses(); recalc();
     if (v === 'custom') document.querySelector(`[data-cname="${i}"]`).focus();
@@ -512,7 +526,7 @@
   $('licList').addEventListener('input', e => {
     const d = e.target.dataset;
     if (d.addlic != null) { licRows.forEach((l, k) => { l.add = k === Number(d.addlic) && e.target.checked; }); renderLicenses(); recalc(); return; }
-    if (d.lic != null) licRows[d.lic].cap = toNum(e.target.value);
+    if (d.lic != null) licRows[d.lic].cap = e.target.value.trim() === '' ? null : toNum(e.target.value);
     else if (d.cname != null) licRows[d.cname].name = licRows[d.cname].cname = e.target.value.trim();
     else return;
     updateReq(); recalc();
@@ -524,7 +538,7 @@
     renderLicenses(); recalc();
   });
   document.querySelectorAll('input[name=entity]').forEach(r => r.addEventListener('change', () => {
-    licRows.forEach(l => { if (l.key !== 'custom') l.cap = null; });
+    licRows.forEach(l => { if (l.key !== 'custom') { l.cap = null; l.std = null; } });
     $('corpNameLabel').textContent = entity() === 'corp' ? '법인명' : '상호(대표자)';
     renderLicenses(); recalc();
   }));
@@ -699,7 +713,7 @@
     classifyTimer = setTimeout(() => { const list = [...classifyQueue]; classifyQueue.clear(); classifyRows(list); }, 700);
   }
   // 로그인 · 이용권 확인이 끝나면 기본 계정들의 처리 기본값을 받아옴
-  window.__diagReady = () => classifyRows([...document.querySelectorAll('tr.acct')]);
+  window.__diagReady = () => { classifyRows([...document.querySelectorAll('tr.acct')]); updateReq(); };
   function offRow(name) {
     const tr = document.createElement('tr'); tr.className = 'off';
     tr.innerHTML = `<td><input type="text" class="name" value="${esc(name || '')}" placeholder="내용"></td>
@@ -751,34 +765,33 @@
 
   // ================= 표 합계 · 판정 =================
   function collect(kind) {
-    const o = { total: 0, ded: 0, rows: [] };
+    const rows = [];
     document.querySelectorAll(`tr.acct[data-kind="${kind}"]`).forEach(tr => {
       const name = tr.querySelector('.name').value.trim(), amt = toNum(tr.querySelector('.amt').value), t = tr.querySelector('.treat').value;
-      const ded = t === 'ok' ? 0 : t === 'part' ? toNum(tr.querySelector('.ded').value) : amt;
-      o.total += amt; o.ded += ded;
-      if (name || amt) o.rows.push({ name, amt, t, ded: t === 'part' ? ded : 0 });
+      if (name || amt) rows.push({ name, amt, t, ded: t === 'part' ? toNum(tr.querySelector('.ded').value) : 0 });
     });
-    return o;
+    return rows;
   }
   let result = null, judgedKey = '';
   const inputKey = () => JSON.stringify(payload());
   function payload() {
-    const A = collect('asset'), L = collect('liab');
     return {
-      mode: 'calc', unit: unitMul(),
-      assets: A.rows, liabs: L.rows,
+      mode: 'calc', unit: unitMul(), entity: entity(),
+      assets: collect('asset'), liabs: collect('liab'),
       off: [...document.querySelectorAll('tr.off')].map(tr => ({ name: tr.querySelector('.name').value.trim(), amt: toNum(tr.querySelector('.amt').value) })).filter(r => r.amt),
-      licenses: licenses.map(l => ({ name: l.name, group: l.group, cap: licCap(l), add: !!l.add })),
+      licenses: licenses.map(l => ({ name: l.name, group: l.group, cap: l.cap, add: !!l.add })),
       bsAssetTotal: toNum($('bsAssetTotal').value), bsLiabTotal: toNum($('bsLiabTotal').value)
     };
   }
   // 입력이 바뀔 때: 표 합계만 바로 고치고, 판정 결과가 있으면 '다시 판정' 안내
+  function showSums(d) {
+    $('assetSum').textContent = d ? fmt(d.A.total) : '-'; $('assetDed').textContent = d ? fmt(d.A.ded) : '-';
+    $('liabSum').textContent = d ? fmt(d.L.total) : '-'; $('liabDed').textContent = d ? fmt(d.L.ded) : '-';
+  }
   function recalc() {
-    const A = collect('asset'), L = collect('liab');
-    $('assetSum').textContent = fmt(A.total); $('assetDed').textContent = fmt(A.ded);
-    $('liabSum').textContent = fmt(L.total); $('liabDed').textContent = fmt(L.ded);
     if (result) {
       const stale = inputKey() !== judgedKey;
+      showSums(stale ? null : result);
       $('judgeMsg').className = 'live-msg warn';
       $('judgeMsg').textContent = stale ? '입력이 바뀌었어요. [실질자본 판정하기]를 다시 눌러 주세요.' : '';
       $('reportBtn').disabled = stale;
@@ -804,6 +817,7 @@
     }
   });
   function renderResult(d) {
+    showSums(d);
     const u = d.uName;
     const ln = (k, v, c) => `<div class="line ${c || ''}"><span>${k}</span><span>${v}</span></div>`;
     $('calc').innerHTML =
@@ -1025,10 +1039,7 @@
     const setChk = (id, v) => { if (v != null) { $(id).value = fmt(v); $(id).classList.add('auto'); } };
     setChk('bsAssetTotal', bs.totalAssets); setChk('bsLiabTotal', bs.totalLiabs);
     recalc();
-    const A = collect('asset').total, L = collect('liab').total;
-    const okA = bs.totalAssets == null || Math.round(bs.totalAssets) === Math.round(A);
-    const okL = bs.totalLiabs == null || Math.round(bs.totalLiabs) === Math.round(L);
-    const flagged = bs.assets.filter(r => r.t !== 'ok').length;
+    const okA = bs.matchAssets, okL = bs.matchLiabs, flagged = bs.flagged;
     msg(okA && okL ? 'ok' : 'warn',
       `자산 <b>${bs.assets.length}개</b>, 부채 <b>${bs.liabs.length}개</b> 계정을 읽었어요` + (bs.unit ? ` (단위: ${unitName()})` : '') + '.<br>' +
       (okA && okL ? '읽은 금액의 합계가 재무상태표 총계와 일치합니다. ' : '읽은 금액의 합계가 재무상태표 총계와 다릅니다. 4번 표에서 빠지거나 겹친 계정을 확인해 주세요. ') +
@@ -1046,7 +1057,7 @@
     const name = $('corpName').value.trim() || '-';
     const base = $('baseDate').value || '-';
     const today = new Date(); const ymd = `${today.getFullYear()}. ${today.getMonth() + 1}. ${today.getDate()}.`;
-    const rowsHtml = (rows, isLiab) => rows.map(r => `<tr><td>${esc(r.name)}</td><td class="r">${fmt(r.amt)}</td><td style="text-align:center">${r.t === 'side' && isLiab ? '겸업부채' : TREAT[r.t]}</td><td class="r">${r.ded ? fmt(r.ded) : ''}</td><td class="r">${fmt(r.amt - r.ded)}</td></tr>`).join('');
+    const rowsHtml = (rows, isLiab) => rows.map(r => `<tr><td>${esc(r.name)}</td><td class="r">${fmt(r.amt)}</td><td style="text-align:center">${r.t === 'side' && isLiab ? '겸업부채' : TREAT[r.t]}</td><td class="r">${r.ded ? fmt(r.ded) : ''}</td><td class="r">${fmt(r.real)}</td></tr>`).join('');
     $('report').innerHTML = `
       <h1>실질자본 진단 결과 보고서</h1>
       <div class="sub">건설업 기업진단 사전검토 (참고용)</div>
@@ -1095,11 +1106,11 @@
     result = null; judgedKey = '';
     ['calc', 'warns', 'verdict', 'judgeMsg'].forEach(id => { $(id).innerHTML = ''; });
     $('verdict').className = 'verdict'; $('reportBtn').disabled = true;
-    renderFiles(); buildDefaults(); renderLicenses(); recalc();
+    renderFiles(); buildDefaults(); renderLicenses(); recalc(); showSums(null);
     if (window.__diagPaid) window.__diagReady();
   });
 
-  buildDefaults(); renderLicenses(); recalc();
+  buildDefaults(); renderLicenses(); recalc(); showSums(null);
 })();
 </script>
 </body>
