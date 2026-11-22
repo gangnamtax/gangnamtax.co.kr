@@ -341,6 +341,30 @@
     .fclose { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
     .fbox textarea { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical; outline: none; }
     .fbox textarea:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    /* ===== 공동명의 ===== */
+    .owner-mode { display: flex; gap: 8px; }
+    .owner-mode label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0; }
+    .owner-mode label.on { border-color: #8a6d3b; background: #faf7f1; color: #5b4a2e; }
+    .owner-mode input { width: auto !important; margin: 0; }
+    .owner-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .owner-row .oname { flex: 1; min-width: 0; padding: 9px 10px; font-size: 13px; }
+    .owner-row .share-wrap { position: relative; width: 110px; flex-shrink: 0; }
+    .owner-row .oshare { padding: 9px 26px 9px 10px; font-size: 13px; text-align: right; }
+    .owner-row .share-wrap::after { content: '%'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 13px; color: #64748b; }
+    .owner-row .del { background: none; border: none; color: #94a3b8; font-size: 18px; cursor: pointer; padding: 0 4px; }
+    .owner-tools { display: flex; gap: 8px; margin-top: 8px; }
+    .owner-tools .add-house-btn { flex: 1; }
+    .share-msg { font-size: 12px; font-weight: 600; margin-top: 6px; color: #475569; }
+    .share-msg.bad { color: #b91c1c; }
+    .owner-results { margin-top: 18px; }
+    .owner-results h4 { font-size: 14px; color: #1e293b; margin: 0 0 10px; }
+    .owner-card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px 4px; margin-bottom: 10px; background: #f8fafc; }
+    .owner-card .ohead { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; }
+    .owner-card .ohead span:last-child { color: #5b4a2e; }
+    .owner-card .result-row { margin-bottom: 6px; }
+    .owner-card .result-row span:first-child, .owner-card .result-row span:last-child { font-size: 12.5px; }
+    .res-notes { font-size: 12px; color: #5b4a2e; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.6; }
+    .res-notes p { margin: 0; }
   </style>
 </head>
 <body>
@@ -442,7 +466,7 @@
                     <div class="date-col">
                         <label style="font-size: 12px; color: #64748b; margin-bottom: 4px;">양도일</label>
                         <div class="date-input-wrapper">
-                            <input type="text" id="transferDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateLivePeriod()" required>
+                            <input type="text" id="transferDate" placeholder="YYYY-MM-DD" maxlength="10" oninput="formatDateInput(this)" onchange="calculateLivePeriod(); updateHouseSummary()" required>
                         </div>
                     </div>
                 </div>
@@ -483,6 +507,22 @@
                 <input type="text" id="expenses" placeholder="예: 20,000,000" value="0" oninput="formatCurrency(this)">
             </div>
 
+            <div class="form-group">
+                <label>7. 명의 <span class="hint">(공동명의는 지분율대로 나눠 사람마다 기본공제·세율을 따로 적용합니다)</span></label>
+                <div class="owner-mode">
+                    <label id="ownerSingleLbl" class="on"><input type="radio" name="ownerMode" value="single" checked onchange="setOwnerMode()"> 단독명의</label>
+                    <label id="ownerJointLbl"><input type="radio" name="ownerMode" value="joint" onchange="setOwnerMode()"> 공동명의</label>
+                </div>
+                <div id="ownerBox" class="hidden">
+                    <div id="ownerList"></div>
+                    <div class="owner-tools">
+                        <button type="button" class="add-house-btn" onclick="addOwner()">+ 공유자 추가</button>
+                        <button type="button" class="add-house-btn" onclick="splitEqually()">지분 똑같이 나누기</button>
+                    </div>
+                    <div id="shareMsg" class="share-msg"></div>
+                </div>
+            </div>
+
             <button type="submit" class="calc-action-btn">예상 양도세 결과보기</button>
         </form>
 
@@ -500,8 +540,8 @@
                 <span id="resLongTermDeduction">0 원</span>
             </div>
             <div class="result-row">
-                <span>양도소득 기본공제</span>
-                <span>2,500,000 원</span>
+                <span id="resBasicLabel">양도소득 기본공제</span>
+                <span id="resBasic">0 원</span>
             </div>
             <div class="result-row">
                 <span>과세표준</span>
@@ -519,6 +559,8 @@
                 <span>최종 납부할 총 예상 세액</span>
                 <span id="resTotalTax">0 원</span>
             </div>
+            <div id="resOwners" class="owner-results hidden"></div>
+            <div id="resNotes" class="res-notes hidden"></div>
             <div class="notice-text">
                 <p>※ 본 계산기는 세무회계강남에서 제작하였으며, 무단배포를 금지합니다.</p>
                 <p>※ 산출된 세액은 참고용이며, 법적 근거로 사용할 수 없습니다.</p>
@@ -963,26 +1005,105 @@
 
         let text = `보유 주택 ${s.count}채`;
         if (s.taxType === 'single_house') text += ' · 1세대 1주택 기준으로 계산 (비과세·12억 초과분)';
-        else if (s.heavy) text += ` · 양도 주택 조정대상지역 → 중과 ${s.heavy}%p, 장기보유특별공제 배제`;
+        else if (s.heavy) {
+            // 2026 세제개편안: 보유 2년 이상이면 2027년 +5/+10%p, 2028년 +10/+15%p로 한시 완화
+            const acq = document.getElementById('acquisitionDate').value, trf = document.getElementById('transferDate').value;
+            const y = Number(trf.slice(0, 4));
+            const held2 = isDate(acq) && isDate(trf) && (getYearMonthString(acq, trf) || { fullYears: 0 }).fullYears >= 2;
+            const eased = held2 && (y === 2027 || y === 2028) ? (y === 2027 ? (s.heavy === 30 ? 10 : 5) : (s.heavy === 30 ? 15 : 10)) : 0;
+            text += eased
+                ? ` · 양도 주택 조정대상지역 → 중과 ${eased}%p (${y}년 한시 완화, 원래 ${s.heavy}%p), 장기보유특별공제 배제`
+                : ` · 양도 주택 조정대상지역 → 중과 ${s.heavy}%p, 장기보유특별공제 배제`;
+        }
         else text += ' · 일반 과세 (중과 없음)';
         document.getElementById('houseSummary').innerText = text;
         toggleTaxConditions();
     }
 
     function toggleTaxConditions() {
-        const type = getHouseStatus().taxType;
+        const s = getHouseStatus();
+        const type = s.taxType;
         const resBox = document.getElementById('residencePeriodBox');
+        // 2028.1.1 이후 양도분은 일반 주택도 장기보유특별공제가 거주기간 기준 (2026 세제개편안)
+        const from2028 = document.getElementById('transferDate').value >= '2028-01-01';
+        const resLabel = document.getElementById('residenceLabel');
         if (type === 'single_house') {
             resBox.style.display = 'block';
+            resLabel.innerHTML = '3. 실제 거주 기간 (전입일 및 전출일) <span style="font-size: 12px; color: #8a6d3b; font-weight: normal;">[1세대 1주택 비과세·장기보유특별공제 · 10년 이상 거주 시 2027년부터 기본공제 2,500만원]</span>';
             document.getElementById('resProfitLabel').innerText = '양도차익 (12억 초과 과세분)';
         } else {
-            resBox.style.display = 'none';
+            resBox.style.display = from2028 && !s.heavy ? 'block' : 'none';
+            resLabel.innerHTML = '3. 실제 거주 기간 (전입일 및 전출일) <span style="font-size: 12px; color: #8a6d3b; font-weight: normal;">[2028년 이후 양도: 장기보유특별공제가 거주기간 기준]</span>';
             document.getElementById('resProfitLabel').innerText = '양도차익';
         }
     }
 
     // 처음에는 주택 1채(주소 비움)로 시작
     document.addEventListener('DOMContentLoaded', () => addHouseRow(''));
+
+    // ===== 명의: 단독 / 공동명의 (공유자별 지분율) =====
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const isJoint = () => document.querySelector('input[name="ownerMode"]:checked').value === 'joint';
+
+    function setOwnerMode() {
+        const joint = isJoint();
+        document.getElementById('ownerSingleLbl').classList.toggle('on', !joint);
+        document.getElementById('ownerJointLbl').classList.toggle('on', joint);
+        document.getElementById('ownerBox').classList.toggle('hidden', !joint);
+        // 처음 공동명의를 고르면 부부 50:50으로 시작
+        if (joint && !document.querySelector('.owner-row')) {
+            addOwner('본인', 50);
+            addOwner('배우자', 50);
+        }
+        updateShareMsg();
+    }
+
+    function addOwner(name, share) {
+        const n = document.querySelectorAll('.owner-row').length;
+        if (n >= 10) { alert('공유자는 10명까지 넣을 수 있습니다.'); return; }
+        const row = document.createElement('div');
+        row.className = 'owner-row';
+        row.innerHTML = `
+            <input type="text" class="oname" maxlength="30" placeholder="이름 (예: 본인, 배우자)">
+            <div class="share-wrap"><input type="text" class="oshare" inputmode="decimal" placeholder="지분" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); updateShareMsg()"></div>
+            <button type="button" class="del" onclick="removeOwner(this)" aria-label="공유자 삭제">×</button>`;
+        row.querySelector('.oname').value = name || `공유자 ${n + 1}`;
+        row.querySelector('.oshare').value = share == null ? '' : share;
+        document.getElementById('ownerList').appendChild(row);
+        updateShareMsg();
+    }
+
+    function removeOwner(btn) {
+        if (document.querySelectorAll('.owner-row').length <= 2) { alert('공동명의는 2명 이상이어야 합니다. 1명이면 단독명의를 골라 주세요.'); return; }
+        btn.closest('.owner-row').remove();
+        updateShareMsg();
+    }
+
+    // 지분을 똑같이 (끝자리는 마지막 사람에게)
+    function splitEqually() {
+        const rows = [...document.querySelectorAll('.owner-row')];
+        const each = Math.floor(10000 / rows.length) / 100;
+        rows.forEach((r, i) => {
+            r.querySelector('.oshare').value = i === rows.length - 1 ? Math.round((100 - each * (rows.length - 1)) * 100) / 100 : each;
+        });
+        updateShareMsg();
+    }
+
+    function getOwners() {
+        if (!isJoint()) return [{ name: '본인', share: 100 }];
+        return [...document.querySelectorAll('.owner-row')].map(r => ({
+            name: r.querySelector('.oname').value.trim(),
+            share: Number(r.querySelector('.oshare').value) || 0
+        }));
+    }
+
+    function updateShareMsg() {
+        const msg = document.getElementById('shareMsg');
+        if (!isJoint()) return;
+        const sum = Math.round(getOwners().reduce((s, o) => s + o.share, 0) * 100) / 100;
+        msg.classList.toggle('bad', Math.abs(sum - 100) > 0.01);
+        msg.innerText = Math.abs(sum - 100) > 0.01 ? `지분 합계 ${sum}% → 100%가 되도록 맞춰 주세요.` : `지분 합계 100% · 공유자 ${getOwners().length}명`;
+    }
 
     function getYearMonthString(startDateStr, endDateStr) {
         const start = new Date(startDateStr);
@@ -1068,6 +1189,15 @@
             return;
         }
 
+        const owners = getOwners();
+        if (isJoint()) {
+            const sum = owners.reduce((s, o) => s + o.share, 0);
+            if (owners.some(o => o.share <= 0) || Math.abs(sum - 100) > 0.01) {
+                alert('공동명의 지분율을 확인해주세요. 모든 공유자의 지분이 0보다 크고, 합계가 100%여야 합니다.');
+                return;
+            }
+        }
+
         let res, input;
         lastInput = null;
         try {
@@ -1088,7 +1218,8 @@
                 residenceEndDate: document.getElementById('residenceEndDate').value,
                 transferPrice: parseNum('transferPrice'),
                 acquisitionPrice: parseNum('acquisitionPrice'),
-                expenses: parseNum('expenses')
+                expenses: parseNum('expenses'),
+                owners
             };
             res = await api('/api/calculate', input);
         } catch (error) {
@@ -1110,11 +1241,34 @@
         document.getElementById('resProfit').innerText = won(r.profit);
         document.getElementById('resLongTermLabel').innerText = r.longTermLabel;
         document.getElementById('resLongTermDeduction').innerText = won(r.longTermDeduction);
+        document.getElementById('resBasicLabel').innerText = r.basicLabel || '양도소득 기본공제';
+        document.getElementById('resBasic').innerText = won(r.basicDeduction || 0);
         document.getElementById('resTaxBase').innerText = won(r.taxBase);
         document.getElementById('resTaxRateLabel').innerText = r.rateLabel;
         document.getElementById('resCalculatedTax').innerText = won(r.tax);
         document.getElementById('resLocalTax').innerText = won(r.localTax);
         document.getElementById('resTotalTax').innerText = won(r.total);
+
+        // 공동명의: 위는 합계, 아래에 공유자별 내역
+        const coOwned = !!r.coOwned && Array.isArray(r.owners);
+        document.querySelector('#result h3').innerText = coOwned ? `양도소득세 계산 결과 (공동명의 ${r.owners.length}명 합계)` : '양도소득세 계산 결과 요약';
+        document.querySelector('#result .total-tax span').innerText = coOwned ? '공유자 합계 총 예상 세액' : '최종 납부할 총 예상 세액';
+        const ownersBox = document.getElementById('resOwners');
+        ownersBox.classList.toggle('hidden', !coOwned);
+        ownersBox.innerHTML = coOwned ? '<h4>공유자별 계산 (지분율 기준)</h4>' + r.owners.map(o => `
+            <div class="owner-card">
+                <div class="ohead"><span>${esc(o.name)} · 지분 ${esc(o.share)}%</span><span>${won(o.total)}</span></div>
+                <div class="result-row"><span>양도차익</span><span>${won(o.profit)}</span></div>
+                <div class="result-row"><span>장기보유특별공제</span><span>${won(o.longTermDeduction)}</span></div>
+                <div class="result-row"><span>기본공제</span><span>${won(o.basicDeduction)}</span></div>
+                <div class="result-row"><span>과세표준</span><span>${won(o.taxBase)}</span></div>
+                <div class="result-row"><span>양도소득세 (${esc(o.rateLabel)})</span><span>${won(o.tax)}</span></div>
+                <div class="result-row"><span>지방소득세</span><span>${won(o.localTax)}</span></div>
+            </div>`).join('') : '';
+        const notesBox = document.getElementById('resNotes');
+        const notes = Array.isArray(r.notes) ? r.notes : [];
+        notesBox.classList.toggle('hidden', !notes.length);
+        notesBox.innerHTML = notes.map(n => `<p>※ ${esc(n)}</p>`).join('');
 
         document.getElementById('result').style.display = 'block';
         lastInput = input;
