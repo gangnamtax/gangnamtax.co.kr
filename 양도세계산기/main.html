@@ -2,8 +2,30 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>양도소득세 예상세액 계산기 - 세무회계강남</title>
-  <meta name="description" content="주택 양도소득세 예상세액 계산기. 1세대 1주택 비과세, 12억 초과분 과세, 장기보유특별공제, 다주택 중과까지 자동 계산 - 세무회계강남 김하원 세무사">
+  <title>양도세 계산기 (양도소득세 계산기) · 2026 세제개편안 반영 - 세무회계강남</title>
+  <meta name="description" content="세무회계강남 양도세 계산기. 주택 양도소득세 예상세액을 1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 다주택 중과, 공동명의 지분별 계산까지 자동으로. 2026 세제개편안(기본공제 2,500만원·장기거주공제·중과 한시 완화) 반영 - 김하원 세무사">
+  <link rel="canonical" href="https://gangnamtax.co.kr/%EC%96%91%EB%8F%84%EC%84%B8%EA%B3%84%EC%82%B0%EA%B8%B0/main.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="세무회계강남 김하원세무사">
+  <meta property="og:title" content="양도세 계산기 (양도소득세 계산기) - 세무회계강남">
+  <meta property="og:description" content="1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 다주택 중과, 공동명의 지분별 계산. 2026 세제개편안 반영.">
+  <meta property="og:url" content="https://gangnamtax.co.kr/%EC%96%91%EB%8F%84%EC%84%B8%EA%B3%84%EC%82%B0%EA%B8%B0/main.html">
+  <meta property="og:image" content="https://gangnamtax.co.kr/images/office-entrance.jpg">
+  <meta property="og:locale" content="ko_KR">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "세무회계강남 양도세 계산기",
+    "alternateName": ["양도세계산기", "양도소득세 계산기", "주택 양도세 계산기"],
+    "url": "https://gangnamtax.co.kr/%EC%96%91%EB%8F%84%EC%84%B8%EA%B3%84%EC%82%B0%EA%B8%B0/main.html",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "ko",
+    "description": "주택 양도소득세 예상세액 계산기. 1세대 1주택 비과세·12억 초과분, 장기보유특별공제, 다주택 중과, 공동명의 지분별 계산, 2026 세제개편안 반영.",
+    "provider": { "@type": "AccountingService", "name": "세무회계강남", "url": "https://gangnamtax.co.kr/", "sameAs": ["https://blog.naver.com/gangnamcta"] }
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -365,6 +387,23 @@
     .owner-card .result-row span:first-child, .owner-card .result-row span:last-child { font-size: 12.5px; }
     .res-notes { font-size: 12px; color: #5b4a2e; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.6; }
     .res-notes p { margin: 0; }
+    /* ===== 계산기 안내 ===== */
+    .guide { width: 100%; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 32px 40px; margin-top: 20px; box-shadow: 0 1px 3px rgba(15,23,42,.06); color: #334155; font-size: 14px; line-height: 1.75; }
+    .guide h2 { font-size: 18px; color: #1e293b; margin: 28px 0 10px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; }
+    .guide h2:first-child { margin-top: 0; }
+    .guide h3 { font-size: 15px; color: #5b4a2e; margin: 18px 0 4px; }
+    .guide p { margin: 0 0 10px; }
+    .guide ul { margin: 0 0 10px; padding-left: 20px; }
+    .guide li { margin-bottom: 4px; }
+    .guide-table-wrap { overflow-x: auto; }
+    .guide-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+    .guide-table th, .guide-table td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: center; }
+    .guide-table thead th { background: #faf7f1; color: #5b4a2e; }
+    .guide-table tbody th { background: #f8fafc; text-align: left; font-weight: 600; color: #1e293b; }
+    .guide-note { font-size: 12px; color: #64748b; margin-top: 8px; }
+    .guide-links { margin-top: 20px; padding-top: 14px; border-top: 1px solid #e2e8f0; font-size: 13px; }
+    .guide-links a { color: #8a6d3b; font-weight: 600; }
+    @media (max-width: 860px) { .guide { padding: 22px 18px; } }
   </style>
 </head>
 <body>
@@ -374,7 +413,7 @@
       <div class="header">
         <div class="title-block">
           <span class="eyebrow">세무회계강남</span>
-          <h1>양도소득세 예상세액 계산기</h1>
+          <h1>양도세 계산기 <span style="font-size: 0.7em; font-weight: 500; color: #64748b;">양도소득세 예상세액</span></h1>
         </div>
         <div id="authButtons">
           <a id="adminLink" href="admin.html" style="display: none; font-size: 12px; color: #64748b; margin-right: 6px;">관리자</a>
@@ -575,6 +614,43 @@
         </div>
         </div>
       </div>
+
+      <!-- 계산기 안내 (로그인 없이 읽을 수 있는 설명) -->
+      <section class="guide" aria-labelledby="guideTitle">
+        <h2 id="guideTitle">세무회계강남 양도세 계산기로 계산하는 것</h2>
+        <p>주택을 팔 때 내야 할 <b>양도소득세 예상세액</b>을 보유 주택, 날짜, 금액만 넣으면 바로 계산합니다. 양도소득세를 전문으로 신고하는 세무회계강남 김하원 세무사가 실무에서 쓰는 기준으로 만들었습니다.</p>
+        <ul>
+          <li><b>1세대 1주택 비과세</b>: 2년 보유 요건, 취득 당시 조정대상지역이면 2년 거주 요건, 양도가액 12억원 초과분 과세</li>
+          <li><b>장기보유특별공제</b>: 일반 주택 표1(연 2%), 1세대 1주택 표2(보유 4% + 거주 4%)</li>
+          <li><b>다주택 중과</b>: 보유 주택 주소로 조정대상지역을 자동 판단해 2주택 +20%p, 3주택 이상 +30%p, 장기보유특별공제 배제</li>
+          <li><b>단기보유 세율</b>: 1년 미만 70%, 2년 미만 60%</li>
+          <li><b>공동명의</b>: 부부 등 공동명의 주택은 지분율대로 나눠 사람마다 기본공제와 누진세율을 따로 적용하고 합계를 보여줍니다</li>
+        </ul>
+
+        <h2>2026 세제개편안 반영 내용 (양도일 기준)</h2>
+        <div class="guide-table-wrap">
+        <table class="guide-table">
+          <thead><tr><th>구분</th><th>2026년까지</th><th>2027년</th><th>2028년</th><th>2029년 이후</th></tr></thead>
+          <tbody>
+            <tr><th>1세대 1주택 장기보유특별공제</th><td>보유 4% + 거주 4%</td><td>현행과 같음</td><td>보유 2% + 거주 6%</td><td>거주 8%만 (최대 80%)</td></tr>
+            <tr><th>장기보유특별공제 한도</th><td>없음</td><td>없음</td><td>20억원</td><td>10억원</td></tr>
+            <tr><th>기본공제 (10년 거주 1주택, 30억 이하)</th><td>250만원</td><td>2,500만원</td><td>2,500만원</td><td>2,500만원</td></tr>
+            <tr><th>다주택 중과 (보유 2년 이상)</th><td>+20%p / +30%p</td><td>+5%p / +10%p</td><td>+10%p / +15%p</td><td>+20%p / +30%p</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="guide-note">※ 2026년 8월 정부가 발표한 세제개편안 기준이며, 국회 심의 결과에 따라 달라질 수 있습니다.</p>
+
+        <h2>자주 묻는 질문</h2>
+        <h3>1세대 1주택이면 기본공제가 모두 2,500만원인가요?</h3>
+        <p>아닙니다. 2027년 1월 1일 이후 양도하면서, 그 주택에 10년 이상 실제로 살았고, 양도가액이 30억원 이하일 때만 2,500만원입니다. 그 밖에는 250만원입니다.</p>
+        <h3>부부 공동명의면 양도세가 줄어드나요?</h3>
+        <p>양도차익이 두 사람에게 나뉘어 각자 낮은 세율 구간이 적용되고 기본공제도 사람마다 받기 때문에, 보통 단독명의보다 세금이 적습니다. 비과세와 12억원 판정은 주택 전체 금액으로 합니다.</p>
+        <h3>계산 결과로 바로 신고해도 되나요?</h3>
+        <p>계산 결과는 예상세액입니다. 상속·증여받은 주택, 일시적 2주택, 임대주택, 재개발 입주권처럼 특례가 걸리면 세액이 크게 달라질 수 있어 신고 전에 세무사 검토를 권합니다. 결과 화면의 [신고 의뢰하기]로 바로 맡기실 수 있습니다.</p>
+
+        <p class="guide-links">양도세 칼럼: <a href="https://blog.naver.com/gangnamcta" target="_blank" rel="noopener">세무회계강남 블로그</a> · 상담: <a href="tel:010-4454-2429">010-4454-2429</a> · <a href="/">세무회계강남 홈</a></p>
+      </section>
   </div>
 
   <!-- 회원가입/로그인 팝업 모달 -->
