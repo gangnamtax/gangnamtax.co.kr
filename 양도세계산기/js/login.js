@@ -250,6 +250,8 @@ async function handleLogout() {
 // ==========================================
 function updateUi(user, plan, paymentEnabled, bank) {
   const loggedIn = !!user;
+  // 로그인한 회원에게만 보이는 내용(계산기 안내 등)을 켜고 끄는 표시
+  document.body.classList.toggle('logged-in', loggedIn);
   const paid = loggedIn && user.paid;
   const waiting = loggedIn && !paid;
 
