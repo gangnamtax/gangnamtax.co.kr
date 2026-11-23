@@ -365,6 +365,15 @@
     .owner-card .result-row span:first-child, .owner-card .result-row span:last-child { font-size: 12.5px; }
     .res-notes { font-size: 12px; color: #5b4a2e; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.6; }
     .res-notes p { margin: 0; }
+    /* ===== 관련사이트 (페이지 하단) ===== */
+    .related { margin-top: 28px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px; }
+    .related h4 { margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #1e293b; }
+    .related ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .related a { display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid #dbe4f3; border-radius: 10px; background: #f3f7fe; color: #1e293b; font-size: 13px; font-weight: 500; text-decoration: none; transition: border-color .15s, background .15s; }
+    .related a:hover { border-color: #8a6d3b; background: #faf7f1; }
+    .related img { width: 20px; height: 20px; flex-shrink: 0; }
+    @media (max-width: 900px) { .related ul { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 480px) { .related ul { grid-template-columns: repeat(2, 1fr); } }
   </style>
 </head>
 <body>
@@ -575,6 +584,19 @@
         </div>
         </div>
       </div>
+
+      <!-- 관련사이트 (페이지 하단, 가로 배치) -->
+      <footer class="related">
+        <h4>관련사이트</h4>
+        <ul>
+          <li><a href="https://www.nts.go.kr" target="_blank" rel="noopener"><img src="https://www.nts.go.kr/favicon.ico" alt="">국세청</a></li>
+          <li><a href="https://www.hometax.go.kr" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?domain=hometax.go.kr&sz=64" alt="">홈택스</a></li>
+          <li><a href="https://www.wetax.go.kr" target="_blank" rel="noopener"><img src="https://www.wetax.go.kr/favicon.ico" alt="">위택스</a></li>
+          <li><a href="https://www.molit.go.kr" target="_blank" rel="noopener"><img src="https://www.nts.go.kr/favicon.ico" alt="">국토교통부</a></li>
+          <li><a href="https://rt.molit.go.kr" target="_blank" rel="noopener"><img src="https://www.nts.go.kr/favicon.ico" alt="">실거래가 조회</a></li>
+          <li><a href="https://seereal.lh.or.kr" target="_blank" rel="noopener"><img src="https://www.google.com/s2/favicons?domain=seereal.lh.or.kr&sz=64" alt="">SEE:REAL</a></li>
+        </ul>
+      </footer>
   </div>
 
   <!-- 회원가입/로그인 팝업 모달 -->
