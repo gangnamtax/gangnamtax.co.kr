@@ -49,6 +49,27 @@
     .sealprev { display: flex; justify-content: center; padding: 12px; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 10px; }
     .sealprev img { width: 120px; height: 120px; }
     .done-icon { font-size: 46px; margin-bottom: 6px; }
+    /* 고객 정보 입력 */
+    .terms { background: #f1f5fb; border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; margin-bottom: 18px; color: #334155; }
+    .iform h3 { font-size: 15px; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 2px solid #e2e8f0; color: var(--navy); }
+    .iform h3:first-child { margin-top: 0; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .grid2 .full { grid-column: 1 / -1; }
+    .iform label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 5px; }
+    .iform label small { font-weight: 400; color: #94a3b8; }
+    .iform input, .iform select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 15px; font-family: inherit; background: #fff; }
+    .iform input:focus, .iform select:focus { outline: 2px solid #c7d2fe; border-color: #818cf8; }
+    .iform input[readonly] { background: #eef2f7; color: #0f172a; font-weight: 700; border-color: #d5dbe5; cursor: not-allowed; }
+    .iform input[readonly]:focus { outline: none; border-color: #d5dbe5; }
+    .iform .lock { font-weight: 400; color: #94a3b8; font-size: 12px; }
+    .iform .hint { font-size: 12.5px; color: #64748b; margin: 8px 0 0; line-height: 1.5; }
+    .linkbtn { background: none; border: none; color: var(--navy); text-decoration: underline; font-family: inherit; font-size: 14px; cursor: pointer; padding: 0; }
+    /* 날인 후 카카오톡으로 서류 보내기 */
+    .kakao { margin: 20px 0 16px; background: #fffbe6; border: 1px solid #f5e08a; border-radius: 12px; padding: 16px; text-align: left; }
+    .kakao b { font-size: 16px; } .kakao p { margin: 8px 0 12px; font-size: 14px; color: #475569; }
+    .kakao-btn { display: block; text-align: center; text-decoration: none; background: #fee500; color: #191919; border-radius: 10px; padding: 15px; font-weight: 700; font-size: 16px; }
+    .kakao-qr { text-align: center; margin-top: 12px; } .kakao-qr img { width: 180px; height: 180px; }
+    @media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
     @media (max-width: 420px) { main { padding: 14px 10px 32px; } }
   </style>
   <style id="docCss"></style>
@@ -67,9 +88,46 @@
       </form>
     </section>
 
-    <!-- 2. 계약서 확인 + 서명 -->
+    <!-- 2. 고객이 직접 입력 (기장료·기간·출금일은 잠긴 칸, 서버도 원장님 값만 사용) -->
+    <section id="stepInfo" class="card hidden">
+      <h2>계약 정보 입력</h2>
+      <form id="infoForm" class="iform" autocomplete="off">
+        <h3>계약 조건</h3>
+        <div class="grid2">
+          <div><label for="tFee">월 기장수수료 <small>(부가세 포함)</small> <span class="lock">🔒 변경 불가</span></label><input id="tFee" readonly tabindex="-1"></div>
+          <div><label for="tTerm">계약기간 <span class="lock">🔒 변경 불가</span></label><input id="tTerm" readonly tabindex="-1"></div>
+          <div class="full"><label for="tPay">보수 지급방법 <span class="lock">🔒 변경 불가</span></label><input id="tPay" readonly tabindex="-1"></div>
+        </div>
+        <p class="hint">계약 조건이 상담 내용과 다르면 입력하지 마시고 010-4454-2429로 연락 주세요.</p>
+        <h3>사업자 정보</h3>
+        <div class="grid2">
+          <div><label for="fCeo">대표자명 *</label><input id="fCeo" maxlength="30" autocomplete="name"></div>
+          <div><label for="fBizName">상호 <small>(개업 전이면 비워 두기)</small></label><input id="fBizName" maxlength="100"></div>
+          <div><label for="fBizNo">사업자등록번호 <small>(개업 전이면 비워 두기)</small></label><input id="fBizNo" inputmode="numeric" maxlength="20" placeholder="000-00-00000"></div>
+          <div><label for="fRegNo">주민(법인)등록번호 *</label><input id="fRegNo" inputmode="numeric" maxlength="20" placeholder="000000-0000000"></div>
+          <div><label for="fTel">사업장 전화번호</label><input id="fTel" inputmode="tel" maxlength="30"></div>
+          <div class="full"><label for="fAddr">사업장 주소 *</label><input id="fAddr" maxlength="200"></div>
+        </div>
+        <div id="cmsFields">
+          <h3>CMS 자동이체 출금 통장</h3>
+          <div class="grid2">
+            <div><label for="fRelation">예금주와의 관계</label><select id="fRelation"><option>본인</option><option>배우자</option><option>부모</option><option>자녀</option><option>법인(회사) 통장</option><option>기타</option></select></div>
+            <div><label for="fHolder">예금주명 *</label><input id="fHolder" maxlength="50"></div>
+            <div><label for="fBank">은행 *</label><input id="fBank" maxlength="30" placeholder="예: 신한은행"></div>
+            <div><label for="fAccount">계좌번호 *</label><input id="fAccount" inputmode="numeric" maxlength="40"></div>
+            <div><label for="fHolderBirth">예금주 생년월일 6자리 * <small>(법인·사업자 통장은 사업자번호)</small></label><input id="fHolderBirth" inputmode="numeric" maxlength="20" placeholder="예: 800101"></div>
+            <div><label for="fHolderMobile">예금주 휴대번호 <small>(본인이 아니면)</small></label><input id="fHolderMobile" inputmode="tel" maxlength="30"></div>
+          </div>
+          <p class="hint">신용카드 출금은 받지 않습니다. 계좌만 입력해 주세요.<br>예금주가 본인이 아니면 다음 화면에서 예금주 서명을 한 번 더 받습니다.</p>
+        </div>
+        <div class="err" id="infoErr"></div>
+        <button class="btn" id="infoBtn">입력 완료 · 계약서 확인하기</button>
+      </form>
+    </section>
+
+    <!-- 3. 계약서 확인 + 서명 -->
     <section id="stepDoc" class="hidden">
-      <div class="notice">아래 계약서 내용을 확인하신 뒤, 맨 아래에서 <b>동의하고 서명</b>해 주세요.<br>내용이 다르면 서명하지 마시고 010-4454-2429로 연락 주세요.</div>
+      <div class="notice">아래 계약서 내용을 확인하신 뒤, 맨 아래에서 <b>동의하고 서명</b>해 주세요.<br>입력한 내용이 틀렸으면 <button type="button" class="linkbtn" id="editInfo">입력 내용 고치기</button>, 계약 조건이 다르면 010-4454-2429로 연락 주세요.</div>
       <div id="docs"></div>
       <div class="panel">
         <h3>동의 및 서명</h3>
@@ -86,7 +144,13 @@
       <div class="done-icon">✅</div>
       <h2>서명이 완료되었습니다</h2>
       <p>서명하신 계약서가 세무회계강남에 전달되었습니다.<br><span id="doneMail"></span></p>
-      <button class="btn" id="dlBtn">서명본 PDF 내려받기</button>
+      <div class="kakao">
+        <b>📎 마지막 단계: 서류 보내기</b>
+        <p><b id="docList" style="font-size:14px">사업자등록증</b>을 사진으로 찍어 세무사 카카오톡으로 보내 주세요.<br>개업 전이시면 사업자등록 후 보내 주시면 됩니다.</p>
+        <a class="kakao-btn" id="kakaoBtn" href="https://qr.kakao.com/talk/apHWPmXp2XOxAxSWs5ken36AMh0-" target="_blank" rel="noopener">카카오톡으로 서류 보내기</a>
+        <div class="kakao-qr hidden" id="kakaoQr"><img src="/images/kakao-qr.png" alt="세무사 김하원 카카오톡 QR코드"><p>휴대폰 카메라로 QR코드를 찍으면<br>카카오톡 대화로 연결됩니다.</p></div>
+      </div>
+      <button class="btn ghost" id="dlBtn">서명본 PDF 내려받기</button>
       <p style="margin-top: 16px; font-size: 13px;">문의: <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 700;">010-4454-2429</a></p>
     </section>
 
@@ -115,7 +179,7 @@
     const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, id: ID, pin: PIN, ...body }) });
     return res.json();
   }
-  function showOnly(id) { ['stepPin', 'stepDoc', 'stepDone', 'stepErr'].forEach(s => $(s).classList.toggle('hidden', s !== id)); window.scrollTo(0, 0); }
+  function showOnly(id) { ['stepPin', 'stepInfo', 'stepDoc', 'stepDone', 'stepErr'].forEach(s => $(s).classList.toggle('hidden', s !== id)); window.scrollTo(0, 0); }
   function fatal(msg) { $('errMsg').textContent = msg; showOnly('stepErr'); }
 
   if (!/^[0-9a-f]{32}$/.test(ID)) fatal('링크가 올바르지 않습니다. 받으신 링크를 다시 눌러 주세요.');
@@ -133,9 +197,7 @@
         if (r.status === 403 || r.status === 429) $('pinErr').textContent = r.message; else fatal(r.message || '계약서를 불러오지 못했습니다.');
         return;
       }
-      C = r.info; DOC_HTML = r.html; $('docCss').textContent = r.css;
-      OFFICE_SEAL = r.seal || await makeSeal(C.officeSealName);
-      startDoc();
+      await applyView(r);
     } catch (err) {
       console.error(err); $('pinErr').textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.';
     } finally { $('pinBtn').disabled = false; $('pinBtn').textContent = '확인'; }
@@ -227,7 +289,51 @@
     return self;
   }
 
-  // ===== 2. 계약서 화면 =====
+  // ===== 서버가 보낸 화면 정보 적용: 입력 전이면 입력 칸, 입력이 끝났으면 계약서 =====
+  let FIELDS = {};
+  const won = n => Number(n || 0).toLocaleString('ko-KR');
+  async function applyView(r) {
+    C = r.info; FIELDS = r.fields || {}; $('docCss').textContent = r.css || '';
+    if (!r.filled) { startInfo(); return; }
+    DOC_HTML = r.html;
+    OFFICE_SEAL = r.seal || await makeSeal(C.officeSealName);
+    startDoc();
+  }
+
+  // ===== 2. 고객 정보 입력 =====
+  const FMAP = { ceo: 'fCeo', bizName: 'fBizName', bizNo: 'fBizNo', regNo: 'fRegNo', tel: 'fTel', addr: 'fAddr', relation: 'fRelation',
+    holder: 'fHolder', bank: 'fBank', account: 'fAccount', holderBirth: 'fHolderBirth', holderMobile: 'fHolderMobile' };
+  function startInfo() {
+    $('tFee').value = `${won(C.fee)}원`;
+    $('tTerm').value = C.term || '';
+    $('tPay').value = `${C.hasCms ? 'CMS 자동이체' : '계좌이체'} · 매월 ${Number(C.payDay) || 5}일`;
+    $('cmsFields').classList.toggle('hidden', !C.hasCms);
+    Object.entries(FMAP).forEach(([k, id]) => { if (FIELDS[k] != null && FIELDS[k] !== '') $(id).value = FIELDS[k]; });
+    if (!$('fCeo').value) $('fCeo').value = C.ceo || '';
+    if (C.hasCms && !$('fHolder').value) $('fHolder').value = C.ceo;
+    showOnly('stepInfo');
+  }
+  $('infoForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const fields = Object.fromEntries(Object.entries(FMAP).map(([k, id]) => [k, $(id).value.trim()]));
+    const err = $('infoErr'), digits = v => v.replace(/\D/g, '');
+    err.textContent = '';
+    if (!fields.ceo) { err.textContent = '대표자명을 입력해 주세요.'; return; }
+    if (digits(fields.regNo).length !== 13) { err.textContent = '주민(법인)등록번호 13자리를 입력해 주세요.'; return; }
+    if (!fields.addr) { err.textContent = '사업장 주소를 입력해 주세요.'; return; }
+    if (C.hasCms && (!fields.holder || !fields.bank || !fields.account)) { err.textContent = '예금주·은행·계좌번호를 입력해 주세요.'; return; }
+    const btn = $('infoBtn'); btn.disabled = true; btn.textContent = '계약서를 만드는 중...';
+    try {
+      const r = await call('contractFill', { fields });
+      if (!r.success) { err.textContent = r.message || '저장하지 못했습니다. 잠시 후 다시 시도해 주세요.'; return; }
+      await applyView(r);
+    } catch (x) {
+      console.error(x); err.textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    } finally { btn.disabled = false; btn.textContent = '입력 완료 · 계약서 확인하기'; }
+  });
+  $('editInfo').addEventListener('click', startInfo);
+
+  // ===== 3. 계약서 화면 =====
   let mainBox, holderBox;
   const AG = () => Object.fromEntries([...document.querySelectorAll('#agrees input[data-k]')].map(x => [x.dataset.k, x.checked]));
   function draw() { fillDocs($('docs'), { office: OFFICE_SEAL }, AG()); }
@@ -244,6 +350,7 @@
     draw();
     showOnly('stepDoc');
     mainBox = SignBox($('signMain'), `위임인${C.hasCms ? '·신청인' : ''} 서명: ${C.ceo}`, C.ceo);
+    holderBox = null; $('signHolder').classList.add('hidden');
     if (C.needHolder) {
       $('signHolder').classList.remove('hidden');
       holderBox = SignBox($('signHolder'), `예금(카드)주 서명: ${C.holder}`, C.holder);
@@ -293,10 +400,17 @@
       const r = await call('contractSign', { pdf: b64, method });
       if (!r.success) { err.textContent = r.message || '보내지 못했습니다. 010-4454-2429로 연락 주세요.'; return; }
       $('doneMail').textContent = C.email ? `서명본은 ${C.email} 으로도 보내드렸습니다.` : '아래 버튼으로 서명본을 내려받아 보관해 주세요.';
+      $('docList').textContent = C.hasCms ? '사업자등록증과 CMS 출금 통장사본' : '사업자등록증';
       showOnly('stepDone');
     } catch (e) {
       console.error(e); err.textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.';
     } finally { btn.disabled = false; btn.textContent = '서명하고 보내기'; }
+  });
+
+  // 카카오톡: 휴대폰은 카카오톡으로 바로 이동, PC는 QR코드를 보여 줌 (홈페이지 카톡상담과 같은 주소)
+  $('kakaoBtn').addEventListener('click', e => {
+    if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) return;
+    e.preventDefault(); $('kakaoQr').classList.remove('hidden');
   });
 
   $('dlBtn').addEventListener('click', () => {
