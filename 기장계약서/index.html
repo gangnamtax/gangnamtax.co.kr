@@ -59,6 +59,9 @@
     .iform label small { font-weight: 400; color: #94a3b8; }
     .iform input, .iform select { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font-size: 15px; font-family: inherit; background: #fff; }
     .iform input:focus, .iform select:focus { outline: 2px solid #c7d2fe; border-color: #818cf8; }
+    .iform label.chk { display: flex; gap: 8px; align-items: center; font-weight: 600; cursor: pointer; margin: 0; }
+    .iform label.chk input { width: 19px; height: 19px; flex: none; accent-color: var(--navy); }
+    .iform input:disabled { background: #f1f5f9; color: #94a3b8; }
     .iform input[readonly] { background: #eef2f7; color: #0f172a; font-weight: 700; border-color: #d5dbe5; cursor: not-allowed; }
     .iform input[readonly]:focus { outline: none; border-color: #d5dbe5; }
     .iform .lock { font-weight: 400; color: #94a3b8; font-size: 12px; }
@@ -116,23 +119,26 @@
         <h3>사업자 정보</h3>
         <div class="grid2">
           <div><label for="fCeo">대표자명 *</label><input id="fCeo" maxlength="30" autocomplete="name"></div>
-          <div><label for="fBizName">상호 <small>(개업 전이면 비워 두기)</small></label><input id="fBizName" maxlength="100"></div>
-          <div><label for="fBizNo">사업자등록번호 <small>(개업 전이면 비워 두기)</small></label><input id="fBizNo" inputmode="numeric" maxlength="12" placeholder="숫자 10자리" data-fmt="biz"></div>
+          <div><label for="fMobile">휴대전화번호 *</label><input id="fMobile" inputmode="numeric" maxlength="13" placeholder="숫자만 입력" data-fmt="phone" autocomplete="off"></div>
+          <div><label for="fBizName">상호 *</label><input id="fBizName" maxlength="100"></div>
+          <div><label for="fBizNo">사업자등록번호 *</label><input id="fBizNo" inputmode="numeric" maxlength="12" placeholder="숫자 10자리" data-fmt="biz">
+            <label class="chk" style="margin-top:8px"><input type="checkbox" id="fBeforeReg"> 사업자등록 전입니다</label></div>
           <div><label for="fRegNo">주민(법인)등록번호 *</label><input id="fRegNo" inputmode="numeric" maxlength="14" placeholder="숫자 13자리" data-fmt="reg"></div>
-          <div><label for="fTel">사업장 전화번호</label><input id="fTel" inputmode="numeric" maxlength="13" data-fmt="phone"></div>
+          <div><label for="fTel">사업장 전화번호 *</label><input id="fTel" inputmode="numeric" maxlength="13" data-fmt="phone"></div>
           <div class="full"><label for="fAddr">사업장 주소 *</label><input id="fAddr" maxlength="200"></div>
         </div>
         <div id="cmsFields">
           <h3>CMS 자동이체 출금 통장</h3>
           <div class="grid2">
-            <div><label for="fRelation">예금주와의 관계</label><select id="fRelation"><option>본인</option><option>배우자</option><option>부모</option><option>자녀</option><option>법인(회사) 통장</option><option>기타</option></select></div>
+            <div><label for="fRelation">예금주와의 관계 *</label><select id="fRelation"><option>본인</option><option>배우자</option><option>부모</option><option>자녀</option><option>법인(회사) 통장</option><option>기타</option></select></div>
             <div><label for="fHolder">예금주명 *</label><input id="fHolder" maxlength="50"></div>
-            <div><label for="fBank">은행 *</label><input id="fBank" maxlength="30" placeholder="예: 신한은행"></div>
-            <div><label for="fAccount">계좌번호 *</label><input id="fAccount" inputmode="numeric" maxlength="40"></div>
+            <div><label for="fBankSel">은행 *</label><select id="fBankSel"><option value="">은행 선택</option></select>
+              <input id="fBankEtc" class="hidden" maxlength="30" placeholder="은행 이름 직접 입력" style="margin-top:8px"><input type="hidden" id="fBank"></div>
+            <div><label for="fAccount">계좌번호 *</label><input id="fAccount" inputmode="numeric" maxlength="24" placeholder="숫자만 입력" data-fmt="acct"></div>
             <div><label for="fHolderBirth">예금주 생년월일 6자리 * <small>(법인·사업자 통장은 사업자번호)</small></label><input id="fHolderBirth" inputmode="numeric" maxlength="12" placeholder="예: 800101" data-fmt="birth"></div>
-            <div><label for="fHolderMobile">예금주 휴대번호 <small>(본인이 아니면)</small></label><input id="fHolderMobile" inputmode="numeric" maxlength="13" data-fmt="phone"></div>
+            <div><label for="fHolderMobile">예금주 휴대번호 *</label><input id="fHolderMobile" inputmode="numeric" maxlength="13" data-fmt="phone"></div>
           </div>
-          <p class="hint">신용카드 출금은 받지 않습니다. 계좌만 입력해 주세요.<br>예금주가 본인이 아니면 다음 화면에서 예금주 서명을 한 번 더 받습니다.</p>
+          <p class="hint">모든 칸을 입력해 주세요. 신용카드 출금은 받지 않습니다(계좌만).<br>예금주가 본인이 아니면 다음 화면에서 예금주 서명을 한 번 더 받습니다.</p>
         </div>
         <div class="err" id="infoErr"></div>
         <button class="btn" id="infoBtn">입력 완료 · 계약서 확인하기</button>
@@ -163,7 +169,7 @@
         <p>아래 서류를 사진으로 찍어 세무사 <b>카카오톡</b> 또는 <b>이메일</b>로 보내 주세요.</p>
         <ul class="doclist">
           <li><b>①</b>신분증</li>
-          <li><b>②</b>사업자등록증 <small>(개업 전이면 등록 후)</small></li>
+          <li><b>②</b>사업자등록증 <small>(사업자등록 전이면 등록 후)</small></li>
           <li><b>③</b>통장사본</li>
           <li><b>④</b>홈택스 아이디·비밀번호</li>
         </ul>
@@ -324,7 +330,7 @@
   }
 
   // ===== 2. 고객 정보 입력 =====
-  const FMAP = { ceo: 'fCeo', bizName: 'fBizName', bizNo: 'fBizNo', regNo: 'fRegNo', tel: 'fTel', addr: 'fAddr', relation: 'fRelation',
+  const FMAP = { ceo: 'fCeo', mobile: 'fMobile', bizName: 'fBizName', bizNo: 'fBizNo', regNo: 'fRegNo', tel: 'fTel', addr: 'fAddr', relation: 'fRelation',
     holder: 'fHolder', bank: 'fBank', account: 'fAccount', holderBirth: 'fHolderBirth', holderMobile: 'fHolderMobile' };
   function startInfo() {
     $('tFee').value = `${won(C.fee)}원`;
@@ -333,20 +339,39 @@
     $('cmsFields').classList.toggle('hidden', !C.hasCms);
     Object.entries(FMAP).forEach(([k, id]) => { if (FIELDS[k] != null && FIELDS[k] !== '') $(id).value = FIELDS[k]; });
     document.querySelectorAll('#infoForm input[data-fmt]').forEach(el => { el.value = FMT[el.dataset.fmt](el.value.replace(/\D/g, '')); });
+    $('fBeforeReg').checked = !!FIELDS.beforeReg; syncBeforeReg();
+    setBank($('fBank').value);
+    document.querySelectorAll('#infoForm input[data-fmt]').forEach(el => { el.value = FMT[el.dataset.fmt](el.value.replace(/\D/g, '')); });
     if (!$('fCeo').value) $('fCeo').value = C.ceo || '';
     if (C.hasCms && !$('fHolder').value) $('fHolder').value = C.ceo;
     showOnly('stepInfo');
   }
   $('infoForm').addEventListener('submit', async e => {
     e.preventDefault();
+    syncBank();
     const fields = Object.fromEntries(Object.entries(FMAP).map(([k, id]) => [k, $(id).value.trim()]));
+    fields.beforeReg = $('fBeforeReg').checked;
     const err = $('infoErr'), digits = v => v.replace(/\D/g, '');
     err.textContent = '';
-    if (!fields.ceo) { err.textContent = '대표자명을 입력해 주세요.'; return; }
-    if (fields.bizNo && digits(fields.bizNo).length !== 10) { err.textContent = '사업자등록번호는 숫자 10자리입니다. (개업 전이면 비워 두세요)'; return; }
-    if (digits(fields.regNo).length !== 13) { err.textContent = '주민(법인)등록번호 13자리를 입력해 주세요.'; return; }
-    if (!fields.addr) { err.textContent = '사업장 주소를 입력해 주세요.'; return; }
-    if (C.hasCms && (!fields.holder || !fields.bank || !fields.account)) { err.textContent = '예금주·은행·계좌번호를 입력해 주세요.'; return; }
+    // 모든 칸 필수: 처음 빠진(또는 틀린) 칸을 알려 주고 그 칸으로 이동
+    const CHECKS = [
+      ['ceo', '대표자명을 입력해 주세요.', v => !!v],
+      ['mobile', '휴대전화번호를 입력해 주세요. (예: 010-1234-5678)', v => /^01\d{8,9}$/.test(digits(v))],
+      ['bizName', '상호를 입력해 주세요.', v => !!v],
+      ['bizNo', '사업자등록번호 10자리를 입력해 주세요. (사업자등록 전이면 「사업자등록 전입니다」에 체크)', v => fields.beforeReg || digits(v).length === 10],
+      ['regNo', '주민(법인)등록번호 13자리를 입력해 주세요.', v => digits(v).length === 13],
+      ['tel', '사업장 전화번호를 입력해 주세요.', v => /^0\d{8,10}$/.test(digits(v))],
+      ['addr', '사업장 주소를 입력해 주세요.', v => !!v]
+    ];
+    if (C.hasCms) CHECKS.push(
+      ['relation', '예금주와의 관계를 선택해 주세요.', v => !!v],
+      ['holder', '예금주명을 입력해 주세요.', v => !!v],
+      ['bank', '은행을 선택해 주세요.', v => !!v],
+      ['account', '계좌번호를 입력해 주세요.', v => digits(v).length >= 8],
+      ['holderBirth', '예금주 생년월일 6자리(법인·사업자 통장은 사업자번호 10자리)를 입력해 주세요.', v => [6, 10].includes(digits(v).length)],
+      ['holderMobile', '예금주 휴대번호를 입력해 주세요.', v => /^01\d{8,9}$/.test(digits(v))]);
+    const bad = CHECKS.find(([k, , ok]) => !ok(fields[k]));
+    if (bad) { err.textContent = bad[1]; (bad[0] === 'bank' ? ($('fBankSel').value === '기타' ? $('fBankEtc') : $('fBankSel')) : $(FMAP[bad[0]])).focus(); return; }
     const btn = $('infoBtn'); btn.disabled = true; btn.textContent = '계약서를 만드는 중...';
     try {
       const r = await call('contractFill', { fields });
@@ -358,8 +383,51 @@
   });
   $('editInfo').addEventListener('click', startInfo);
 
+  // 은행 선택 ↔ 숨은 칸(fBank), 기타는 직접 입력
+  function syncBank() { const v = $('fBankSel').value; $('fBank').value = v === '기타' ? $('fBankEtc').value.trim() : v; }
+  function setBank(name) {
+    if (!name) { $('fBankSel').value = ''; }
+    else if (BANKS[name] && name !== '기타') { $('fBankSel').value = name; }
+    else { $('fBankSel').value = '기타'; $('fBankEtc').value = name; }
+    $('fBankEtc').classList.toggle('hidden', $('fBankSel').value !== '기타');
+  }
+  $('fBankSel').addEventListener('change', () => {
+    $('fBankEtc').classList.toggle('hidden', $('fBankSel').value !== '기타');
+    const a = $('fAccount'); a.value = FMT.acct(a.value.replace(/\D/g, '')); syncBank();
+  });
+  $('fBankEtc').addEventListener('input', syncBank);
+  // 사업자등록 전: 사업자등록번호 칸을 비우고 잠금
+  function syncBeforeReg() { const on = $('fBeforeReg').checked; $('fBizNo').disabled = on; if (on) $('fBizNo').value = ''; }
+  $('fBeforeReg').addEventListener('change', syncBeforeReg);
+
   // 번호 칸: 숫자만 받고 정해진 자리수까지만, 자리에 맞춰 대시 자동 입력
+  // 은행별 계좌번호 형식 [숫자 개수, [앞, 가운데, ... 자리수]] — 첫 번째가 대표 형식
+  const BANKS = {
+    'KB국민은행': [[14, [6, 2, 6]], [12, [3, 2, 4, 3]]],
+    '신한은행': [[12, [3, 3, 6]], [11, [3, 2, 6]]],
+    '우리은행': [[13, [4, 3, 6]]],
+    '하나은행': [[14, [3, 6, 5]]],
+    'NH농협은행': [[13, [3, 4, 4, 2]], [14, [6, 2, 6]], [11, [3, 2, 6]]],
+    'IBK기업은행': [[14, [3, 6, 2, 3]]],
+    '카카오뱅크': [[13, [4, 2, 7]]],
+    '토스뱅크': [[12, [4, 4, 4]]],
+    '케이뱅크': [[12, [3, 3, 6]]],
+    'SC제일은행': [[11, [3, 2, 6]]],
+    '우체국': [[14, [6, 2, 6]]],
+    '새마을금고': [[13, [4, 4, 4, 1]]],
+    '수협은행': [], '신협': [], '부산은행': [], '대구은행(iM뱅크)': [], '경남은행': [], '광주은행': [], '전북은행': [],
+    '제주은행': [], 'KDB산업은행': [], '한국씨티은행': [], '기타': []
+  };
+  Object.keys(BANKS).forEach(b => { const o = document.createElement('option'); o.value = b; o.textContent = b === '기타' ? '기타 (직접 입력)' : b; $('fBankSel').appendChild(o); });
+  function cutBy(d, parts) { const out = []; let i = 0; for (const n of parts) { if (i >= d.length) break; out.push(d.slice(i, i + n)); i += n; } if (i < d.length) out.push(d.slice(i)); return out.join('-'); }
   const FMT = {
+    acct: d => {
+      const rules = BANKS[$('fBankSel').value] || [];
+      if (!rules.length) return d.slice(0, 20);              // 자리 규칙을 모르는 은행은 숫자만
+      d = d.slice(0, 16);                                    // 자리수는 자르지 않음 (규칙보다 긴 계좌도 있음)
+      const hit = rules.find(([n]) => n === d.length);       // 자리수가 맞는 형식, 입력 중에는 대표 형식(첫 번째)
+      return cutBy(d, (hit || rules[0])[1]);
+    },
     biz: d => (d = d.slice(0, 10), d.length > 5 ? `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}` : d.length > 3 ? `${d.slice(0, 3)}-${d.slice(3)}` : d),
     reg: d => (d = d.slice(0, 13), d.length > 6 ? `${d.slice(0, 6)}-${d.slice(6)}` : d),
     birth: d => (d = d.slice(0, 10), d.length > 6 ? FMT.biz(d) : d),
