@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>세무기장 계약서 전자서명 - 세무회계강남</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --navy: #1f2352; --gold: #b08d57; --ink: #1e293b; --muted: #64748b; --line: #cbd5e1; --bg: #eef1f6; --seal: #d0201c; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; -webkit-text-size-adjust: 100%; }
+    header { background: var(--navy); color: #fff; padding: 14px 16px; text-align: center; border-bottom: 3px solid var(--gold); }
+    header b { font-size: 17px; letter-spacing: .5px; } header span { display: block; font-size: 12px; opacity: .75; margin-top: 2px; }
+    main { max-width: 860px; margin: 0 auto; padding: 18px 16px 40px; }
+    .card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(15,23,42,.08); padding: 24px 20px; }
+    .center { max-width: 420px; margin: 30px auto; text-align: center; }
+    .card h2 { margin: 0 0 8px; font-size: 19px; } .card p { color: #475569; line-height: 1.65; margin: 0 0 16px; font-size: 14px; }
+    .pin { width: 160px; font-size: 26px; letter-spacing: 10px; text-align: center; padding: 10px; border: 1px solid var(--line); border-radius: 10px; font-family: inherit; }
+    .btn { display: block; width: 100%; padding: 15px; border: none; border-radius: 10px; background: var(--navy); color: #fff; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn:disabled { background: #94a3b8; cursor: default; }
+    .btn.ghost { background: #fff; color: #334155; border: 1px solid var(--line); }
+    .err { color: #dc2626; font-size: 14px; min-height: 20px; margin: 10px 0; }
+    .hidden { display: none !important; }
+    .notice { background: #fff8eb; border: 1px solid #f1d9a7; color: #7a5a1e; border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+
+    /* 계약서 양식(문구·표·디자인)은 본인 확인 후 서버(Apps Script)에서 받아 옴 */
+    #pdfStage { position: fixed; left: -12000px; top: 0; width: 794px; }
+    /* ===== 서명 영역 ===== */
+    .panel { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(15,23,42,.08); padding: 20px 18px; margin-top: 8px; }
+    .panel h3 { margin: 0 0 12px; font-size: 17px; }
+    .agrees label { display: flex; gap: 9px; align-items: flex-start; padding: 9px 2px; border-bottom: 1px solid #f1f5f9; font-size: 14px; line-height: 1.5; cursor: pointer; }
+    .agrees label.all { font-weight: 700; border-bottom: 2px solid #e2e8f0; }
+    .agrees input { width: 19px; height: 19px; margin-top: 1px; flex: none; accent-color: var(--navy); }
+    .signbox { margin-top: 18px; }
+    .signbox .who { font-weight: 700; margin-bottom: 8px; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+    .tabs button { flex: 1; padding: 10px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600; color: #475569; cursor: pointer; }
+    .tabs button.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+    .pad { position: relative; border: 2px dashed var(--line); border-radius: 10px; background: #fafbfc; height: 180px; touch-action: none; }
+    .pad canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+    .pad .ph { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #94a3b8; pointer-events: none; font-size: 15px; }
+    .row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+    .row input { flex: 1; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 15px; font-family: inherit; }
+    .row button { padding: 10px 14px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-family: inherit; cursor: pointer; }
+    .sealprev { display: flex; justify-content: center; padding: 12px; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 10px; }
+    .sealprev img { width: 120px; height: 120px; }
+    .done-icon { font-size: 46px; margin-bottom: 6px; }
+    @media (max-width: 420px) { main { padding: 14px 10px 32px; } }
+  </style>
+  <style id="docCss"></style>
+</head>
+<body>
+  <header><b>세무회계강남</b><span>세무기장 계약서 전자서명</span></header>
+  <main>
+    <!-- 1. 본인 확인 -->
+    <section id="stepPin" class="card center">
+      <h2>본인 확인</h2>
+      <p>계약서를 받으실 분의 <b>휴대전화 번호 뒷 4자리</b>를 입력해 주세요.</p>
+      <form id="pinForm">
+        <input id="pin" class="pin" inputmode="numeric" maxlength="4" autocomplete="off" required>
+        <div class="err" id="pinErr"></div>
+        <button class="btn" id="pinBtn">확인</button>
+      </form>
+    </section>
+
+    <!-- 2. 계약서 확인 + 서명 -->
+    <section id="stepDoc" class="hidden">
+      <div class="notice">아래 계약서 내용을 확인하신 뒤, 맨 아래에서 <b>동의하고 서명</b>해 주세요.<br>내용이 다르면 서명하지 마시고 010-4454-2429로 연락 주세요.</div>
+      <div id="docs"></div>
+      <div class="panel">
+        <h3>동의 및 서명</h3>
+        <div class="agrees" id="agrees"></div>
+        <div id="signMain" class="signbox"></div>
+        <div id="signHolder" class="signbox hidden"></div>
+        <div class="err" id="signErr"></div>
+        <button class="btn" id="submitBtn">서명하고 보내기</button>
+      </div>
+    </section>
+
+    <!-- 3. 완료 -->
+    <section id="stepDone" class="card center hidden">
+      <div class="done-icon">✅</div>
+      <h2>서명이 완료되었습니다</h2>
+      <p>서명하신 계약서가 세무회계강남에 전달되었습니다.<br><span id="doneMail"></span></p>
+      <button class="btn" id="dlBtn">서명본 PDF 내려받기</button>
+      <p style="margin-top: 16px; font-size: 13px;">문의: <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 700;">010-4454-2429</a></p>
+    </section>
+
+    <!-- 오류 -->
+    <section id="stepErr" class="card center hidden">
+      <h2>계약서를 열 수 없습니다</h2>
+      <p id="errMsg"></p>
+      <p>문의: <a href="tel:010-4454-2429" style="color: #8a6d3b; font-weight: 700;">010-4454-2429</a></p>
+    </section>
+  </main>
+  <div id="pdfStage" aria-hidden="true"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+  // 구글 Apps Script 웹 앱 주소 (양도세계산기/js/login.js 와 같은 주소)
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyL-g8WPHabkFEKsiAut9mdJXYU4zNLJ6eDfiS0no6YC21JBb0_mSFdyCL5963W3BgWcQ/exec';
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const params = new URLSearchParams(location.search);
+  const ID = params.get('id') || '';
+  let C = null, PIN = '', OFFICE_SEAL = null, pdfBlob = null;
+
+  async function call(action, body) {
+    const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, id: ID, pin: PIN, ...body }) });
+    return res.json();
+  }
+  function showOnly(id) { ['stepPin', 'stepDoc', 'stepDone', 'stepErr'].forEach(s => $(s).classList.toggle('hidden', s !== id)); window.scrollTo(0, 0); }
+  function fatal(msg) { $('errMsg').textContent = msg; showOnly('stepErr'); }
+
+  if (!/^[0-9a-f]{32}$/.test(ID)) fatal('링크가 올바르지 않습니다. 받으신 링크를 다시 눌러 주세요.');
+
+  // ===== 1. 본인 확인 =====
+  $('pin').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); });
+  $('pinForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    PIN = $('pin').value;
+    if (PIN.length !== 4) { $('pinErr').textContent = '4자리를 입력해 주세요.'; return; }
+    $('pinBtn').disabled = true; $('pinBtn').textContent = '확인 중...'; $('pinErr').textContent = '';
+    try {
+      const r = await call('contractGet');
+      if (!r.success) {
+        if (r.status === 403 || r.status === 429) $('pinErr').textContent = r.message; else fatal(r.message || '계약서를 불러오지 못했습니다.');
+        return;
+      }
+      C = r.info; DOC_HTML = r.html; $('docCss').textContent = r.css;
+      OFFICE_SEAL = r.seal || await makeSeal(C.officeSealName);
+      startDoc();
+    } catch (err) {
+      console.error(err); $('pinErr').textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    } finally { $('pinBtn').disabled = false; $('pinBtn').textContent = '확인'; }
+  });
+
+  // ===== 계약서 양식 채우기 =====
+  // 서버가 보낸 양식(DOC_HTML)에 서명 이미지(data-sig)와 동의 표시(data-ag)만 넣음
+  let DOC_HTML = '';
+  function fillDocs(root, sig, ag) {
+    root.innerHTML = DOC_HTML;
+    root.querySelectorAll('[data-sig]').forEach(el => {
+      const img = sig[el.dataset.sig];
+      el.classList.toggle('need', !img);
+      if (img) { const im = new Image(); im.alt = ''; im.src = img; el.appendChild(im); }
+    });
+    root.querySelectorAll('[data-ag]').forEach(el => { el.textContent = ag[el.dataset.ag] ? '■' : '□'; });
+  }
+
+  // ===== 도장 그리기 (빨간 원형 인감) =====
+  async function makeSeal(name) {
+    try { await document.fonts.load('800 60px "Nanum Myeongjo"', name + '인지'); } catch (e) { /* 기본 글꼴 */ }
+    const S = 300, cv = document.createElement('canvas'); cv.width = cv.height = S;
+    const g = cv.getContext('2d'), col = '#d0201c', font = n => `800 ${n}px "Nanum Myeongjo", "Batang", serif`;
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 14;
+    g.beginPath(); g.arc(S / 2, S / 2, S / 2 - 12, 0, Math.PI * 2); g.stroke();
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    let ch = [...String(name || '').replace(/\s/g, '')];
+    if (ch.length === 2) ch = [...ch, '지', '인']; else if (ch.length === 3) ch = [...ch, '인'];
+    if (ch.length === 4) {
+      // 오른쪽 줄 위→아래, 왼쪽 줄 위→아래 (도장 읽는 순서)
+      const pos = [[S * .67, S * .33], [S * .67, S * .68], [S * .33, S * .33], [S * .33, S * .68]];
+      g.font = font(96);
+      ch.forEach((c, i) => g.fillText(c, pos[i][0], pos[i][1]));
+    } else {
+      const text = ch.join('') + '인', n = [...text].length;
+      g.font = font(Math.min(110, Math.floor((S - 70) / n)));
+      g.fillText(text, S / 2, S / 2 + 4);
+    }
+    return cv.toDataURL('image/png');
+  }
+
+  // ===== 서명 상자 (손글씨 / 도장) =====
+  function SignBox(root, title, defaultName) {
+    const self = { mode: 'draw', drawn: false, seal: null };
+    root.innerHTML = `<div class="who">${esc(title)}</div>
+      <div class="tabs"><button type="button" data-m="draw" class="on">손글씨 서명</button><button type="button" data-m="seal">도장으로 날인</button></div>
+      <div class="m-draw"><div class="pad"><canvas></canvas><div class="ph">여기에 서명해 주세요</div></div>
+        <div class="row"><span style="flex:1;color:#64748b;font-size:13px">손가락이나 마우스로 성함을 써 주세요.</span><button type="button" class="clear">다시 쓰기</button></div></div>
+      <div class="m-seal hidden"><div class="sealprev"><img alt="도장 미리보기"></div>
+        <div class="row"><input class="sname" maxlength="10" value="${esc(defaultName)}" aria-label="도장에 들어갈 이름"><button type="button" class="remake">도장 만들기</button></div></div>`;
+    const cv = root.querySelector('canvas'), ctx = cv.getContext('2d'), ph = root.querySelector('.ph');
+    function fit() {
+      const r = cv.getBoundingClientRect(); if (!r.width) return;
+      const k = window.devicePixelRatio || 1; cv.width = r.width * k; cv.height = r.height * k;
+      ctx.setTransform(k, 0, 0, k, 0, 0); ctx.lineCap = ctx.lineJoin = 'round'; ctx.lineWidth = 3.2; ctx.strokeStyle = '#111';
+      self.drawn = false; ph.classList.remove('hidden');
+    }
+    let last = null;
+    const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); last = pt(e); ph.classList.add('hidden'); ctx.beginPath(); ctx.arc(last[0], last[1], 1.4, 0, 7); ctx.fillStyle = '#111'; ctx.fill(); });
+    cv.addEventListener('pointermove', e => { if (!last) return; const p = pt(e); ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); last = p; self.drawn = true; });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => cv.addEventListener(t, () => { last = null; }));
+    root.querySelector('.clear').onclick = fit;
+    const remake = async () => { const n = root.querySelector('.sname').value.trim() || defaultName; self.seal = await makeSeal(n); root.querySelector('.sealprev img').src = self.seal; };
+    root.querySelector('.remake').onclick = remake;
+    root.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+      self.mode = b.dataset.m;
+      root.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+      root.querySelector('.m-draw').classList.toggle('hidden', self.mode !== 'draw');
+      root.querySelector('.m-seal').classList.toggle('hidden', self.mode !== 'seal');
+      if (self.mode === 'seal' && !self.seal) remake();
+      if (self.mode === 'draw') requestAnimationFrame(fit);
+    });
+    let w = 0; window.addEventListener('resize', () => { const r = cv.getBoundingClientRect().width; if (r && r !== w && !self.drawn) { w = r; fit(); } });
+    requestAnimationFrame(fit);
+    // 서명 이미지: 손글씨는 여백을 잘라 냄
+    self.image = () => {
+      if (self.mode === 'seal') return self.seal;
+      if (!self.drawn) return null;
+      const { width: W, height: H } = cv, px = ctx.getImageData(0, 0, W, H).data;
+      let x0 = W, y0 = H, x1 = 0, y1 = 0;
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (px[(y * W + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 <= x0) return null;
+      const m = 8, out = document.createElement('canvas'); out.width = x1 - x0 + m * 2; out.height = y1 - y0 + m * 2;
+      out.getContext('2d').drawImage(cv, x0 - m, y0 - m, out.width, out.height, 0, 0, out.width, out.height);
+      return out.toDataURL('image/png');
+    };
+    self.label = () => self.mode === 'seal' ? '도장' : '손글씨 서명';
+    return self;
+  }
+
+  // ===== 2. 계약서 화면 =====
+  let mainBox, holderBox;
+  const AG = () => Object.fromEntries([...document.querySelectorAll('#agrees input[data-k]')].map(x => [x.dataset.k, x.checked]));
+  function draw() { fillDocs($('docs'), { office: OFFICE_SEAL }, AG()); }
+
+  function startDoc() {
+    const items = [['privacy', '[필수] 개인정보 수집 및 이용에 동의합니다.'], ['contract', '[필수] 세무기장 계약 내용을 확인했으며 계약 체결에 동의합니다.']];
+    if (C.hasCms) items.push(['cmsPrivacy', '[필수] CMS 출금이체 개인정보 수집 및 이용에 동의합니다.'], ['cmsThird', '[필수] 개인정보 제3자 제공에 동의합니다.'],
+      ['cmsFinance', '[필수] 금융거래정보 제공 및 출금이체 서비스 약관에 동의합니다.']);
+    $('agrees').innerHTML = `<label class="all"><input type="checkbox" id="agAll"> 전체 동의</label>` +
+      items.map(([k, t]) => `<label><input type="checkbox" data-k="${k}"> ${t}</label>`).join('');
+    const boxes = [...document.querySelectorAll('#agrees input[data-k]')];
+    $('agAll').onchange = e => { boxes.forEach(b => b.checked = e.target.checked); draw(); };
+    boxes.forEach(b => b.onchange = () => { $('agAll').checked = boxes.every(x => x.checked); draw(); });
+    draw();
+    showOnly('stepDoc');
+    mainBox = SignBox($('signMain'), `위임인${C.hasCms ? '·신청인' : ''} 서명: ${C.ceo}`, C.ceo);
+    if (C.needHolder) {
+      $('signHolder').classList.remove('hidden');
+      holderBox = SignBox($('signHolder'), `예금(카드)주 서명: ${C.holder}`, C.holder);
+    }
+  }
+
+  // ===== 3. 서명하고 보내기 =====
+  function fitPage(p) {
+    let fs = parseFloat(getComputedStyle(p).fontSize);
+    while (p.scrollHeight > p.clientHeight + 1 && fs > 7) { fs -= 0.2; p.style.fontSize = fs + 'px'; }
+  }
+  async function buildPdf(sig) {
+    const stage = $('pdfStage');
+    fillDocs(stage, sig, AG());
+    await document.fonts.ready;
+    await Promise.all([...stage.querySelectorAll('img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+    const pages = [...stage.querySelectorAll('.page')];
+    // 주소·특약이 길어 A4 한 장을 넘으면 글자를 조금씩 줄여 반드시 한 장에 맞춤
+    pages.forEach(fitPage);
+    for (let i = 0; i < pages.length; i++) {
+      const canvas = await html2canvas(pages[i], { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+      if (i) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, 210, 297);
+    }
+    pdf.setProperties({ title: `세무기장 계약서 - ${C.bizName || C.ceo}`, author: '세무회계강남', subject: '세무기장 계약서 전자서명본' });
+    stage.innerHTML = '';
+    return pdf;
+  }
+
+  $('submitBtn').addEventListener('click', async () => {
+    const err = $('signErr'); err.textContent = '';
+    const ag = AG();
+    if (!Object.values(ag).every(Boolean)) { err.textContent = '필수 항목에 모두 동의해 주세요.'; $('agrees').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    const sig = { main: mainBox.image(), holder: holderBox ? holderBox.image() : null, office: OFFICE_SEAL };
+    if (!sig.main) { err.textContent = '서명란에 서명하거나 도장을 만들어 주세요.'; return; }
+    if (holderBox && !sig.holder) { err.textContent = '예금(카드)주 서명도 해 주세요.'; return; }
+    const btn = $('submitBtn'); btn.disabled = true; btn.textContent = '계약서를 만드는 중...';
+    try {
+      fillDocs($('docs'), sig, ag);
+      const pdf = await buildPdf(sig);
+      pdfBlob = pdf.output('blob');
+      btn.textContent = '보내는 중...';
+      const b64 = pdf.output('datauristring').split(',')[1];
+      const method = mainBox.label() + (holderBox ? ` / 예금주 ${holderBox.label()}` : '');
+      const r = await call('contractSign', { pdf: b64, method });
+      if (!r.success) { err.textContent = r.message || '보내지 못했습니다. 010-4454-2429로 연락 주세요.'; return; }
+      $('doneMail').textContent = C.email ? `서명본은 ${C.email} 으로도 보내드렸습니다.` : '아래 버튼으로 서명본을 내려받아 보관해 주세요.';
+      showOnly('stepDone');
+    } catch (e) {
+      console.error(e); err.textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    } finally { btn.disabled = false; btn.textContent = '서명하고 보내기'; }
+  });
+
+  $('dlBtn').addEventListener('click', () => {
+    if (!pdfBlob) return;
+    const a = document.createElement('a'); a.href = URL.createObjectURL(pdfBlob);
+    a.download = `세무기장계약서_${(C.bizName || C.ceo).replace(/[\\/:*?"<>|]/g, '')}.pdf`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+  </script>
+</body>
+</html>
