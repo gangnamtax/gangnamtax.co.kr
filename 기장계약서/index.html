@@ -48,6 +48,10 @@
     .row button { padding: 10px 14px; border: 1px solid var(--line); background: #fff; border-radius: 8px; font-family: inherit; cursor: pointer; }
     .sealprev { display: flex; justify-content: center; padding: 12px; background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 10px; }
     .sealprev img { width: 120px; height: 120px; }
+    .sealbox .drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; border: 2px dashed var(--line); border-radius: 10px; background: #fafbfc; min-height: 180px; padding: 16px; text-align: center; color: #64748b; font-size: 14px; cursor: pointer; }
+    .sealbox .drop img { max-width: 170px; max-height: 170px; }
+    .sealbox .drop b { color: var(--navy); font-size: 15px; }
+    .sealbox input[type=file] { display: none; }
     .done-icon { font-size: 46px; margin-bottom: 6px; }
     /* 고객 정보 입력 */
     .terms { background: #f1f5fb; border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; margin-bottom: 18px; color: #334155; }
@@ -80,7 +84,11 @@
     .mail-addr b { font-size: 15px; color: #1f2352; user-select: all; }
     .mail-addr button { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
     .kakao .note { background: #fff; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; color: #334155; margin: 0 0 12px; }
-    /* 계약서 화면의 동의 칸: 누르면 ■로 칠해짐, 아직 안 칠한 칸은 노랗게 표시 (PDF에는 표시 안 됨) */
+    /* 계약서 화면의 동의 칸: 누르면 ■로 체크됨, 아직 체크 안 한 칸은 노랗게 표시 (PDF에는 표시 안 됨) */
+    .applied { margin-top: 14px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 14px; }
+    .applied p { margin: 0 0 12px; color: #065f46; font-size: 14px; line-height: 1.6; }
+    #docs .slot img { outline: 2px dashed transparent; }
+    .locked #docs .ck[data-ag] { cursor: default; }
     #docs .ck[data-ag] { cursor: pointer; display: inline-block; min-width: 1.4em; text-align: center; border-radius: 3px; padding: 0 .1em; }
     #docs .ck[data-ag]:not(.on) { background: #fef3c7; outline: 1.5px solid #f59e0b; }
     #docs .ck[data-ag].miss { animation: blink .5s 3; }
@@ -147,7 +155,7 @@
 
     <!-- 3. 계약서 확인 + 서명 -->
     <section id="stepDoc" class="hidden">
-      <div class="notice">아래 계약서 내용을 확인하시면서 노란 <b>□ 동의 칸을 눌러 ■로 칠해</b> 주시고, 맨 아래에서 서명해 주세요.<br>입력한 내용이 틀렸으면 <button type="button" class="linkbtn" id="editInfo">입력 내용 고치기</button>, 계약 조건이 다르면 010-4454-2429로 연락 주세요.</div>
+      <div class="notice">아래 계약서 내용을 확인하시면서 노란 <b>□ 동의 칸을 눌러 체크</b>해 주시고, 맨 아래에서 서명해 주세요.<br>입력한 내용이 틀렸으면 <button type="button" class="linkbtn" id="editInfo">입력내용 수정하기</button>, 계약 조건이 다르면 010-4454-2429로 연락 주세요.</div>
       <div id="docs"></div>
       <div class="panel">
         <h3>동의 및 서명</h3>
@@ -155,7 +163,13 @@
         <div id="signMain" class="signbox"></div>
         <div id="signHolder" class="signbox hidden"></div>
         <div class="err" id="signErr"></div>
-        <button class="btn" id="submitBtn">서명하고 보내기</button>
+        <button class="btn" id="submitBtn">서명 적용하기</button>
+        <div id="applied" class="applied hidden">
+          <p>✔ 서명이 계약서에 적용되었습니다.<br>위 계약서에 들어간 서명을 확인하신 뒤 <b>전송하기</b>를 눌러 주세요.</p>
+          <div class="err" id="sendErr"></div>
+          <button class="btn" id="sendBtn">전송하기</button>
+          <button class="btn ghost" id="resignBtn" style="margin-top:8px">다시 서명하기</button>
+        </div>
       </div>
     </section>
 
@@ -268,15 +282,74 @@
     return cv.toDataURL('image/png');
   }
 
-  // ===== 서명 상자 (손글씨 / 도장) =====
-  function SignBox(root, title, defaultName) {
-    const self = { mode: 'draw', drawn: false, seal: null };
+  // ===== 법인 도장 첨부 상자: 사진을 고르면 흰 바탕을 투명하게, 도장 부분만 잘라 냄 =====
+  function SealBox(root, title) {
+    const self = { img: null };
     root.innerHTML = `<div class="who">${esc(title)}</div>
-      <div class="tabs"><button type="button" data-m="draw" class="on">손글씨 서명</button><button type="button" data-m="seal">도장으로 날인</button></div>
-      <div class="m-draw"><div class="pad"><canvas></canvas><div class="ph">여기에 서명해 주세요</div></div>
-        <div class="row"><span style="flex:1;color:#64748b;font-size:13px">손가락이나 마우스로 성함을 써 주세요.</span><button type="button" class="clear">다시 쓰기</button></div></div>
-      <div class="m-seal hidden"><div class="sealprev"><img alt="도장 미리보기"></div>
-        <div class="row"><input class="sname" maxlength="10" value="${esc(defaultName)}" aria-label="도장에 들어갈 이름"><button type="button" class="remake">도장 만들기</button></div></div>`;
+      <div class="sealbox"><label class="drop"><input type="file" accept="image/*">
+        <span class="msg"><b>📷 법인 도장 사진 첨부</b><br>흰 종이에 법인 도장을 찍어 사진을 찍거나,<br>도장 이미지 파일을 골라 주세요.</span><img class="hidden" alt="첨부한 법인 도장"></label></div>
+      <div class="row"><span style="flex:1;color:#64748b;font-size:13px">흰 바탕은 자동으로 지워집니다.</span><button type="button" class="clear">다시 첨부</button></div>`;
+    const input = root.querySelector('input[type=file]'), prev = root.querySelector('.drop img'), msg = root.querySelector('.msg');
+    input.addEventListener('change', async () => {
+      const file = input.files[0]; if (!file) return;
+      if (file.size > 15 * 1024 * 1024) { alert('15MB 이하 사진을 골라 주세요.'); return; }
+      try {
+        self.img = await cleanSeal(file);
+        prev.src = self.img; prev.classList.remove('hidden'); msg.classList.add('hidden'); $('signErr').textContent = '';
+      } catch (e) { console.error(e); alert('사진을 읽지 못했습니다. 다른 사진을 골라 주세요.'); }
+      input.value = '';
+    });
+    root.querySelector('.clear').onclick = () => { self.img = null; prev.classList.add('hidden'); msg.classList.remove('hidden'); input.click(); };
+    self.image = () => self.img;
+    self.label = () => '법인 도장 첨부';
+    self.fit = () => {};
+    return self;
+  }
+  // 도장 사진 → 흰 바탕 투명, 잉크(빨강·검정) 부분만 남기고 여백 잘라 400px 이하 PNG
+  function cleanSeal(file) {
+    return new Promise((ok, no) => {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        URL.revokeObjectURL(url);
+        const k = Math.min(1, 900 / Math.max(im.width, im.height)), W = Math.round(im.width * k), H = Math.round(im.height * k);
+        const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+        const g = cv.getContext('2d'); g.drawImage(im, 0, 0, W, H);
+        const d = g.getImageData(0, 0, W, H), px = d.data;
+        // 종이 색: 사진 가장자리(테두리 3%)의 밝기·붉은 정도 평균 → 이보다 충분히 진하거나 붉은 곳만 도장으로 봄
+        const edge = Math.max(2, Math.round(Math.min(W, H) * 0.03));
+        let n = 0, bgMin = 0, bgRed = 0;
+        for (let y = 0; y < H; y += 3) for (let x = 0; x < W; x += 3) {
+          if (x >= edge && x < W - edge && y >= edge && y < H - edge) continue;
+          const i = (y * W + x) * 4; bgMin += Math.min(px[i], px[i + 1], px[i + 2]); bgRed += px[i] - (px[i + 1] + px[i + 2]) / 2; n++;
+        }
+        bgMin /= n; bgRed /= n;
+        let x0 = W, y0 = H, x1 = -1, y1 = -1;
+        for (let i = 0; i < px.length; i += 4) {
+          const r = px[i], gg = px[i + 1], b = px[i + 2];
+          const red = (r - (gg + b) / 2) - bgRed, dark = (bgMin - 25) - Math.min(r, gg, b);   // 종이 밝기 차이(그림자)는 25까지 무시
+          const raw = Math.max(red * 2.2, dark * 1.8);
+          const a = raw < 45 ? 0 : Math.min(255, (raw - 45) * 1.5);
+          px[i + 3] = a;
+          if (a > 60) { const p = i / 4, x = p % W, y = (p - x) / W; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+        if (x1 < 0) { no(new Error('도장이 보이지 않음')); return; }
+        g.putImageData(d, 0, 0);
+        const m = 6, cw = x1 - x0 + 1 + m * 2, ch = y1 - y0 + 1 + m * 2, s2 = Math.min(1, 400 / Math.max(cw, ch));
+        const out = document.createElement('canvas'); out.width = Math.round(cw * s2); out.height = Math.round(ch * s2);
+        out.getContext('2d').drawImage(cv, x0 - m, y0 - m, cw, ch, 0, 0, out.width, out.height);
+        ok(out.toDataURL('image/png'));
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); no(new Error('사진을 열 수 없음')); };
+      im.src = url;
+    });
+  }
+
+  // ===== 서명 상자 (손글씨 서명) =====
+  function SignBox(root, title) {
+    const self = { drawn: false };
+    root.innerHTML = `<div class="who">${esc(title)}</div>
+      <div class="pad"><canvas></canvas><div class="ph">여기에 서명해 주세요</div></div>
+      <div class="row"><span style="flex:1;color:#64748b;font-size:13px">손가락이나 마우스로 성함을 써 주세요.</span><button type="button" class="clear">다시 쓰기</button></div>`;
     const cv = root.querySelector('canvas'), ctx = cv.getContext('2d'), ph = root.querySelector('.ph');
     function fit() {
       const r = cv.getBoundingClientRect(); if (!r.width) return;
@@ -290,21 +363,11 @@
     cv.addEventListener('pointermove', e => { if (!last) return; const p = pt(e); ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); last = p; self.drawn = true; });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => cv.addEventListener(t, () => { last = null; }));
     root.querySelector('.clear').onclick = fit;
-    const remake = async () => { const n = root.querySelector('.sname').value.trim() || defaultName; self.seal = await makeSeal(n); root.querySelector('.sealprev img').src = self.seal; };
-    root.querySelector('.remake').onclick = remake;
-    root.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
-      self.mode = b.dataset.m;
-      root.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-      root.querySelector('.m-draw').classList.toggle('hidden', self.mode !== 'draw');
-      root.querySelector('.m-seal').classList.toggle('hidden', self.mode !== 'seal');
-      if (self.mode === 'seal' && !self.seal) remake();
-      if (self.mode === 'draw') requestAnimationFrame(fit);
-    });
+    self.fit = fit;
     let w = 0; window.addEventListener('resize', () => { const r = cv.getBoundingClientRect().width; if (r && r !== w && !self.drawn) { w = r; fit(); } });
-    requestAnimationFrame(fit);
+    fit(); requestAnimationFrame(() => { if (!self.drawn) fit(); });   // 바로 크기를 맞추고, 이미 그린 서명은 지우지 않음
     // 서명 이미지: 손글씨는 여백을 잘라 냄
     self.image = () => {
-      if (self.mode === 'seal') return self.seal;
       if (!self.drawn) return null;
       const { width: W, height: H } = cv, px = ctx.getImageData(0, 0, W, H).data;
       let x0 = W, y0 = H, x1 = 0, y1 = 0;
@@ -314,7 +377,7 @@
       out.getContext('2d').drawImage(cv, x0 - m, y0 - m, out.width, out.height, 0, 0, out.width, out.height);
       return out.toDataURL('image/png');
     };
-    self.label = () => self.mode === 'seal' ? '도장' : '손글씨 서명';
+    self.label = () => '손글씨 서명';
     return self;
   }
 
@@ -332,7 +395,18 @@
   // ===== 2. 고객 정보 입력 =====
   const FMAP = { ceo: 'fCeo', mobile: 'fMobile', bizName: 'fBizName', bizNo: 'fBizNo', regNo: 'fRegNo', tel: 'fTel', addr: 'fAddr', relation: 'fRelation',
     holder: 'fHolder', bank: 'fBank', account: 'fAccount', holderBirth: 'fHolderBirth', holderMobile: 'fHolderMobile' };
+  // 법인이면 입력 칸 이름을 법인용으로 (개인은 원래 이름)
+  const LABELS = {
+    fCeo: ['대표자명 *', '대표이사 *'], fBizName: ['상호 *', '법인명 *'], fRegNo: ['주민(법인)등록번호 *', '법인등록번호 *'],
+    fTel: ['사업장 전화번호 *', '회사 전화번호 *'], fAddr: ['사업장 주소 *', '본점 소재지 *']
+  };
+  function applyLabels() {
+    const corp = C.kind === '법인';
+    Object.entries(LABELS).forEach(([id, t]) => { const l = document.querySelector(`label[for="${id}"]`); if (l) l.textContent = t[corp ? 1 : 0]; });
+    $('fRegNo').placeholder = corp ? '숫자 13자리 (법인등록번호)' : '숫자 13자리';
+  }
   function startInfo() {
+    applyLabels();
     $('tFee').value = `${won(C.fee)}원`;
     $('tTerm').value = C.termText || C.term || '';
     $('tPay').value = `${C.hasCms ? 'CMS 자동이체' : '계좌이체'} · 매월 ${Number(C.payDay) || 5}일`;
@@ -343,7 +417,8 @@
     setBank($('fBank').value);
     document.querySelectorAll('#infoForm input[data-fmt]').forEach(el => { el.value = FMT[el.dataset.fmt](el.value.replace(/\D/g, '')); });
     if (!$('fCeo').value) $('fCeo').value = C.ceo || '';
-    if (C.hasCms && !$('fHolder').value) $('fHolder').value = C.ceo;
+    if (C.kind === '법인') { if (C.hasCms && !FIELDS.holder && !$('fHolder').value) $('fRelation').value = '법인(회사) 통장'; }
+    else if (C.hasCms && !$('fHolder').value) $('fHolder').value = C.ceo;
     showOnly('stepInfo');
   }
   $('infoForm').addEventListener('submit', async e => {
@@ -354,14 +429,15 @@
     const err = $('infoErr'), digits = v => v.replace(/\D/g, '');
     err.textContent = '';
     // 모든 칸 필수: 처음 빠진(또는 틀린) 칸을 알려 주고 그 칸으로 이동
+    const corp = C.kind === '법인';
     const CHECKS = [
-      ['ceo', '대표자명을 입력해 주세요.', v => !!v],
+      ['ceo', corp ? '대표이사 성함을 입력해 주세요.' : '대표자명을 입력해 주세요.', v => !!v],
       ['mobile', '휴대전화번호를 입력해 주세요. (예: 010-1234-5678)', v => /^01\d{8,9}$/.test(digits(v))],
-      ['bizName', '상호를 입력해 주세요.', v => !!v],
+      ['bizName', corp ? '법인명을 입력해 주세요.' : '상호를 입력해 주세요.', v => !!v],
       ['bizNo', '사업자등록번호 10자리를 입력해 주세요. (사업자등록 전이면 「사업자등록 전입니다」에 체크)', v => fields.beforeReg || digits(v).length === 10],
-      ['regNo', '주민(법인)등록번호 13자리를 입력해 주세요.', v => digits(v).length === 13],
-      ['tel', '사업장 전화번호를 입력해 주세요.', v => /^0\d{8,10}$/.test(digits(v))],
-      ['addr', '사업장 주소를 입력해 주세요.', v => !!v]
+      ['regNo', corp ? '법인등록번호 13자리를 입력해 주세요.' : '주민(법인)등록번호 13자리를 입력해 주세요.', v => digits(v).length === 13],
+      ['tel', corp ? '회사 전화번호를 입력해 주세요.' : '사업장 전화번호를 입력해 주세요.', v => /^0\d{8,10}$/.test(digits(v))],
+      ['addr', corp ? '본점 소재지를 입력해 주세요.' : '사업장 주소를 입력해 주세요.', v => !!v]
     ];
     if (C.hasCms) CHECKS.push(
       ['relation', '예금주와의 관계를 선택해 주세요.', v => !!v],
@@ -448,6 +524,7 @@
   function draw() { fillDocs($('docs'), { office: OFFICE_SEAL }, AG()); }
   // 계약서 안의 □ 칸을 누르면 아래 동의 체크와 함께 ■/□ 바뀜
   $('docs').addEventListener('click', e => {
+    if (APPLIED) return;
     const el = e.target.closest('[data-ag]'); if (!el) return;
     const box = document.querySelector(`#agrees input[data-k="${el.dataset.ag}"]`); if (!box) return;
     box.checked = !box.checked; box.onchange();
@@ -464,22 +541,25 @@
     boxes.forEach(b => b.onchange = () => { $('agAll').checked = boxes.every(x => x.checked); draw(); });
     draw();
     showOnly('stepDoc');
-    mainBox = SignBox($('signMain'), `위임인${C.hasCms ? '·신청인' : ''} 서명: ${C.ceo}`, C.ceo);
+    mainBox = C.kind === '법인'
+      ? SealBox($('signMain'), `위임인${C.hasCms ? '·신청인' : ''} 날인: ${C.bizName || ''} (법인 도장)`)
+      : SignBox($('signMain'), `위임인${C.hasCms ? '·신청인' : ''} 서명: ${C.ceo}`);
     holderBox = null; $('signHolder').classList.add('hidden');
+    APPLIED = null; setApplied(false);
     if (C.needHolder) {
       $('signHolder').classList.remove('hidden');
-      holderBox = SignBox($('signHolder'), `예금(카드)주 서명: ${C.holder}`, C.holder);
+      holderBox = SignBox($('signHolder'), `예금(카드)주 서명: ${C.holder}`);
     }
   }
 
-  // ===== 3. 서명하고 보내기 =====
+  // ===== 4. 서명 적용 후 전송 (PDF 만들기) =====
   function fitPage(p) {
     let fs = parseFloat(getComputedStyle(p).fontSize);
     while (p.scrollHeight > p.clientHeight + 1 && fs > 7) { fs -= 0.2; p.style.fontSize = fs + 'px'; }
   }
   async function buildPdf(sig) {
     const stage = $('pdfStage');
-    fillDocs(stage, sig, AG());
+    fillDocs(stage, sig, APPLIED ? APPLIED.ag : AG());
     await document.fonts.ready;
     await Promise.all([...stage.querySelectorAll('img')].map(im => im.complete ? 0 : new Promise(r => { im.onload = im.onerror = r; })));
     const { jsPDF } = window.jspdf;
@@ -502,18 +582,40 @@
     const ag = AG();
     if (!Object.values(ag).every(Boolean)) {
       const n = Object.values(ag).filter(x => !x).length;
-      err.textContent = `아직 칠하지 않은 동의 칸이 ${n}개 있습니다. 계약서의 노란 □ 칸을 누르시거나, 위의 「필수 동의 모두 동의」를 체크해 주세요.`;
+      err.textContent = `아직 체크하지 않은 동의 칸이 ${n}개 있습니다. 계약서의 노란 □ 칸을 눌러 체크하시거나, 위의 「필수 동의 모두 동의」를 체크해 주세요.`;
       $('agAll').closest('label').classList.add('miss');
       document.querySelectorAll('#docs .ck[data-ag]:not(.on)').forEach(x => x.classList.add('miss'));
       $('agrees').scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
     const sig = { main: mainBox.image(), holder: holderBox ? holderBox.image() : null, office: OFFICE_SEAL };
-    if (!sig.main) { err.textContent = '서명란에 서명하거나 도장을 만들어 주세요.'; return; }
+    if (!sig.main) { err.textContent = C.kind === '법인' ? '법인 도장 사진을 첨부해 주세요.' : '서명란에 서명해 주세요.'; return; }
     if (holderBox && !sig.holder) { err.textContent = '예금(카드)주 서명도 해 주세요.'; return; }
-    const btn = $('submitBtn'); btn.disabled = true; btn.textContent = '계약서를 만드는 중...';
+    // 서명을 계약서에 넣어 보여 주고, 확인 후 [전송하기]
+    APPLIED = { sig, ag };
+    fillDocs($('docs'), sig, ag);
+    setApplied(true);
+    const slot = document.querySelector('#docs [data-sig="main"]');
+    if (slot) slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  let APPLIED = null;
+  function setApplied(on) {
+    $('stepDoc').classList.toggle('locked', on);
+    ['signMain', 'signHolder', 'submitBtn', 'agrees'].forEach(id => { if (id !== 'signHolder' || holderBox) $(id).classList.toggle('hidden', on); });
+    $('applied').classList.toggle('hidden', !on);
+    $('sendErr').textContent = '';
+  }
+  $('resignBtn').addEventListener('click', () => {
+    APPLIED = null; setApplied(false); draw();
+    mainBox.fit(); if (holderBox) holderBox.fit();
+    $('signMain').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  $('sendBtn').addEventListener('click', async () => {
+    if (!APPLIED) return;
+    const { sig } = APPLIED, err = $('sendErr'); err.textContent = '';
+    const btn = $('sendBtn'); btn.disabled = true; $('resignBtn').disabled = true; btn.textContent = '계약서를 만드는 중...';
     try {
-      fillDocs($('docs'), sig, ag);
       const pdf = await buildPdf(sig);
       pdfBlob = pdf.output('blob');
       btn.textContent = '보내는 중...';
@@ -525,7 +627,7 @@
       showOnly('stepDone');
     } catch (e) {
       console.error(e); err.textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.';
-    } finally { btn.disabled = false; btn.textContent = '서명하고 보내기'; }
+    } finally { btn.disabled = false; $('resignBtn').disabled = false; btn.textContent = '전송하기'; }
   });
 
   // 카카오톡: 휴대폰은 카카오톡으로 바로 이동, PC는 QR코드를 보여 줌 (홈페이지 카톡상담과 같은 주소)
