@@ -69,6 +69,20 @@
     .kakao b { font-size: 16px; } .kakao p { margin: 8px 0 12px; font-size: 14px; color: #475569; }
     .kakao-btn { display: block; text-align: center; text-decoration: none; background: #fee500; color: #191919; border-radius: 10px; padding: 15px; font-weight: 700; font-size: 16px; }
     .kakao-qr { text-align: center; margin-top: 12px; } .kakao-qr img { width: 180px; height: 180px; }
+    .doclist { margin: 6px 0 12px; padding: 0; list-style: none; font-size: 15px; line-height: 1.9; }
+    .doclist li b { display: inline-block; width: 1.6em; color: #92400e; }
+    .doclist small { color: #94a3b8; }
+    .mail-btn { display: block; text-align: center; text-decoration: none; background: #fff; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 10px; padding: 13px; font-weight: 700; font-size: 15px; margin-top: 8px; }
+    .mail-addr { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; font-size: 14px; color: #334155; }
+    .mail-addr b { font-size: 15px; color: #1f2352; user-select: all; }
+    .mail-addr button { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 10px; font-size: 13px; cursor: pointer; font-family: inherit; }
+    .kakao .note { background: #fff; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; color: #334155; margin: 0 0 12px; }
+    /* 계약서 화면의 동의 칸: 누르면 ■로 칠해짐, 아직 안 칠한 칸은 노랗게 표시 (PDF에는 표시 안 됨) */
+    #docs .ck[data-ag] { cursor: pointer; display: inline-block; min-width: 1.4em; text-align: center; border-radius: 3px; padding: 0 .1em; }
+    #docs .ck[data-ag]:not(.on) { background: #fef3c7; outline: 1.5px solid #f59e0b; }
+    #docs .ck[data-ag].miss { animation: blink .5s 3; }
+    @keyframes blink { 50% { background: #fca5a5; } }
+    .agrees label.all.miss { background: #fee2e2; border-radius: 8px; }
     @media (max-width: 520px) { .grid2 { grid-template-columns: 1fr; } }
     @media (max-width: 420px) { main { padding: 14px 10px 32px; } }
   </style>
@@ -103,9 +117,9 @@
         <div class="grid2">
           <div><label for="fCeo">대표자명 *</label><input id="fCeo" maxlength="30" autocomplete="name"></div>
           <div><label for="fBizName">상호 <small>(개업 전이면 비워 두기)</small></label><input id="fBizName" maxlength="100"></div>
-          <div><label for="fBizNo">사업자등록번호 <small>(개업 전이면 비워 두기)</small></label><input id="fBizNo" inputmode="numeric" maxlength="20" placeholder="000-00-00000"></div>
-          <div><label for="fRegNo">주민(법인)등록번호 *</label><input id="fRegNo" inputmode="numeric" maxlength="20" placeholder="000000-0000000"></div>
-          <div><label for="fTel">사업장 전화번호</label><input id="fTel" inputmode="tel" maxlength="30"></div>
+          <div><label for="fBizNo">사업자등록번호 <small>(개업 전이면 비워 두기)</small></label><input id="fBizNo" inputmode="numeric" maxlength="12" placeholder="숫자 10자리" data-fmt="biz"></div>
+          <div><label for="fRegNo">주민(법인)등록번호 *</label><input id="fRegNo" inputmode="numeric" maxlength="14" placeholder="숫자 13자리" data-fmt="reg"></div>
+          <div><label for="fTel">사업장 전화번호</label><input id="fTel" inputmode="numeric" maxlength="13" data-fmt="phone"></div>
           <div class="full"><label for="fAddr">사업장 주소 *</label><input id="fAddr" maxlength="200"></div>
         </div>
         <div id="cmsFields">
@@ -115,8 +129,8 @@
             <div><label for="fHolder">예금주명 *</label><input id="fHolder" maxlength="50"></div>
             <div><label for="fBank">은행 *</label><input id="fBank" maxlength="30" placeholder="예: 신한은행"></div>
             <div><label for="fAccount">계좌번호 *</label><input id="fAccount" inputmode="numeric" maxlength="40"></div>
-            <div><label for="fHolderBirth">예금주 생년월일 6자리 * <small>(법인·사업자 통장은 사업자번호)</small></label><input id="fHolderBirth" inputmode="numeric" maxlength="20" placeholder="예: 800101"></div>
-            <div><label for="fHolderMobile">예금주 휴대번호 <small>(본인이 아니면)</small></label><input id="fHolderMobile" inputmode="tel" maxlength="30"></div>
+            <div><label for="fHolderBirth">예금주 생년월일 6자리 * <small>(법인·사업자 통장은 사업자번호)</small></label><input id="fHolderBirth" inputmode="numeric" maxlength="12" placeholder="예: 800101" data-fmt="birth"></div>
+            <div><label for="fHolderMobile">예금주 휴대번호 <small>(본인이 아니면)</small></label><input id="fHolderMobile" inputmode="numeric" maxlength="13" data-fmt="phone"></div>
           </div>
           <p class="hint">신용카드 출금은 받지 않습니다. 계좌만 입력해 주세요.<br>예금주가 본인이 아니면 다음 화면에서 예금주 서명을 한 번 더 받습니다.</p>
         </div>
@@ -127,7 +141,7 @@
 
     <!-- 3. 계약서 확인 + 서명 -->
     <section id="stepDoc" class="hidden">
-      <div class="notice">아래 계약서 내용을 확인하신 뒤, 맨 아래에서 <b>동의하고 서명</b>해 주세요.<br>입력한 내용이 틀렸으면 <button type="button" class="linkbtn" id="editInfo">입력 내용 고치기</button>, 계약 조건이 다르면 010-4454-2429로 연락 주세요.</div>
+      <div class="notice">아래 계약서 내용을 확인하시면서 노란 <b>□ 동의 칸을 눌러 ■로 칠해</b> 주시고, 맨 아래에서 서명해 주세요.<br>입력한 내용이 틀렸으면 <button type="button" class="linkbtn" id="editInfo">입력 내용 고치기</button>, 계약 조건이 다르면 010-4454-2429로 연락 주세요.</div>
       <div id="docs"></div>
       <div class="panel">
         <h3>동의 및 서명</h3>
@@ -146,8 +160,17 @@
       <p>서명하신 계약서가 세무회계강남에 전달되었습니다.<br><span id="doneMail"></span></p>
       <div class="kakao">
         <b>📎 마지막 단계: 서류 보내기</b>
-        <p><b id="docList" style="font-size:14px">사업자등록증</b>을 사진으로 찍어 세무사 카카오톡으로 보내 주세요.<br>개업 전이시면 사업자등록 후 보내 주시면 됩니다.</p>
+        <p>아래 서류를 사진으로 찍어 세무사 <b>카카오톡</b> 또는 <b>이메일</b>로 보내 주세요.</p>
+        <ul class="doclist">
+          <li><b>①</b>신분증</li>
+          <li><b>②</b>사업자등록증 <small>(개업 전이면 등록 후)</small></li>
+          <li><b>③</b>통장사본</li>
+          <li><b>④</b>홈택스 아이디·비밀번호</li>
+        </ul>
+        <p class="note">이렇게 보내 주시면 <b>세무사 수임등록</b>이 진행되며, 진행하면서 <b>카카오톡 인증이 1회</b> 진행됩니다.</p>
         <a class="kakao-btn" id="kakaoBtn" href="https://qr.kakao.com/talk/apHWPmXp2XOxAxSWs5ken36AMh0-" target="_blank" rel="noopener">카카오톡으로 서류 보내기</a>
+        <a class="mail-btn" id="mailBtn" href="mailto:gangnam_tax@naver.com">✉️ 이메일로 보내기</a>
+        <div class="mail-addr">이메일 주소 <b id="mailAddr">gangnam_tax@naver.com</b><button type="button" id="mailCopy">복사</button></div>
         <div class="kakao-qr hidden" id="kakaoQr"><img src="/images/kakao-qr.png" alt="세무사 김하원 카카오톡 QR코드"><p>휴대폰 카메라로 QR코드를 찍으면<br>카카오톡 대화로 연결됩니다.</p></div>
       </div>
       <button class="btn ghost" id="dlBtn">서명본 PDF 내려받기</button>
@@ -213,7 +236,7 @@
       el.classList.toggle('need', !img);
       if (img) { const im = new Image(); im.alt = ''; im.src = img; el.appendChild(im); }
     });
-    root.querySelectorAll('[data-ag]').forEach(el => { el.textContent = ag[el.dataset.ag] ? '■' : '□'; });
+    root.querySelectorAll('[data-ag]').forEach(el => { const on = !!ag[el.dataset.ag]; el.textContent = on ? '■' : '□'; el.classList.toggle('on', on); });
   }
 
   // ===== 도장 그리기 (빨간 원형 인감) =====
@@ -305,10 +328,11 @@
     holder: 'fHolder', bank: 'fBank', account: 'fAccount', holderBirth: 'fHolderBirth', holderMobile: 'fHolderMobile' };
   function startInfo() {
     $('tFee').value = `${won(C.fee)}원`;
-    $('tTerm').value = C.term || '';
+    $('tTerm').value = C.termText || C.term || '';
     $('tPay').value = `${C.hasCms ? 'CMS 자동이체' : '계좌이체'} · 매월 ${Number(C.payDay) || 5}일`;
     $('cmsFields').classList.toggle('hidden', !C.hasCms);
     Object.entries(FMAP).forEach(([k, id]) => { if (FIELDS[k] != null && FIELDS[k] !== '') $(id).value = FIELDS[k]; });
+    document.querySelectorAll('#infoForm input[data-fmt]').forEach(el => { el.value = FMT[el.dataset.fmt](el.value.replace(/\D/g, '')); });
     if (!$('fCeo').value) $('fCeo').value = C.ceo || '';
     if (C.hasCms && !$('fHolder').value) $('fHolder').value = C.ceo;
     showOnly('stepInfo');
@@ -319,6 +343,7 @@
     const err = $('infoErr'), digits = v => v.replace(/\D/g, '');
     err.textContent = '';
     if (!fields.ceo) { err.textContent = '대표자명을 입력해 주세요.'; return; }
+    if (fields.bizNo && digits(fields.bizNo).length !== 10) { err.textContent = '사업자등록번호는 숫자 10자리입니다. (개업 전이면 비워 두세요)'; return; }
     if (digits(fields.regNo).length !== 13) { err.textContent = '주민(법인)등록번호 13자리를 입력해 주세요.'; return; }
     if (!fields.addr) { err.textContent = '사업장 주소를 입력해 주세요.'; return; }
     if (C.hasCms && (!fields.holder || !fields.bank || !fields.account)) { err.textContent = '예금주·은행·계좌번호를 입력해 주세요.'; return; }
@@ -333,19 +358,41 @@
   });
   $('editInfo').addEventListener('click', startInfo);
 
+  // 번호 칸: 숫자만 받고 정해진 자리수까지만, 자리에 맞춰 대시 자동 입력
+  const FMT = {
+    biz: d => (d = d.slice(0, 10), d.length > 5 ? `${d.slice(0, 3)}-${d.slice(3, 5)}-${d.slice(5)}` : d.length > 3 ? `${d.slice(0, 3)}-${d.slice(3)}` : d),
+    reg: d => (d = d.slice(0, 13), d.length > 6 ? `${d.slice(0, 6)}-${d.slice(6)}` : d),
+    birth: d => (d = d.slice(0, 10), d.length > 6 ? FMT.biz(d) : d),
+    phone: d => {
+      d = d.slice(0, 11);
+      if (d.startsWith('02')) return d.length > 9 ? `02-${d.slice(2, 6)}-${d.slice(6, 10)}` : d.length > 5 ? `02-${d.slice(2, 5)}-${d.slice(5)}` : d.length > 2 ? `02-${d.slice(2)}` : d;
+      return d.length > 10 ? `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}` : d.length > 6 ? `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}` : d.length > 3 ? `${d.slice(0, 3)}-${d.slice(3)}` : d;
+    }
+  };
+  document.querySelectorAll('#infoForm input[data-fmt]').forEach(el => {
+    const f = () => { el.value = FMT[el.dataset.fmt](el.value.replace(/\D/g, '')); };
+    el.addEventListener('input', f); el.addEventListener('blur', f);
+  });
+
   // ===== 3. 계약서 화면 =====
   let mainBox, holderBox;
   const AG = () => Object.fromEntries([...document.querySelectorAll('#agrees input[data-k]')].map(x => [x.dataset.k, x.checked]));
   function draw() { fillDocs($('docs'), { office: OFFICE_SEAL }, AG()); }
+  // 계약서 안의 □ 칸을 누르면 아래 동의 체크와 함께 ■/□ 바뀜
+  $('docs').addEventListener('click', e => {
+    const el = e.target.closest('[data-ag]'); if (!el) return;
+    const box = document.querySelector(`#agrees input[data-k="${el.dataset.ag}"]`); if (!box) return;
+    box.checked = !box.checked; box.onchange();
+  });
 
   function startDoc() {
     const items = [['privacy', '[필수] 개인정보 수집 및 이용에 동의합니다.'], ['contract', '[필수] 세무기장 계약 내용을 확인했으며 계약 체결에 동의합니다.']];
     if (C.hasCms) items.push(['cmsPrivacy', '[필수] CMS 출금이체 개인정보 수집 및 이용에 동의합니다.'], ['cmsThird', '[필수] 개인정보 제3자 제공에 동의합니다.'],
       ['cmsFinance', '[필수] 금융거래정보 제공 및 출금이체 서비스 약관에 동의합니다.']);
-    $('agrees').innerHTML = `<label class="all"><input type="checkbox" id="agAll"> 전체 동의</label>` +
+    $('agrees').innerHTML = `<label class="all"><input type="checkbox" id="agAll"> 필수 동의 모두 동의</label>` +
       items.map(([k, t]) => `<label><input type="checkbox" data-k="${k}"> ${t}</label>`).join('');
     const boxes = [...document.querySelectorAll('#agrees input[data-k]')];
-    $('agAll').onchange = e => { boxes.forEach(b => b.checked = e.target.checked); draw(); };
+    $('agAll').onchange = e => { boxes.forEach(b => b.checked = e.target.checked); $('agAll').closest('label').classList.remove('miss'); draw(); };
     boxes.forEach(b => b.onchange = () => { $('agAll').checked = boxes.every(x => x.checked); draw(); });
     draw();
     showOnly('stepDoc');
@@ -385,7 +432,14 @@
   $('submitBtn').addEventListener('click', async () => {
     const err = $('signErr'); err.textContent = '';
     const ag = AG();
-    if (!Object.values(ag).every(Boolean)) { err.textContent = '필수 항목에 모두 동의해 주세요.'; $('agrees').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+    if (!Object.values(ag).every(Boolean)) {
+      const n = Object.values(ag).filter(x => !x).length;
+      err.textContent = `아직 칠하지 않은 동의 칸이 ${n}개 있습니다. 계약서의 노란 □ 칸을 누르시거나, 위의 「필수 동의 모두 동의」를 체크해 주세요.`;
+      $('agAll').closest('label').classList.add('miss');
+      document.querySelectorAll('#docs .ck[data-ag]:not(.on)').forEach(x => x.classList.add('miss'));
+      $('agrees').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const sig = { main: mainBox.image(), holder: holderBox ? holderBox.image() : null, office: OFFICE_SEAL };
     if (!sig.main) { err.textContent = '서명란에 서명하거나 도장을 만들어 주세요.'; return; }
     if (holderBox && !sig.holder) { err.textContent = '예금(카드)주 서명도 해 주세요.'; return; }
@@ -400,7 +454,6 @@
       const r = await call('contractSign', { pdf: b64, method });
       if (!r.success) { err.textContent = r.message || '보내지 못했습니다. 010-4454-2429로 연락 주세요.'; return; }
       $('doneMail').textContent = C.email ? `서명본은 ${C.email} 으로도 보내드렸습니다.` : '아래 버튼으로 서명본을 내려받아 보관해 주세요.';
-      $('docList').textContent = C.hasCms ? '사업자등록증과 CMS 출금 통장사본' : '사업자등록증';
       showOnly('stepDone');
     } catch (e) {
       console.error(e); err.textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.';
@@ -411,6 +464,18 @@
   $('kakaoBtn').addEventListener('click', e => {
     if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) return;
     e.preventDefault(); $('kakaoQr').classList.remove('hidden');
+  });
+
+  // 이메일로 보내기: 메일 앱을 열고 제목에 상호·대표자를 넣어 둠, 주소는 복사도 가능
+  $('mailBtn').addEventListener('click', () => {
+    const who = C ? `${C.bizName ? C.bizName + ' · ' : ''}${C.ceo}` : '';
+    $('mailBtn').href = 'mailto:gangnam_tax@naver.com?subject=' + encodeURIComponent(`[기장 서류] ${who}`) +
+      '&body=' + encodeURIComponent('① 신분증\n② 사업자등록증\n③ 통장사본\n④ 홈택스 아이디·비밀번호\n\n(사진·파일을 첨부해 주세요)');
+  });
+  $('mailCopy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText('gangnam_tax@naver.com'); }
+    catch (e) { const r = document.createRange(); r.selectNodeContents($('mailAddr')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); document.execCommand('copy'); }
+    $('mailCopy').textContent = '복사됨';
   });
 
   $('dlBtn').addEventListener('click', () => {
