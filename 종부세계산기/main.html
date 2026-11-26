@@ -153,10 +153,10 @@
     .hrow { display: grid; gap: 10px; margin-bottom: 10px; }
     .hrow.r1 { grid-template-columns: 150px minmax(0, 1fr) 90px; }
     .hrow.r2 { grid-template-columns: 1fr 1fr; }
-    .hrow.r3 { grid-template-columns: 1.2fr 0.7fr 1.6fr; align-items: end; }
+    .hrow.r3 { grid-template-columns: 1fr 1fr; align-items: end; }
     .hrow label { font-size: 12px; color: #64748b; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .hrow input { padding: 9px 10px; font-size: 13px; }
-    .r3-hint { font-size: 11.5px; color: #64748b; line-height: 1.5; }
+    .r3-hint { grid-column: 1 / -1; font-size: 11.5px; color: #64748b; line-height: 1.5; margin-top: -2px; }
     .addr-row { display: flex; gap: 6px; }
     .addr-row button { white-space: nowrap; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
     .addr-row button:hover { border-color: #8a6d3b; color: #8a6d3b; }
@@ -581,6 +581,15 @@
         $('judgeBox').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
         $('judgeBox').className = 'judge-box ' + cls;
     }
+    $('taxForm').addEventListener('keydown', e => {
+        const t = e.target;
+        if (e.key !== 'Enter' || e.isComposing || !t.matches('input, select') || t.type === 'checkbox') return;
+        e.preventDefault();
+        const items = [...$('taxForm').querySelectorAll('input, select, button[type="submit"]')]
+            .filter(el => !el.disabled && el.type !== 'checkbox' && el.offsetParent !== null);
+        const next = items[items.indexOf(t) + 1];
+        if (next) { next.focus(); if (next.tagName === 'INPUT') next.select(); }
+    });
     setHouseCount(1);
 
     let lastInput = null;
