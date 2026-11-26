@@ -54,7 +54,19 @@
     .amount-guide { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 6px; padding: 10px 14px; font-size: 13px; color: #5b4a2e; line-height: 1.6; margin-bottom: 18px; }
     .amount-guide b { color: #3f3320; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .grid2 .form-group { margin-bottom: 0; }
+    .grid2 .form-group, .grid3 .form-group { margin-bottom: 0; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .grid3 label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .period-box { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    .period-box div { background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #5b4a2e; line-height: 1.5; }
+    .period-box b { display: block; font-size: 16px; color: #3f3320; }
+    .period-box small { color: #8a6d3b; }
+    .tax-field { margin-top: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
+    .tax-field label { font-size: 12px; color: #334155; margin-bottom: 4px; }
+    .tax-field input { padding: 9px 10px; font-size: 13px; max-width: 260px; }
+    .res-sec .sec-desc { font-size: 12px; color: #475569; line-height: 1.6; background: #f8fafc; border-radius: 6px; padding: 8px 10px; margin: 6px 0 10px; }
+    .res-sec .sec-desc div { padding-left: 1em; text-indent: -1em; }
+    .res-sec .sec-desc div::before { content: '· '; }
 
     .house { border: 1px solid #e2e8f0; border-left: 3px solid #b08d57; border-radius: 10px; padding: 14px 14px 12px; margin-bottom: 12px; background: #fcfcfd; }
     .house.ex { border-left-color: #1e3a8a; background: #f8faff; }
@@ -131,6 +143,7 @@
     }
     @media (max-width: 640px) {
         .hgrid, .grid2, details.adv .hgrid { grid-template-columns: 1fr 1fr; }
+        .grid3, .period-box { grid-template-columns: 1fr; }
         .hgrid .wide { grid-column: 1 / -1; }
     }
   </style>
@@ -209,16 +222,17 @@
 
             <div class="section-title step">본인 소유 주택 <small>6월 1일 현재 · 공시가격은 주택 전체 금액</small></div>
             <div id="houseList"></div>
-            <button type="button" class="floor-add" onclick="addHouse(); refreshForm()">+ 주택 추가</button>
+            <button type="button" class="floor-add" onclick="addHouse(mode() === 'oneHouse' && $('houseList').children.length ? { kind: 'excluded' } : {}); refreshForm()">+ 주택 추가</button>
             <div id="houseSum" class="live-msg" style="margin-top: 10px;"></div>
 
             <div id="creditBox" class="hidden">
                 <div class="section-title step">1세대1주택 세액공제</div>
-                <div class="grid2">
-                    <div class="form-group"><label for="age">만 나이 <span class="hint">(6월 1일 기준)</span></label><input type="text" id="age" inputmode="numeric" placeholder="예: 62" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 3); refreshForm()"></div>
-                    <div class="form-group"><label for="holdYears">주된 주택 보유기간 <span class="hint">(년)</span></label><input type="text" id="holdYears" inputmode="decimal" placeholder="예: 7" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); refreshForm()"></div>
+                <div class="grid3">
+                    <div class="form-group"><label for="birthDate">생년월일 <span class="hint">(납세자)</span></label><input type="text" id="birthDate" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" oninput="formatDate(this); refreshForm()"></div>
+                    <div class="form-group"><label for="acqDate">주된 주택 취득일 <span class="hint">(잔금·등기 중 빠른 날)</span></label><input type="text" id="acqDate" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" oninput="formatDate(this); refreshForm()"></div>
+                    <div class="form-group"><label for="moveInDate">전입신고일 <span class="hint">(선택)</span></label><input type="text" id="moveInDate" inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" oninput="formatDate(this); refreshForm()"></div>
                 </div>
-                <div id="creditMsg" class="live-msg"></div>
+                <div id="creditMsg" class="period-box hidden"></div>
             </div>
 
             <div class="section-title step">선택 입력</div>
@@ -365,6 +379,27 @@
         input.value = out;
         if (document.activeElement === input) input.setSelectionRange(pos, pos);
     }
+    // 날짜 입력: 숫자만 넣어도 YYYY-MM-DD로
+    function formatDate(input) {
+        const d = input.value.replace(/\D/g, '').slice(0, 8);
+        input.value = d.length > 6 ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : d.length > 4 ? `${d.slice(0, 4)}-${d.slice(4)}` : d;
+    }
+    const BASE_DATE = '2026-06-01'; // 과세기준일
+    const isDate = s => {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || '');
+        if (!m) return false;
+        const d = new Date(+m[1], +m[2] - 1, +m[3]);
+        return d.getMonth() === +m[2] - 1 && d.getDate() === +m[3];
+    };
+    // 만 연수와 'n년 n개월' (from ~ to)
+    function period(from, to) {
+        if (!isDate(from) || from > to) return null;
+        const [fy, fm, fd] = from.split('-').map(Number), [ty, tm, td] = to.split('-').map(Number);
+        let y = ty - fy, mo = tm - fm;
+        if (td < fd) mo -= 1;
+        if (mo < 0) { y -= 1; mo += 12; }
+        return { years: y, text: (y ? `${y}년 ` : '') + `${mo}개월` };
+    }
     const digits = s => String(s || '').replace(/[^0-9]/g, '');
     const num = id => Number(digits($(id).value)) || 0;
     const won = n => Math.round(n).toLocaleString('ko-KR') + ' 원';
@@ -384,13 +419,17 @@
                 <div><label>본인 지분 (%)</label><input type="text" data-f="share" inputmode="decimal" value="100" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); refreshForm()"></div>
                 <div><label>직전연도 공시가격 (전체)</label><input type="text" data-f="prevPrice" inputmode="numeric" placeholder="과세표준상한·세부담상한" oninput="formatCurrency(this)"></div>
             </div>
-            <label class="check-line"><input type="checkbox" data-f="urban" checked> 재산세 도시지역분 과세 대상 <span class="hint">(재산세 표시용 · 종부세에는 영향 없음)</span></label>
-            <details class="adv"><summary>고급 입력 (고지서 금액으로 맞추기)</summary>
+            <div class="tax-field">
+                <label>올해 재산세 (종부세에서 공제되는 본세만, 본인분 7월 + 9월) <span class="hint">· 비우면 공시가격으로 자동 계산</span></label>
+                <input type="text" data-f="propTaxManual" inputmode="numeric" placeholder="예: 1,835,760" oninput="formatCurrency(this)">
+                <div class="live-msg" style="font-weight: normal;">고지서의 '재산세' 본세만 넣습니다. 도시지역분 · 지방교육세 · 지역자원시설세는 공제되지 않으니 빼고 넣으세요. (위택스 → 납부결과 → 재산세 상세에서 확인)</div>
+            </div>
+            <label class="check-line"><input type="checkbox" data-f="urban" checked> 재산세 도시지역분 과세 대상 <span class="hint">(재산세 자동 계산 표시용 · 종부세에는 영향 없음)</span></label>
+            <details class="adv"><summary>고급 입력 (재산세 과세표준상한)</summary>
                 <div class="hgrid">
                     <div><label>직전연도 재산세 과세표준 (전체)</label><input type="text" data-f="prevBase" inputmode="numeric" placeholder="비우면 직전 공시가격 × 60%" oninput="formatCurrency(this)"></div>
-                    <div><label>올해 재산세 본세 (본인분, 연간)</label><input type="text" data-f="propTaxManual" inputmode="numeric" placeholder="비우면 자동 계산" oninput="formatCurrency(this)"></div>
                 </div>
-                <div class="live-msg" style="font-weight: normal;">재산세 본세는 도시지역분·지방교육세·지역자원시설세를 뺀 금액입니다 (7월분 + 9월분).</div>
+                <div class="live-msg" style="font-weight: normal;">직전연도에도 과세표준상한이 적용됐다면 그해 재산세 과세표준을 넣으세요.</div>
             </details>
             <div class="live-msg h-msg"></div>`;
         $('houseList').appendChild(box);
@@ -445,9 +484,21 @@
               + (one && mains !== 1 ? ' · ⚠ 주된 주택은 1채만 고르세요' : '')
             : '';
         $('houseSum').classList.toggle('warn', one && mains !== 1);
-        const age = Number($('age').value) || 0, y = Number($('holdYears').value) || 0;
-        const ar = age >= 70 ? 40 : age >= 65 ? 30 : age >= 60 ? 20 : 0, hr = y >= 15 ? 50 : y >= 10 ? 40 : y >= 5 ? 20 : 0;
-        $('creditMsg').innerText = one && (age || y) ? `세액공제율 고령자 ${ar}% + 장기보유 ${hr}% = ${Math.min(80, ar + hr)}% (한도 80%, 주된 주택분에만 적용)` : '';
+        // 생년월일·취득일·전입신고일 → 6월 1일 현재 만 나이·보유기간·거주기간
+        const bd = $('birthDate').value, ad = $('acqDate').value, md = $('moveInDate').value;
+        const pa = period(bd, BASE_DATE), ph = period(ad, BASE_DATE);
+        const resFrom = isDate(md) ? (isDate(ad) && ad > md ? ad : md) : '';
+        const pr = resFrom ? period(resFrom, BASE_DATE) : null;
+        const ar = !pa ? 0 : pa.years >= 70 ? 40 : pa.years >= 65 ? 30 : pa.years >= 60 ? 20 : 0;
+        const hr = !ph ? 0 : ph.years >= 15 ? 50 : ph.years >= 10 ? 40 : ph.years >= 5 ? 20 : 0;
+        const box = $('creditMsg');
+        const cells = [];
+        if (isDate(bd)) cells.push(pa ? `<div>만 나이 (2026.6.1.)<b>${pa.years}세</b><small>고령자 공제 ${ar}%</small></div>` : `<div>만 나이<b>-</b><small>생년월일을 확인하세요</small></div>`);
+        if (isDate(ad)) cells.push(ph ? `<div>보유기간<b>${ph.text}</b><small>장기보유 공제 ${hr}%</small></div>` : `<div>보유기간<b>-</b><small>6월 1일 이후 취득이면 올해 대상 아님</small></div>`);
+        if (isDate(md)) cells.push(pr ? `<div>거주기간<b>${pr.text}</b><small>${resFrom !== md ? '취득일부터 · ' : ''}참고용 (종부세 공제와 무관)</small></div>` : `<div>거주기간<b>-</b><small>전입일을 확인하세요</small></div>`);
+        if (pa || ph) cells.push(`<div>세액공제율 합계<b>${Math.min(80, ar + hr)}%</b><small>한도 80% · 주된 주택분에만</small></div>`);
+        box.innerHTML = cells.join('');
+        box.classList.toggle('hidden', !one || !cells.length);
     }
     addHouse({ kind: 'main' });
     refreshForm();
@@ -462,6 +513,10 @@
             if (Number(H[i].price) && (!s || s > 100)) { alert(`${i + 1}번 주택의 지분율(0~100%)을 확인해주세요.`); return; }
         }
         if (mode() === 'oneHouse' && H.filter(h => Number(h.price) && h.kind === 'main').length !== 1) { alert('1세대1주택 계산은 주된 주택 1채와 나머지 특례주택으로 구분해주세요.'); return; }
+        for (const [id, name] of [['birthDate', '생년월일'], ['acqDate', '주된 주택 취득일'], ['moveInDate', '전입신고일']]) {
+            const v = $(id).value;
+            if (mode() === 'oneHouse' && v && !isDate(v)) { alert(`${name}을(를) YYYY-MM-DD 형식으로 입력해주세요.`); return; }
+        }
         const btn = $('calcBtn');
         btn.disabled = true;
         btn.innerText = '계산 중...';
@@ -469,7 +524,7 @@
         try {
             lastInput = {
                 mode: mode(), houseCount: $('houseCount').value, houses: H,
-                age: $('age').value, holdYears: $('holdYears').value,
+                birthDate: $('birthDate').value, acqDate: $('acqDate').value, moveInDate: $('moveInDate').value,
                 prevTotal: digits($('prevTotal').value), paid: digits($('paid').value)
             };
             res = await api('/api/calculate', lastInput);
@@ -497,7 +552,7 @@
         $('resRural').innerText = won(r.rural);
         $('resTotal').innerText = won(r.total);
         $('resNotes').innerHTML = r.notes.map(n => `<div>${esc(n)}</div>`).join('');
-        $('resSections').innerHTML = r.sections.map(s => `<div class="res-sec"><h4>${esc(s.title)}</h4>${s.sub ? `<div class="sec-sub">${esc(s.sub)}</div>` : ''}${s.rows.map(line).join('')}</div>`).join('');
+        $('resSections').innerHTML = r.sections.map(s => `<div class="res-sec"><h4>${esc(s.title)}</h4>${s.sub ? `<div class="sec-sub">${esc(s.sub)}</div>` : ''}${s.desc ? `<div class="sec-desc">${s.desc.map(d => `<div>${esc(d)}</div>`).join('')}</div>` : ''}${s.rows.map(line).join('')}</div>`).join('');
         $('resBasis').innerHTML = r.basis.map(n => `<div>${esc(n)}</div>`).join('');
         $('result').style.display = 'block';
         if (window.matchMedia('(max-width: 860px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
