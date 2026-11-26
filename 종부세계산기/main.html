@@ -162,6 +162,13 @@
     .addr-row button:hover { border-color: #8a6d3b; color: #8a6d3b; }
     .judge-box { margin-top: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-left: 3px solid #1e3a8a; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #1e293b; line-height: 1.7; }
     .judge-box:empty { display: none; }
+    details.more { margin: 4px 0 10px; border-top: 1px dashed #e2e8f0; padding-top: 8px; }
+    details.more summary { cursor: pointer; font-size: 13px; font-weight: 600; color: #8a6d3b; padding: 4px 0; }
+    details.more[open] summary { margin-bottom: 6px; }
+    .sub-sec { background: #f8fafc; border-radius: 8px; padding: 10px 12px 2px; margin-top: 8px; }
+    .sub-sec h5 { margin: 0 0 2px; font-size: 13px; color: #5b4a2e; }
+    .sub-sec .result-row span:first-child { font-size: 12px; }
+    .sub-sec .result-row span:last-child { font-size: 13px; }
     .judge-box.warn { border-left-color: #b45309; background: #fffaf3; }
     @media (max-width: 640px) { .hrow.r1 { grid-template-columns: 1fr 1fr; } .hrow.r1 .h-addr { grid-column: 1 / -1; grid-row: 1; } .hrow.r2, .hrow.r3 { grid-template-columns: 1fr; } }
   </style>
@@ -611,7 +618,9 @@
         $('resRural').innerText = won(r.rural);
         $('resTotal').innerText = won(r.total);
         $('resNotes').innerHTML = r.notes.map(n => `<div>${esc(n)}</div>`).join('');
-        $('resSections').innerHTML = r.sections.map(s => `<div class="res-sec"><h4>${esc(s.title)}</h4>${s.sub ? `<div class="sec-sub">${esc(s.sub)}</div>` : ''}${s.desc ? `<div class="sec-desc">${s.desc.map(d => `<div>${esc(d)}</div>`).join('')}</div>` : ''}${s.rows.map(line).join('')}</div>`).join('');
+        // 주택별 재산세 계산은 '공제할 재산세 산출근거' 안의 자세히 보기로 접어 둠
+        const sub = d => `<div class="sub-sec"><h5>${esc(d.title)}</h5>${d.sub ? `<div class="sec-sub">${esc(d.sub)}</div>` : ''}${d.rows.map(line).join('')}</div>`;
+        $('resSections').innerHTML = r.sections.map(s => `<div class="res-sec"><h4>${esc(s.title)}</h4>${s.sub ? `<div class="sec-sub">${esc(s.sub)}</div>` : ''}${s.desc ? `<div class="sec-desc">${s.desc.map(d => `<div>${esc(d)}</div>`).join('')}</div>` : ''}${s.rows.map(line).join('')}${s.details && s.details.length ? `<details class="more"><summary>${esc(s.detailsLabel || '자세히 보기')}</summary>${s.details.map(sub).join('')}</details>` : ''}</div>`).join('');
         $('resBasis').innerHTML = r.basis.map(n => `<div>${esc(n)}</div>`).join('');
         $('result').style.display = 'block';
         if (nm && !$('filingName').value) $('filingName').value = nm;
