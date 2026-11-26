@@ -222,7 +222,7 @@
 
             <div class="section-title step">본인 소유 주택 <small>6월 1일 현재 · 공시가격은 주택 전체 금액</small></div>
             <div id="houseList"></div>
-            <button type="button" class="floor-add" onclick="addHouse(mode() === 'oneHouse' && $('houseList').children.length ? { kind: 'excluded' } : {}); refreshForm()">+ 주택 추가</button>
+            <button type="button" class="floor-add" onclick="addHouseClick()">+ 주택 추가</button>
             <div id="houseSum" class="live-msg" style="margin-top: 10px;"></div>
 
             <div id="creditBox" class="hidden">
@@ -435,6 +435,12 @@
         $('houseList').appendChild(box);
         Object.entries(v).forEach(([k, val]) => { const el = box.querySelector(`[data-f="${k}"]`); if (el) { if (el.type === 'checkbox') el.checked = !!val; else el.value = val; } });
         return box;
+    }
+    // 1세대1주택 방식에서 2번째부터 추가하는 주택은 특례주택으로 시작
+    // (폼 안의 onclick에서는 'mode'가 라디오 버튼을 가리키므로 함수로 분리)
+    function addHouseClick() {
+        addHouse(mode() === 'oneHouse' && $('houseList').children.length ? { kind: 'excluded' } : {});
+        refreshForm();
     }
     function delHouse(btn) {
         if ($('houseList').children.length <= 1) { alert('주택은 1채 이상 있어야 합니다.'); return; }
