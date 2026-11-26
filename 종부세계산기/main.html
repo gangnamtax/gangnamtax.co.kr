@@ -461,6 +461,7 @@
                 <div><label>재산세 감면율 (%) <span class="hint">(없으면 0)</span></label><input type="text" data-f="reduction" inputmode="decimal" placeholder="0" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); refreshForm()"></div>
                 <div class="r3-hint">종부세에서 공제되는 <b>재산세 본세</b>만 넣습니다. 도시지역분 · 지방교육세 · 지역자원시설세는 빼세요. 규정에 따라 계산한 본세보다 크게 넣으면 규정 계산액으로 공제합니다. 감면율은 지방세특례제한법 등으로 재산세가 감면된 경우만 넣습니다 (조례 가감세율은 감면 아님).</div>
             </div>
+            <label class="check-line h-spouse hidden"><input type="checkbox" data-f="spouseCo" checked onchange="refreshForm()"> 나머지 지분은 <b>배우자</b> 소유 <span class="hint">(1세대1주택 특례 시 공동명의 1주택자로 배우자 지분까지 공시가격·재산세 합산)</span></label>
             <div class="live-msg h-msg"></div>
             <details class="adv"><summary>더 보기 (전입신고일 · 재산세 과세표준상한)</summary>
                 <div class="hgrid">
@@ -498,7 +499,7 @@
             kind: fv(box, 'kind').value, price: digits(fv(box, 'price').value), share: fv(box, 'share').value,
             prevPrice: digits(fv(box, 'prevPrice').value), urban: fv(box, 'urban').checked,
             prevBase: digits(fv(box, 'prevBase').value), propTaxManual: digits(fv(box, 'propTaxManual').value),
-            reduction: fv(box, 'reduction').value
+            reduction: fv(box, 'reduction').value, spouseCo: fv(box, 'spouseCo').checked
         }));
     }
     const count = () => $('houseList').children.length;
@@ -528,7 +529,9 @@
             box.querySelector('.h-kind').classList.toggle('hidden', !sp);
             const price = Number(h.price) || 0, share = Math.min(100, Number(h.share) || 0);
             const red = Math.min(100, Number(h.reduction) || 0);
-            const mine = Math.floor(price * share / 100 * (1 - red / 100));
+            const spouseCo = one && share < 100 && h.spouseCo;
+            box.querySelector('.h-spouse').classList.toggle('hidden', !(one && share && share < 100));
+            const mine = Math.floor(price * (spouseCo ? 100 : share) / 100 * (1 - red / 100));
             sum += mine;
             const msg = [], ph = period(h.acqDate, BASE_DATE);
             let warn = !!(isDate(h.acqDate) && !ph);
@@ -536,7 +539,7 @@
             const resFrom = isDate(h.moveInDate) ? (isDate(h.acqDate) && h.acqDate > h.moveInDate ? h.acqDate : h.moveInDate) : '';
             const pr = resFrom ? period(resFrom, BASE_DATE) : null;
             if (pr) msg.push(`거주 ${pr.text}`);
-            if (price && (share < 100 || red)) msg.push(`종부세 합산 공시가격 ${won(mine)}${red ? ` (감면 ${red}% 반영)` : ''}`);
+            if (price && (share < 100 || red)) msg.push(`종부세 합산 공시가격 ${won(mine)}${spouseCo ? ' (배우자 지분 포함)' : ''}${red ? ` (감면 ${red}% 반영)` : ''}`);
             if (sp && kind === 'replace') {
                 const pn = period(h.acqDate, BASE_DATE);
                 msg.push(`일시적 2주택: 신규주택 취득 후 3년 이내 종전주택(주된 주택)을 양도해야 특례 유지${pn ? ` · 취득 후 ${pn.text}` : ''}`);
@@ -574,7 +577,7 @@
                            `장기보유 ${ph ? (hr ? hr + '%' : '0% (보유 ' + ph.text + ')') : '(주된 주택 취득일 입력)'}`];
             lines.push(`세액공제: ${parts.join(' + ')}${pa && ph ? ` = <b>${Math.min(80, ar + hr)}%</b> (한도 80%)` : ''}`);
         }
-        if (H.some(h => Number(h.price))) lines.push(`공시가격 합계(지분 반영) ${won(sum)} · 공제 ${one ? '12억' : '9억'} ${sum > ded ? '초과 → 종부세 과세' : '이하 → 종부세 없음'}`);
+        if (H.some(h => Number(h.price))) lines.push(`공시가격 합계${one ? '' : '(지분 반영)'} ${won(sum)} · 공제 ${one ? '12억' : '9억'} ${sum > ded ? '초과 → 종부세 과세' : '이하 → 종부세 없음'}`);
         $('judgeBox').innerHTML = lines.map(l => `<div>${l}</div>`).join('');
         $('judgeBox').className = 'judge-box ' + cls;
     }
