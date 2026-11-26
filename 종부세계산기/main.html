@@ -153,7 +153,7 @@
     .hrow { display: grid; gap: 10px; margin-bottom: 10px; }
     .hrow.r1 { grid-template-columns: 150px minmax(0, 1fr) 90px; }
     .hrow.r2 { grid-template-columns: 1fr 1fr; }
-    .hrow.r3 { grid-template-columns: 1fr 1fr; align-items: end; }
+    .hrow.r3 { grid-template-columns: 1.2fr 0.7fr 1.6fr; align-items: end; }
     .hrow label { font-size: 12px; color: #64748b; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .hrow input { padding: 9px 10px; font-size: 13px; }
     .r3-hint { font-size: 11.5px; color: #64748b; line-height: 1.5; }
@@ -250,7 +250,7 @@
             </div>
             <div id="specialBox" class="special hidden">
                 <label class="check-line" style="margin-top: 0;"><input type="checkbox" id="applySpecial" onchange="refreshForm()"> <b>1세대1주택자 특례 신청</b> <span class="hint">(기본공제 12억 · 고령자·장기보유 세액공제)</span></label>
-                <div class="hint" style="margin-top: 6px; line-height: 1.6;">주된 주택 1채 외의 주택이 모두 <b>지방 저가주택 · 상속주택 · 일시적 2주택(대체취득 전 종전주택)</b>이면 신청할 수 있습니다. 공시가격은 모두 합산하고, 세액공제는 주된 주택분에만 적용합니다. 신청하면 주택마다 구분을 고르세요.</div>
+                <div class="hint" style="margin-top: 6px; line-height: 1.6;">주된 주택 1채 외의 주택이 모두 <b>지방 저가주택 · 상속주택 · 일시적 2주택의 신규주택(대체취득)</b>이면 신청할 수 있습니다. 공시가격은 모두 합산하고, 세액공제는 주된 주택분에만 적용합니다. 신청하면 주택마다 구분을 고르세요.</div>
             </div>
 
             <div id="houseList"></div>
@@ -425,7 +425,7 @@
     }
     const digits = s => String(s || '').replace(/[^0-9]/g, '');
     const won = n => Math.round(n).toLocaleString('ko-KR') + ' 원';
-    const KINDS = [['main', '주된 주택'], ['local', '지방 저가주택'], ['inherit', '상속주택'], ['replace', '일시적 2주택 (종전주택)']];
+    const KINDS = [['main', '주된 주택'], ['local', '지방 저가주택'], ['inherit', '상속주택'], ['replace', '일시적 2주택 신규주택']];
     const kindName = k => (KINDS.find(x => x[0] === k) || KINDS[0])[1];
 
     // 지방 저가주택 지역 요건: 수도권·광역시·특별자치시 밖 (광역시 군, 세종 읍·면, 경기 가평·연천, 인천 강화·옹진은 포함)
@@ -457,7 +457,8 @@
             </div>
             <div class="hrow r3">
                 <div><label>올해 납부한 재산세 <span class="hint">(본인분 본세 · 7월 + 9월)</span></label><input type="text" data-f="propTaxManual" inputmode="numeric" placeholder="비우면 공시가격으로 자동 계산" oninput="formatCurrency(this)"></div>
-                <div class="r3-hint">종부세에서 공제되는 <b>재산세 본세</b>만 넣습니다. 도시지역분 · 지방교육세 · 지역자원시설세는 빼세요. 규정에 따라 계산한 본세보다 크게 넣으면 규정 계산액으로 공제합니다.</div>
+                <div><label>재산세 감면율 (%) <span class="hint">(없으면 0)</span></label><input type="text" data-f="reduction" inputmode="decimal" placeholder="0" oninput="this.value = this.value.replace(/[^0-9.]/g, ''); refreshForm()"></div>
+                <div class="r3-hint">종부세에서 공제되는 <b>재산세 본세</b>만 넣습니다. 도시지역분 · 지방교육세 · 지역자원시설세는 빼세요. 규정에 따라 계산한 본세보다 크게 넣으면 규정 계산액으로 공제합니다. 감면율은 지방세특례제한법 등으로 재산세가 감면된 경우만 넣습니다 (조례 가감세율은 감면 아님).</div>
             </div>
             <div class="live-msg h-msg"></div>
             <details class="adv"><summary>더 보기 (전입신고일 · 재산세 과세표준상한)</summary>
@@ -495,7 +496,8 @@
             acqDate: fv(box, 'acqDate').value, moveInDate: fv(box, 'moveInDate').value,
             kind: fv(box, 'kind').value, price: digits(fv(box, 'price').value), share: fv(box, 'share').value,
             prevPrice: digits(fv(box, 'prevPrice').value), urban: fv(box, 'urban').checked,
-            prevBase: digits(fv(box, 'prevBase').value), propTaxManual: digits(fv(box, 'propTaxManual').value)
+            prevBase: digits(fv(box, 'prevBase').value), propTaxManual: digits(fv(box, 'propTaxManual').value),
+            reduction: fv(box, 'reduction').value
         }));
     }
     const count = () => $('houseList').children.length;
@@ -519,15 +521,21 @@
             box.querySelector('.tag').innerText = n === 1 ? '1세대1주택' : sp ? kindName(kind) : '일반';
             box.querySelector('.h-kind').classList.toggle('hidden', !sp);
             const price = Number(h.price) || 0, share = Math.min(100, Number(h.share) || 0);
-            const mine = Math.floor(price * share / 100);
+            const red = Math.min(100, Number(h.reduction) || 0);
+            const mine = Math.floor(price * share / 100 * (1 - red / 100));
             sum += mine;
             const msg = [], ph = period(h.acqDate, BASE_DATE);
+            let warn = !!(isDate(h.acqDate) && !ph);
             if (isDate(h.acqDate)) msg.push(ph ? `보유 ${ph.text}` : '⚠ 6월 1일 이후 취득 → 올해 대상 아님');
             const resFrom = isDate(h.moveInDate) ? (isDate(h.acqDate) && h.acqDate > h.moveInDate ? h.acqDate : h.moveInDate) : '';
             const pr = resFrom ? period(resFrom, BASE_DATE) : null;
             if (pr) msg.push(`거주 ${pr.text}`);
-            if (price && share < 100) msg.push(`본인 지분 공시가격 ${won(mine)}`);
-            let warn = !!(isDate(h.acqDate) && !ph);
+            if (price && (share < 100 || red)) msg.push(`종부세 합산 공시가격 ${won(mine)}${red ? ` (감면 ${red}% 반영)` : ''}`);
+            if (sp && kind === 'replace') {
+                const pn = period(h.acqDate, BASE_DATE);
+                msg.push(`일시적 2주택: 신규주택 취득 후 3년 이내 종전주택(주된 주택)을 양도해야 특례 유지${pn ? ` · 취득 후 ${pn.text}` : ''}`);
+                if (pn && pn.years >= 3) warn = true;
+            }
             if (sp && kind === 'local') {
                 const reg = localRegion(h.address);
                 const okP = price ? price <= 400000000 : null;
