@@ -1,0 +1,42 @@
+# 블로그 새 글을 홈페이지 '세무사 칼럼'에 자동 반영
+# 3시간마다 네이버 블로그 RSS를 확인해 blog-posts.json이 바뀌면 커밋 → GitHub Pages가 다시 배포
+# GitHub 저장소 > Actions 탭 > '블로그 글 갱신' > Run workflow 로 바로 실행할 수도 있음
+name: 블로그 글 갱신
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - blog-highlights.json
+      - scripts/update-blog-posts.js
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-blog-posts
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/update-blog-posts.js
+      - name: 바뀐 내용 커밋
+        run: |
+          if git diff --quiet -- blog-posts.json; then
+            echo "새 글 없음"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add blog-posts.json
+          git commit -m "블로그 새 글 반영 (세무사 칼럼)"
+          git push
