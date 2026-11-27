@@ -172,7 +172,7 @@
         .calc-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15,23,42,.12); }
         .calc-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--sky-light); display: flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; }
         .calc-card h3 { font-size: 20px; font-weight: 700; color: var(--navy); }
-        .calc-desc { color: var(--muted); font-size: 14px; margin-top: 4px; }
+        .calc-desc { color: var(--muted); font-size: 14px; margin: 4px 0 22px; }
         .calc-card ul { list-style: none; margin: 16px 0 22px; padding-top: 14px; border-top: 1px dashed #e2e8f0; color: var(--text); font-size: 14px; }
         .calc-card li { padding: 3px 0; }
         .calc-card li::before { content: '✓ '; color: var(--green); font-weight: 700; }
@@ -192,8 +192,8 @@
         .calc-grid.row5 .calc-go-group { gap: 6px; }
         .btn-navy { background: var(--navy); color: #fff; padding: 16px 28px; font-size: 16px; }
 
-        /* 세무사 칼럼: 왼쪽 최신 글(핵심 요약) + 오른쪽 글 목록 */
-        .column-wrap { display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; align-items: start; }
+        /* 세무사 칼럼: 위에 최신 글(핵심 요약), 그 아래 글 목록 */
+        .column-wrap { display: grid; grid-template-columns: 1fr; gap: 16px; }
         .col-feature { background: #fff; border: 1px solid #e2e8f0; border-top: 4px solid var(--green); border-radius: 14px; padding: 28px 28px 24px; box-shadow: 0 2px 8px rgba(15,23,42,.05); }
         .col-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
         .col-new { background: var(--green); color: #fff; font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 4px; letter-spacing: .05em; }
@@ -260,7 +260,6 @@
             .calc-grid.row5 .calc-card:hover { transform: none; }
             .about-grid { grid-template-columns: 1fr; gap: 24px; padding: 24px 18px; }
             .about-history li { font-size: 14px; }
-            .column-wrap { grid-template-columns: 1fr; }
             .col-feature { padding: 22px 18px 20px; }
             .col-feature h3 { font-size: 18px; }
             .col-list { padding: 4px 18px; }
@@ -392,22 +391,12 @@
                         <span class="calc-icon">🏠</span>
                         <h3>양도세 계산기</h3>
                         <p class="calc-desc">집을 팔기 전에 예상 세액을 미리 확인하세요.</p>
-                        <ul>
-                            <li>1세대 1주택 비과세 · 12억 초과분 과세</li>
-                            <li>장기보유특별공제 (표1 · 표2) 자동 적용</li>
-                            <li>다주택 중과 · 단기세율 자동 적용</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                     <div class="calc-card multi">
                         <span class="calc-icon">🏗️</span>
                         <h3>재개발·재건축 양도세 계산기</h3>
                         <p class="calc-desc">입주권·신축주택을 팔 때와 청산금을 받을 때 세금을 미리 계산하세요.</p>
-                        <ul>
-                            <li>조합원입주권 · 신축주택 양도 (원조합원)</li>
-                            <li>청산금 수령 (조합원 · 현금청산자)</li>
-                            <li>1세대 1주택 비과세 · 12억 초과분 · 공동명의 지분</li>
-                        </ul>
                         <div class="calc-go-group">
                             <a href="재개발계산기/house.html" class="calc-go">주택(입주권·신축) →</a>
                             <a href="재개발계산기/main.html" class="calc-go">청산금 수령액 →</a>
@@ -417,33 +406,18 @@
                         <span class="calc-icon">🎁</span>
                         <h3>부담부증여 계산기</h3>
                         <p class="calc-desc">전세보증금·대출을 함께 넘기는 증여, 세금과 비용을 한 번에 확인하세요.</p>
-                        <ul>
-                            <li>증여자 양도세 · 수증자 증여세 · 취득세 한 번에</li>
-                            <li>순수 증여와 총세액 비교 (절세 효과)</li>
-                            <li>등기비용 추정 · 신고기한 · 주의사항 안내</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                     <a href="상가주택계산기/main.html" class="calc-card">
                         <span class="calc-icon">🏬</span>
                         <h3>상가주택 양도세 계산기</h3>
                         <p class="calc-desc">1층 상가·위층 주택인 겸용주택, 주택분과 상가분 세금을 나눠 계산하세요.</p>
-                        <ul>
-                            <li>주택·상가 면적 판정 (12억 초과 고가 겸용주택)</li>
-                            <li>기준시가 비율 안분 · 주택분 비과세 · 장특공 표1·표2</li>
-                            <li>부수토지 배율 초과분 비사업용 토지 계산</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                     <a href="토지계산기/main.html" class="calc-card">
                         <span class="calc-icon">🌾</span>
                         <h3>토지 양도세 계산기</h3>
                         <p class="calc-desc">땅 여러 필지를 한 번에 팔 때, 필지별 차익과 합산 세금을 계산하세요.</p>
-                        <ul>
-                            <li>필지별 양도차익 · 장기보유특별공제 · 차손 통산</li>
-                            <li>일괄양도 기준시가·감정가 안분 · 환산취득가액</li>
-                            <li>비사업용 +10%p · 단기세율 비교과세 자동 적용</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                 </div>
@@ -455,33 +429,18 @@
                         <span class="calc-icon">🕊️</span>
                         <h3>상속세 계산기</h3>
                         <p class="calc-desc">상속재산과 상속인을 넣으면 상속공제와 예상 세액을 계산해 드려요.</p>
-                        <ul>
-                            <li>일괄공제 · 인적공제 · 배우자공제 자동 비교</li>
-                            <li>금융재산 · 동거주택 상속공제</li>
-                            <li>사전증여재산 합산 (상속인 10년 · 그 외 5년)</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                     <a href="증여세계산기/main.html" class="calc-card">
                         <span class="calc-icon">💝</span>
                         <h3>증여세 계산기</h3>
                         <p class="calc-desc">현금·부동산 증여 전에 증여세를 미리 확인하세요.</p>
-                        <ul>
-                            <li>관계별 증여재산공제 자동 적용</li>
-                            <li>혼인 · 출산 공제 1억</li>
-                            <li>10년 내 동일인 증여 합산 · 공제 한도 관리</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                     <a href="주식평가계산기/main.html" class="calc-card">
                         <span class="calc-icon">📈</span>
                         <h3>주식평가 계산기</h3>
                         <p class="calc-desc">상속·증여할 비상장주식, 세법이 정한 방법으로 1주당 가치를 미리 평가하세요.</p>
-                        <ul>
-                            <li>순손익가치 · 순자산가치 가중평균 (3 : 2)</li>
-                            <li>부동산과다법인 판정 · 순자산가치 80% 하한</li>
-                            <li>최대주주 할증 · 상장주식 평가</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                 </div>
@@ -493,11 +452,6 @@
                         <span class="calc-icon">🏘️</span>
                         <h3>종합부동산세 계산기</h3>
                         <p class="calc-desc">주택 공시가격만 넣으면 재산세와 종부세 고지 금액을 미리 확인할 수 있어요.</p>
-                        <ul>
-                            <li>기본공제 9억 · 1세대1주택 12억 (지방 저가주택 특례)</li>
-                            <li>재산세 과세표준상한 · 공제할 재산세 자동 계산</li>
-                            <li>고령자·장기보유 세액공제 · 세부담상한 150%</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                 </div>
@@ -510,24 +464,12 @@
                         <span class="calc-icon">📒</span>
                         <h3>개인사업자</h3>
                         <p class="calc-desc">장부를 써야 할지, 추계로 신고해도 될지, 기장료는 얼마인지 한 번에 알려드려요.</p>
-                        <ul>
-                            <li>기장의무 판정 (복식부기 · 간편장부)</li>
-                            <li>경비율 판정 (업종별 단순 · 기준경비율)</li>
-                            <li>성실신고확인 대상 여부</li>
-                            <li>나의 기장료는? (월 기장료 · 조정료)</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                     <a href="기장료계산기/corp.html" class="calc-card">
                         <span class="calc-icon">🏢</span>
                         <h3>법인</h3>
                         <p class="calc-desc">예상 이익으로 법인세를, 매출액으로 기장료와 조정료를 한 번에 알려드려요.</p>
-                        <ul>
-                            <li>예상 법인세액 (지방소득세 포함)</li>
-                            <li>나의 기장료는? (매출 구간별 월 기장료)</li>
-                            <li>법인세 세무조정료 자동 계산</li>
-                            <li>세금 + 보수 1년 합계</li>
-                        </ul>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                 </div>
@@ -538,13 +480,7 @@
                     <a href="기업진단계산기/main.html" class="calc-card">
                         <span class="calc-icon">🏗️</span>
                         <h3>건설업 기업진단</h3>
-                        <p class="calc-desc">재무상태표만 올리면 실질자본을 계산해 보유 면허의 기준자본금 충족 여부를 알려드려요.</p>
-                        <ul>
-                            <li>재무상태표 자동 입력 (PDF · 엑셀 · 스캔본)</li>
-                            <li>부실자산 · 겸업자산 차감</li>
-                            <li>면허별 기준자본금 · 추가 등록 특례</li>
-                            <li>충족 · 미달 판정, 보고서 출력</li>
-                        </ul>
+                        <p class="calc-desc">실질자본을 계산해 보유 면허의 기준자본금 충족 여부를 알려드려요.</p>
                         <span class="calc-go">계산해보기 →</span>
                     </a>
                 </div>
