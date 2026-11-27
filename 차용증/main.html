@@ -55,10 +55,17 @@
     .person.off .person-fields { display: none; }
     .accel-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: #334155; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 6px; padding: 6px 10px; margin: 2px 0 8px; }
     .accel-row span:first-child { font-weight: 700; color: #5b4a2e; margin-right: 4px; }
-    .accel-row input { width: 52px; height: 28px; text-align: center; padding: 2px 4px; }
+    .accel-row input { width: 44px; height: 28px; text-align: center; padding: 2px 4px; -moz-appearance: textfield; }
+    .accel-row input::-webkit-outer-spin-button, .accel-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .stepper { display: inline-flex; align-items: center; gap: 3px; }
+    .stepper button { width: 28px; height: 28px; border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; font-size: 16px; font-weight: 700; line-height: 1; color: #5b4a2e; cursor: pointer; font-family: inherit; padding: 0; }
+    .stepper button:hover { background: #f1f5f9; }
+    .stepper button:disabled { opacity: .4; cursor: default; }
+    .result-row { margin: 12px 0 4px; }
+    .result-row .btn { width: 100%; padding: 12px; font-size: 15px; }
+    .dirty-msg { display: none; margin-top: 6px; font-size: 12px; color: #c2410c; text-align: center; }
+    .dirty-msg.show { display: block; }
     .party .val[data-v$="Name"], .sign .nm span[data-v$="Name"] { font-weight: 700; }
-    .clause-edit { margin-top: 4px; font-size: 13px; }
-    .clause-edit summary { cursor: pointer; color: #8a6d3b; font-weight: 600; margin-bottom: 8px; }
 
     .tax-box { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: #5b4a2e; line-height: 1.55; }
     .tax-box b { color: #3f3320; }
@@ -290,7 +297,7 @@
           <div class="live-msg" id="principalKo"></div>
           <label class="check-line inline"><input type="checkbox" id="noInterest"> 무이자</label>
         </div>
-        <div class="tax-box" id="taxBox">원금을 넣으면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.</div>
+        <div class="tax-box" id="taxBox">원금을 넣고 아래 [결과보기]를 누르면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.</div>
         <details class="rate-table" id="rateTableWrap">
           <summary>차용금액별 최소 이자율 표 보기</summary>
           <div class="rt-scroll"><table id="rateTable"></table></div>
@@ -311,22 +318,18 @@
         <div class="accel-row">
           <span>기한이익 상실</span>
           <span id="accelWhat">이자 지급을</span>
-          <input id="accelCount" type="number" min="1" max="12" value="3" inputmode="numeric">
+          <span class="stepper">
+            <button type="button" id="accelMinus" aria-label="1회 줄이기">−</button>
+            <input id="accelCount" type="number" min="1" max="12" value="1" inputmode="numeric" aria-label="연체 횟수">
+            <button type="button" id="accelPlus" aria-label="1회 늘리기">+</button>
+          </span>
           <span>회 이상 연체하면 즉시 전액 변제</span>
         </div>
 
-        <details class="clause-edit">
-          <summary>조항 문구 직접 고치기 <span class="hint">(**강조**는 굵게)</span></summary>
-          <div class="form-group">
-            <label>원금 변제 조항</label>
-            <textarea id="repayText" rows="6"></textarea>
-            <label class="check-line" style="margin:4px 0 0"><input type="checkbox" id="repayAuto" checked> 위 입력값으로 자동 작성</label>
-          </div>
-          <div class="form-group">
-            <label>기한이익 상실 조항</label>
-            <textarea id="accelText" rows="4"></textarea>
-          </div>
-        </details>
+        <div class="result-row">
+          <button type="button" class="btn btn-main" id="resultBtn">결과보기</button>
+          <div class="dirty-msg" id="dirtyMsg">입력을 바꿨어요. [결과보기]를 눌러야 차용증에 반영됩니다.</div>
+        </div>
 
         <p class="notice">
           ※ 성명·주민등록번호·주소·계좌는 이 브라우저 안에서만 쓰이며 서버로 보내지 않습니다. 원금·이자율은 계산을 위해 보내지만 저장하지 않습니다.<br>
@@ -606,10 +609,10 @@
   }
   window.formRecalc = fetchLoan;
   async function ensureFresh() { if (!fresh()) await fetchLoan(); else if (pending) await pending; }
-  window.printForm = async function () { await ensureFresh(); window.print(); };
+  window.printForm = async function () { await showResult(); window.print(); };
 
   function taxCheck() {
-    if (!fresh()) { clearTimeout(timer); timer = setTimeout(fetchLoan, 350); return; }
+    if (!L) return;
     $('rateTable').innerHTML = L.tableHtml;
     $('taxBox').className = 'tax-box ' + (L.taxCls || '');
     $('taxBox').innerHTML = L.taxHtml;
@@ -621,14 +624,40 @@
     const ar = +b.dataset.apply;
     $('noInterest').checked = ar === 0;
     $('rate').value = ar ? String(ar) : '';
-    render();
+    syncInputs();
+    showResult();
   });
+
+  // ---------- 미리보기 렌더 ----------
+  // 입력란 도움 (입력하는 동안 바로): 연대보증인 칸 · 한글 금액 · 무이자면 이자 칸 숨김 · 기한이익 상실 문구
+  function syncInputs() {
+    $('guarantorBox').classList.toggle('off', !$('hasGuarantor').checked);
+    const p = num($('principal').value);
+    $('principalKo').textContent = p ? `일금 ${toKorean(p)}원정` : '';
+    const noInt = $('noInterest').checked;
+    $('interestRow').style.visibility = noInt ? 'hidden' : '';
+    $('payDayRow').style.visibility = noInt ? 'hidden' : '';
+    $('accelWhat').textContent = noInt ? '원금 상환을' : '이자 지급을';
+    const n = accelN();
+    $('accelMinus').disabled = n <= 1; $('accelPlus').disabled = n >= 12;
+  }
+  const accelN = () => Math.min(12, Math.max(1, parseInt($('accelCount').value, 10) || 1));
+
+  // [결과보기]: 입력한 내용을 한 번에 서버 계산 · 차용증 미리보기에 반영
+  let shown = false;
+  async function showResult() {
+    const btn = $('resultBtn');
+    btn.disabled = true; btn.textContent = '계산 중...';
+    try { await ensureFresh(); } finally { btn.disabled = false; btn.textContent = '결과보기'; }
+    render();
+    shown = true;
+    $('dirtyMsg').classList.remove('show');
+  }
 
   // ---------- 미리보기 렌더 ----------
   function render() {
     const mask = $('maskId').checked;
     const hasGt = $('hasGuarantor').checked;
-    $('guarantorBox').classList.toggle('off', !hasGt);
 
     form.querySelectorAll('[data-k]').forEach((el) => {
       let v = el.value.trim();
@@ -639,25 +668,17 @@
     });
 
     const p = num($('principal').value);
-    $('principalKo').textContent = p ? `일금 ${toKorean(p)}원정` : '';
     $('pvKo').textContent = p ? toKorean(p) : ' '.repeat(30);
     $('pvNum').textContent = p ? comma(p) : ' '.repeat(20);
 
     const noInt = $('noInterest').checked;
-    $('interestRow').style.visibility = noInt ? 'hidden' : '';
-    $('payDayRow').style.visibility = noInt ? 'hidden' : '';
     const rate = parseFloat($('rate').value);
     const payDay = $('payDay').value;
     $('pvRate').textContent = noInt ? '무이자' : `연 ( ${isNaN(rate) ? '      ' : rate} )%` + (!isNaN(rate) && p ? `  (연 ${comma(annualInterest(p, rate))}원)` : '');
     $('pvPayDay').textContent = noInt ? '-' : `매월 ( ${payDay || '    '} )일`;
 
-    if ($('repayAuto').checked) $('repayText').value = repayDefault();
-    $('pvRepay').innerHTML = clauseHtml($('repayText').value);
-
-    const accelN = Math.max(1, parseInt($('accelCount').value, 10) || 3);
-    $('accelWhat').textContent = noInt ? '원금 상환을' : '이자 지급을';
-    if (!$('accelText').dataset.edited) $('accelText').value = accelDefault(noInt, accelN);
-    $('pvAccel').innerHTML = clauseHtml($('accelText').value);
+    $('pvRepay').innerHTML = clauseHtml(repayDefault());
+    $('pvAccel').innerHTML = clauseHtml(accelDefault(noInt, accelN()));
 
     $('pvClosing').textContent = hasGt
       ? '채무자는 위와 같은 조건으로, 채권자로부터 틀림없이 위 돈을 차용하였으며, 연대보증인은 채무자의 채무이행을 연대보증 하기로 한다.'
@@ -677,8 +698,6 @@
     const n = num(el.value); el.value = n ? comma(n) : '';
   }));
   form.querySelectorAll('[data-rrn]').forEach((el) => el.addEventListener('input', () => { el.value = fmtRrn(el.value); }));
-  $('repayText').addEventListener('input', () => { $('repayAuto').checked = false; });
-  $('accelText').addEventListener('input', () => { $('accelText').dataset.edited = '1'; });
   // 채권자 성명 → 예금주 기본값
   const holderEl = form.querySelector('[data-k="holder"]');
   form.querySelector('[data-k="crName"]').addEventListener('input', (e) => {
@@ -686,8 +705,16 @@
   });
   holderEl.addEventListener('input', () => { holderEl.dataset.edited = '1'; });
 
-  form.addEventListener('input', render);
-  form.addEventListener('change', render);
+  // 입력 중에는 미리보기를 바꾸지 않고, 이미 결과를 본 뒤 바꾸면 안내만 띄움
+  const markDirty = () => { syncInputs(); if (shown) $('dirtyMsg').classList.add('show'); };
+  form.addEventListener('input', markDirty);
+  form.addEventListener('change', markDirty);
+  $('resultBtn').addEventListener('click', showResult);
+  // 기한이익 상실 횟수 − / +
+  const stepAccel = (d) => { $('accelCount').value = Math.min(12, Math.max(1, accelN() + d)); markDirty(); };
+  $('accelMinus').addEventListener('click', () => stepAccel(-1));
+  $('accelPlus').addEventListener('click', () => stepAccel(1));
+  $('accelCount').addEventListener('blur', () => { $('accelCount').value = accelN(); syncInputs(); });
 
   function today() {
     const d = new Date();
@@ -696,10 +723,16 @@
   $('resetBtn').addEventListener('click', () => {
     if (!confirm('입력한 내용을 모두 지울까요?')) return;
     form.reset();
-    delete $('accelText').dataset.edited; delete holderEl.dataset.edited;
+    delete holderEl.dataset.edited;
     $('writeDate').value = today();
-    $('accelCount').value = 3;
+    $('accelCount').value = 1;
     $('bankSel').dispatchEvent(new Event('change'));
+    syncInputs();
+    L = null; shown = false;
+    $('dirtyMsg').classList.remove('show');
+    $('rateTable').innerHTML = '';
+    $('taxBox').className = 'tax-box';
+    $('taxBox').textContent = '원금을 넣고 아래 [결과보기]를 누르면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.';
     render();
   });
 
@@ -766,8 +799,9 @@
 
   FormTools.setupDates(form);
   FormTools.enterToNext(form);
-  FormTools.setupBank($('bankSel'), $('bankEtc'), $('account'), render);
+  FormTools.setupBank($('bankSel'), $('bankEtc'), $('account'), markDirty);
   $('writeDate').value = today();
+  syncInputs();
   render();
 })();
 </script>
