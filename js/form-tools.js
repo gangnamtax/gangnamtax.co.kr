@@ -188,5 +188,23 @@
     sync();
   }
 
-  window.FormTools = { setupDates, setupBank, formatAccount, BANKS, isDate };
+  // ---------- 엔터 → 다음 입력칸 (양도세·종부세 계산기와 같은 방식) ----------
+  // 한글 조합 중·여러 줄 입력칸·체크칸·버튼은 제외, 숨은 칸·읽기 전용 칸은 건너뜀
+  function enterToNext(root) {
+    root.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229 || e.shiftKey || e.ctrlKey || e.altKey) return;
+      const el = e.target;
+      if (!el.matches('input, select') || el.matches('[type="checkbox"], [type="radio"], [type="button"], [type="submit"]')) return;
+      e.preventDefault();
+      if (dpTarget) close();
+      const list = [...root.querySelectorAll('input, select, textarea')].filter((x) =>
+        !x.disabled && !x.readOnly && x.type !== 'hidden' && x.type !== 'checkbox' && x.type !== 'radio' &&
+        x.tagName !== 'TEXTAREA' && x.offsetParent !== null && getComputedStyle(x).visibility !== 'hidden');
+      const next = list[list.indexOf(el) + 1];
+      if (next) { next.focus(); if (next.select && next.tagName === 'INPUT') next.select(); }
+      else el.blur();
+    });
+  }
+
+  window.FormTools = { setupDates, setupBank, formatAccount, enterToNext, BANKS, isDate };
 })();

@@ -680,6 +680,7 @@
   $('moveY').innerHTML = '<option value="">년</option>' + Array.from({ length: 6 }, (_, i) => `<option value="${ty + i}">${ty + i}년</option>`).join('');
   $('moveM').innerHTML = '<option value="">월</option>' + Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('');
   FormTools.setupDates(form);
+  FormTools.enterToNext(form);
   $('writeDate').value = today();
   importLoan();
   render();

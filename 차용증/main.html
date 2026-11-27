@@ -281,15 +281,15 @@
 
         <div class="section-title">원금 변제</div>
         <div class="grid-3">
-          <div class="form-group"><label>상환기한</label><input id="dueDate" data-date></div>
-          <div class="form-group"><label>매월 최소 상환액 <span class="hint">(선택)</span></label><input id="monthly" data-money placeholder="500,000" inputmode="numeric"></div>
           <div class="form-group"><label>작성일</label><input id="writeDate" data-date></div>
+          <div class="form-group"><label>매월 원금 상환액 <span class="hint">(선택)</span></label><input id="monthly" data-money placeholder="500,000" inputmode="numeric"></div>
+          <div class="form-group"><label>상환기한 <span class="hint">(선택)</span></label><input id="dueDate" data-date></div>
           <div class="form-group"><label>상환 은행</label><select data-k="bankSel" id="bankSel"></select>
             <input data-k="bankEtc" id="bankEtc" placeholder="은행명 직접 입력" style="margin-top:4px;display:none"></div>
-          <div class="form-group"><label>계좌번호</label><input data-k="account" id="account" placeholder="은행 선택 후 숫자만" inputmode="numeric"></div>
+          <div class="form-group"><label>계좌번호</label><input data-k="account" id="account" placeholder="비우면 '채권자의 지정계좌'" inputmode="numeric"></div>
           <div class="form-group"><label>예금주</label><input data-k="holder" placeholder="채권자 성명"></div>
         </div>
-        <label class="check-line"><input type="checkbox" id="realEstate" checked> 상환기한 전 부동산 양도 시 잔액 전액 상환</label>
+        <label class="check-line"><input type="checkbox" id="realEstate" checked> 차용 당시 매수한 부동산 양도 시 잔액 전액 상환</label>
         <div class="accel-row">
           <span>기한이익 상실</span>
           <span id="accelWhat">이자 지급을</span>
@@ -494,15 +494,23 @@
   // ---------- 원금 변제 조항 자동 문구 ----------
   function repayDefault() {
     const m = num($('monthly').value);
-    const due = fmtDate($('dueDate').value) || '\u3000\u3000\u3000년 \u3000\u3000월 \u3000\u3000일';
+    const due = fmtDate($('dueDate').value);   // 비어 있으면 상환기한 문구를 넣지 않음
     const items = [];
-    let first = `원금의 **상환기한은 ${due}**로 한다.`;
-    if ($('realEstate').checked) first += ' 다만, 상환기한 전에 차용 당시 매수한 부동산을 양도하는 경우에는 **양도대금 수령일에 차용금 잔액 전액을 상환**한다.';
-    items.push(first);
-    if (m) items.push(`채무자는 상환기한까지 수입에 따라 변동 가능하되, **매월 말일 ${toKorean(m)}원(₩${comma(m)}) 이상**씩 원금을 분할 상환한다.`);
+    if (due) {
+      items.push(`원금의 **상환기한은 ${due}**로 한다.` + ($('realEstate').checked
+        ? ' 다만, 상환기한 전에 차용 당시 매수한 부동산을 양도하는 경우에는 **양도대금 수령일에 차용금 잔액 전액을 상환**한다.' : ''));
+    } else if ($('realEstate').checked) {
+      items.push('차용 당시 매수한 부동산을 양도하는 경우에는 **양도대금 수령일에 차용금 잔액 전액을 상환**한다.');
+    }
+    if (m) items.push(`채무자는 ${due ? '상환기한까지 ' : ''}수입에 따라 변동 가능하되, **매월 말일 ${toKorean(m)}원(₩${comma(m)}) 이상**씩 원금을 분할 상환한다.`);
+    const who = $('noInterest').checked ? '원금은' : '원금 및 이자는';
     const bank = field('bankSel') === '기타' ? field('bankEtc') : field('bankSel'), acc = field('account'), holder = field('holder');
-    const accLine = [bank, acc, holder ? `(예금주 ${holder})` : ''].filter(Boolean).join(' ');
-    items.push(`${$('noInterest').checked ? '원금은' : '원금 및 이자는'} 아래 예금계좌로 송금하여 변제한다.\n상환계좌 : ${accLine ? '**' + accLine + '**' : '            은행'}`);
+    if (acc) {
+      const accLine = [bank, acc, holder ? `(예금주 ${holder})` : ''].filter(Boolean).join(' ');
+      items.push(`${who} 아래 예금계좌로 송금하여 변제한다.\n상환계좌 : **${accLine}**`);
+    } else {
+      items.push(`${who} **채권자의 지정계좌**로 송금하여 변제한다.`);   // 계좌를 비워 두면
+    }
     return items.map((t, i) => `${i + 1}. ${t}`).join('\n');
   }
 
@@ -702,6 +710,7 @@
   });
 
   FormTools.setupDates(form);
+  FormTools.enterToNext(form);
   FormTools.setupBank($('bankSel'), $('bankEtc'), $('account'), render);
   $('writeDate').value = today();
   render();
