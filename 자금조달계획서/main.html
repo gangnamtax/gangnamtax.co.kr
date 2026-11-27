@@ -148,6 +148,7 @@
     }
   </style>
 <script src="/visit.js" defer></script>
+<script src="../js/form-tools.js"></script>
 </head>
 <body>
   <div class="wrapper">
@@ -195,7 +196,7 @@
         <div class="section-title">거래 <small>매수인 모두 같음</small></div>
         <div class="grid-2">
           <div class="form-group"><label>총 거래금액 (원) <span class="hint">계약서상 매매대금</span></label><input id="total" data-money inputmode="numeric" placeholder="900,000,000"></div>
-          <div class="form-group"><label>작성일</label><input id="writeDate" type="date"></div>
+          <div class="form-group"><label>작성일</label><input id="writeDate" data-date></div>
         </div>
         <div class="joint">
           <label class="check-line"><input type="checkbox" id="joint"> 공동명의 (부부 등 매수인 2명)</label>
@@ -317,7 +318,7 @@
             <label><input type="radio" name="move" value="etc"> 그 밖의 경우 (재건축 등)</label>
           </div>
           <div class="grid-2">
-            <div class="form-group"><label>입주 예정 시기</label><input data-k="moveWhen" type="month"></div>
+            <div class="form-group"><label>입주 예정 시기</label><div class="grid-2" style="gap:0 6px"><select data-k="moveY" id="moveY"></select><select data-k="moveM" id="moveM"></select></div></div>
             <div class="form-group"><label>임대 형태</label><select data-k="rentKind"><option value="">선택</option><option value="jeonse">전세</option><option value="wolse">월세</option></select></div>
           </div>
         </div>
@@ -457,13 +458,13 @@
   function front(o, last) {
     const v = calc(o);
     const mv = o.move;
-    const [wy, wm] = (S(o, 'moveWhen') || '-').split('-');
+    const wy = S(o, 'moveY'), wm = S(o, 'moveM');
     const inMove = mv === 'self' || mv === 'family';
     const rk = S(o, 'rentKind');
     const own = S(o, 'ownHouse');
     const ck = S(o, 'cashKind');
     const gr = S(o, 'giftRel'), lr = S(o, 'loanRel');
-    const d = $('writeDate').value;
+    const d = FormTools.isDate($('writeDate').value) ? $('writeDate').value : '';
     let h = '';
     // 제출인 (성명 | 주민등록번호 사이 구분선: 원본 칸 선과 같은 굵기·색)
     h += '<div class="vline" style="left:300pt;top:114pt;height:31pt"></div>';
@@ -674,6 +675,11 @@
     $('importBar').classList.add('show');
   }
 
+  // 입주 예정 시기: 년·월 고르기
+  const ty = new Date().getFullYear();
+  $('moveY').innerHTML = '<option value="">년</option>' + Array.from({ length: 6 }, (_, i) => `<option value="${ty + i}">${ty + i}년</option>`).join('');
+  $('moveM').innerHTML = '<option value="">월</option>' + Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('');
+  FormTools.setupDates(form);
   $('writeDate').value = today();
   importLoan();
   render();

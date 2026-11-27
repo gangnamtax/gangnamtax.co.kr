@@ -53,6 +53,10 @@
     .person > b { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5b4a2e; margin-bottom: 6px; }
     .person.off > b { margin-bottom: 0; }
     .person.off .person-fields { display: none; }
+    .accel-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: #334155; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 6px; padding: 6px 10px; margin: 2px 0 8px; }
+    .accel-row span:first-child { font-weight: 700; color: #5b4a2e; margin-right: 4px; }
+    .accel-row input { width: 52px; height: 28px; text-align: center; padding: 2px 4px; }
+    .party .val[data-v$="Name"], .sign .nm span[data-v$="Name"] { font-weight: 700; }
     .clause-edit { margin-top: 4px; font-size: 13px; }
     .clause-edit summary { cursor: pointer; color: #8a6d3b; font-weight: 600; margin-bottom: 8px; }
 
@@ -182,6 +186,7 @@
     }
   </style>
 <script src="/visit.js" defer></script>
+<script src="../js/form-tools.js"></script>
 </head>
 <body>
   <div class="wrapper">
@@ -276,14 +281,21 @@
 
         <div class="section-title">원금 변제</div>
         <div class="grid-3">
-          <div class="form-group"><label>상환기한</label><input id="dueDate" type="date"></div>
+          <div class="form-group"><label>상환기한</label><input id="dueDate" data-date></div>
           <div class="form-group"><label>매월 최소 상환액 <span class="hint">(선택)</span></label><input id="monthly" data-money placeholder="500,000" inputmode="numeric"></div>
-          <div class="form-group"><label>작성일</label><input id="writeDate" type="date"></div>
-          <div class="form-group"><label>상환 은행</label><input data-k="bank" placeholder="OO은행"></div>
-          <div class="form-group"><label>계좌번호</label><input data-k="account" placeholder="000-000000-00-000"></div>
+          <div class="form-group"><label>작성일</label><input id="writeDate" data-date></div>
+          <div class="form-group"><label>상환 은행</label><select data-k="bankSel" id="bankSel"></select>
+            <input data-k="bankEtc" id="bankEtc" placeholder="은행명 직접 입력" style="margin-top:4px;display:none"></div>
+          <div class="form-group"><label>계좌번호</label><input data-k="account" id="account" placeholder="은행 선택 후 숫자만" inputmode="numeric"></div>
           <div class="form-group"><label>예금주</label><input data-k="holder" placeholder="채권자 성명"></div>
         </div>
         <label class="check-line"><input type="checkbox" id="realEstate" checked> 상환기한 전 부동산 양도 시 잔액 전액 상환</label>
+        <div class="accel-row">
+          <span>기한이익 상실</span>
+          <span id="accelWhat">이자 지급을</span>
+          <input id="accelCount" type="number" min="1" max="12" value="3" inputmode="numeric">
+          <span>회 이상 연체하면 즉시 전액 변제</span>
+        </div>
 
         <details class="clause-edit">
           <summary>조항 문구 직접 고치기 <span class="hint">(**강조**는 굵게)</span></summary>
@@ -440,8 +452,9 @@
 (function () {
   const $ = (id) => document.getElementById(id);
   const form = $('form');
-  const DEFAULT_ACCEL = '1. 이자의 지급을 **1회라도 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원리금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.';
-  const DEFAULT_ACCEL_NO_INT = '1. 원금의 상환을 **2회 이상 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.';
+  const accelDefault = (noInt, n) => noInt
+    ? `1. 원금의 상환을 **${n}회 이상 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.`
+    : `1. 이자의 지급을 **${n}회 이상 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원리금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.`;
   const OFFICIAL_RATE = 4.6; // 상증법 시행규칙 제10조의5 적정이자율
   const GIFT_LIMIT = 10000000; // 상증법 제41조의4: 연 이익 1천만원 미만은 증여 아님
 
@@ -469,7 +482,7 @@
   const won = (n) => (Math.round(n) ? comma(Math.round(n)) : '0') + '원';
 
   function fmtDate(v) {
-    if (!v) return '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v || '')) return '';
     const [y, m, d] = v.split('-');
     return `${y}년 ${m}월 ${d}일`;
   }
@@ -487,7 +500,7 @@
     if ($('realEstate').checked) first += ' 다만, 상환기한 전에 차용 당시 매수한 부동산을 양도하는 경우에는 **양도대금 수령일에 차용금 잔액 전액을 상환**한다.';
     items.push(first);
     if (m) items.push(`채무자는 상환기한까지 수입에 따라 변동 가능하되, **매월 말일 ${toKorean(m)}원(₩${comma(m)}) 이상**씩 원금을 분할 상환한다.`);
-    const bank = field('bank'), acc = field('account'), holder = field('holder');
+    const bank = field('bankSel') === '기타' ? field('bankEtc') : field('bankSel'), acc = field('account'), holder = field('holder');
     const accLine = [bank, acc, holder ? `(예금주 ${holder})` : ''].filter(Boolean).join(' ');
     items.push(`${$('noInterest').checked ? '원금은' : '원금 및 이자는'} 아래 예금계좌로 송금하여 변제한다.\n상환계좌 : ${accLine ? '**' + accLine + '**' : '            은행'}`);
     return items.map((t, i) => `${i + 1}. ${t}`).join('\n');
@@ -614,6 +627,7 @@
       let v = el.value.trim();
       if (el.hasAttribute('data-rrn') && mask && v.length > 8) v = v.slice(0, 8) + '******';
       if (!hasGt && el.dataset.k.startsWith('gt')) v = '';
+      if (/Name$/.test(el.dataset.k)) v = v.replace(/\s+/g, '').split('').join(' ');
       document.querySelectorAll(`[data-v="${el.dataset.k}"]`).forEach((t) => { t.textContent = v; });
     });
 
@@ -633,7 +647,9 @@
     if ($('repayAuto').checked) $('repayText').value = repayDefault();
     $('pvRepay').innerHTML = clauseHtml($('repayText').value);
 
-    if (!$('accelText').dataset.edited) $('accelText').value = noInt ? DEFAULT_ACCEL_NO_INT : DEFAULT_ACCEL;
+    const accelN = Math.max(1, parseInt($('accelCount').value, 10) || 3);
+    $('accelWhat').textContent = noInt ? '원금 상환을' : '이자 지급을';
+    if (!$('accelText').dataset.edited) $('accelText').value = accelDefault(noInt, accelN);
     $('pvAccel').innerHTML = clauseHtml($('accelText').value);
 
     $('pvClosing').textContent = hasGt
@@ -670,6 +686,8 @@
     form.reset();
     delete $('accelText').dataset.edited; delete holderEl.dataset.edited;
     $('writeDate').value = today();
+    $('accelCount').value = 3;
+    $('bankSel').dispatchEvent(new Event('change'));
     render();
   });
 
@@ -683,6 +701,8 @@
     location.href = '../자금조달계획서/main.html';
   });
 
+  FormTools.setupDates(form);
+  FormTools.setupBank($('bankSel'), $('bankEtc'), $('account'), render);
   $('writeDate').value = today();
   render();
 })();
