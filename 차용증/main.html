@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세무회계강남 차용증 작성하기</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="가족·지인 간 금전 차용증을 바로 작성하고 인쇄하세요. 원금 한글 금액 자동 변환, 이자·변제조건·기한이익 상실 조항, 연대보증인, 가족 간 차용 시 증여세(적정이자율 4.6%) 점검까지 - 세무회계강남">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #f4f6fa; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #1e293b; margin: 0; padding: 40px 20px; }
+    .wrapper { max-width: 1440px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,.06); border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; padding: 24px 32px; }
+    .eyebrow { display: block; font-size: 12px; font-weight: 500; color: #a08452; letter-spacing: .5px; margin-bottom: 4px; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .header h1 small { font-size: 17px; font-weight: 500; color: #64748b; margin-left: 2px; }
+    .back-home { display: inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px; }
+    .back-home:hover { color: #8a6d3b; }
+    .home-link { font-size: 13px; color: #8a6d3b; text-decoration: none; font-weight: 600; white-space: nowrap; }
+    .home-link:hover { text-decoration: underline; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 20px; align-items: start; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,.06); padding: 28px; }
+    .form-card { max-height: calc(100vh - 40px); overflow-y: auto; position: sticky; top: 20px; padding: 18px 20px; }
+
+    .section-title { font-size: 14px; font-weight: 700; color: #5b4a2e; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #eadfc9; display: flex; justify-content: space-between; align-items: center; }
+    .section-title:first-child { margin-top: 0; }
+    .section-title small { font-size: 11px; font-weight: normal; color: #94a3b8; }
+    .form-group { margin-bottom: 8px; min-width: 0; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 3px; }
+    .hint { font-size: 11px; color: #94a3b8; font-weight: normal; }
+    input, select, textarea { width: 100%; padding: 6px 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #fff; font-family: inherit; color: inherit; height: 32px; }
+    input[type="checkbox"] { height: auto; }
+    textarea { resize: vertical; line-height: 1.5; min-height: 60px; height: auto; font-size: 12.5px; }
+    input:focus, select:focus, textarea:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    .grid-p { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 0 8px; }
+    .grid-p .span2 { grid-column: span 2; }
+    .grid-p .form-group:last-child { margin-bottom: 0; }
+    .grid-m { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 0 8px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 8px; }
+    .row-sub { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: -2px 0 8px; min-height: 18px; }
+    .live-msg { font-size: 12px; color: #8a6d3b; font-weight: 600; }
+    .check-line { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: normal; color: #334155; cursor: pointer; margin: 2px 0 6px; }
+    .check-line.inline { display: inline-flex; margin: 0; }
+    .check-line input { width: auto; margin: 0; }
+    .person { border: 1px solid #e2e8f0; border-left: 3px solid #b08d57; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; background: #fcfcfd; }
+    .person > b { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5b4a2e; margin-bottom: 6px; }
+    .person.off > b { margin-bottom: 0; }
+    .person.off .person-fields { display: none; }
+    .clause-edit { margin-top: 4px; font-size: 13px; }
+    .clause-edit summary { cursor: pointer; color: #8a6d3b; font-weight: 600; margin-bottom: 8px; }
+
+    .tax-box { background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: #5b4a2e; line-height: 1.55; }
+    .tax-box b { color: #3f3320; }
+    .tax-box.warn { background: #fff7ed; border-color: #fed7aa; border-left-color: #c2410c; color: #7c2d12; }
+    .tax-box.warn b { color: #7c2d12; }
+    .tax-box ul { margin: 6px 0 0; padding-left: 18px; }
+    .tax-box .rate-big { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid #eadfc9; border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; }
+    .tax-box .rate-big b { font-size: 17px; color: #8a6d3b; }
+    .tax-box .rate-big small { display: block; font-size: 12px; color: #64748b; font-weight: normal; }
+    .tax-box .apply { background: #8a6d3b; color: #fff; border: none; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .tax-box .apply:hover { background: #74592e; }
+    .tax-box .kv { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 1px 10px; font-size: 12px; white-space: nowrap; }
+    .tax-box .tips summary { cursor: pointer; font-size: 12px; font-weight: 600; margin-top: 4px; }
+    .tax-box .tips ul { font-size: 12px; }
+    .tax-box .kv span:nth-child(even) { text-align: right; font-weight: 600; color: #3f3320; }
+    .tax-box.warn .kv span:nth-child(even) { color: #7c2d12; }
+    .tax-box.ok { background: #f0fdf4; border-color: #bbf7d0; border-left-color: #15803d; color: #14532d; }
+    .tax-box.ok b { color: #14532d; }
+    .tax-box.ok .rate-big b { color: #8a6d3b; }
+    .rate-table { margin-top: 10px; font-size: 13px; }
+    .rate-table summary { cursor: pointer; color: #8a6d3b; font-weight: 600; }
+    .rt-scroll { overflow-x: auto; margin-top: 8px; }
+    .rate-table table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+    .rate-table th, .rate-table td { border: 1px solid #e2e8f0; padding: 5px 7px; text-align: right; }
+    .rate-table th { background: #f8fafc; color: #334155; text-align: center; }
+    .rate-table td.min { font-weight: 700; color: #8a6d3b; }
+    .rate-table tr.free td { background: #f0fdf4; }
+    .rate-table tr.sep td { background: #fffbeb; }
+    .rate-table tr.comp td { background: #fff1ec; }
+    .rate-table tr.cur td { box-shadow: inset 0 2px 0 #8a6d3b, inset 0 -2px 0 #8a6d3b; font-weight: 700; }
+    .notice { font-size: 11px; color: #64748b; line-height: 1.6; margin: 10px 0 0; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .actions.bottom { justify-content: center; margin-top: 14px; }
+    .btn { border: none; padding: 11px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-main { background: #8a6d3b; color: #fff; }
+    .btn-main:hover { background: #74592e; }
+    .btn-outline { background: #fff; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    /* ---------- 차용증 미리보기 (A4) ---------- */
+    .preview-card { padding: 20px; }
+    .paper-scroll { overflow-x: auto; background: #e9edf3; border-radius: 8px; padding: 20px; }
+    .paper { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; box-shadow: 0 2px 10px rgba(15,23,42,.12); padding: 14mm 18mm 12mm; color: #111; font-family: 'Malgun Gothic', 'Noto Sans KR', sans-serif; font-size: 10.5pt; line-height: 1.45; }
+    .paper h2 { text-align: center; font-size: 22pt; font-weight: 900; letter-spacing: 14px; margin: 0 0 9mm; padding-left: 14px; }
+    .party { display: grid; grid-template-columns: 26mm max-content 1fr; row-gap: 1.6mm; margin-bottom: 5mm; }
+    .party .role { font-weight: 700; letter-spacing: 6px; white-space: nowrap; }
+    .party .role.long { letter-spacing: 0; }
+    .party .key { text-align: justify; text-align-last: justify; margin-right: 3mm; }
+    .party .val::before { content: ':  '; }
+    .party .val { word-break: break-all; }
+    .tbl-title { font-weight: 700; margin: 4mm 0 2mm; }
+    .loan-tbl { width: 100%; border-collapse: collapse; border: 2px solid #111; table-layout: fixed; }
+    .loan-tbl th, .loan-tbl td { border: 1px dotted #555; padding: 1.8mm 2.5mm; vertical-align: middle; }
+    .loan-tbl th { font-weight: 700; text-align: center; }
+    #pvRate, #pvPayDay { white-space: nowrap; }
+    .loan-tbl td.c { text-align: center; }
+    .loan-tbl .multiline { word-break: keep-all; }
+    .loan-tbl .cl { display: flex; gap: 1.5mm; }
+    .loan-tbl .cl + .cl { margin-top: 1mm; }
+    .loan-tbl .cl-no { flex: none; min-width: 4mm; }
+    .loan-tbl .cl-sub { padding-left: 5.5mm; }
+    .loan-tbl .cl-gap { height: 1.5mm; }
+    .amount-line { display: flex; flex-wrap: wrap; gap: 0 5mm; }
+    .closing { margin: 3mm 0 0; padding: 0 1mm; word-break: keep-all; }
+    .date { text-align: center; font-weight: 700; margin: 8mm 0 12mm; word-spacing: 3mm; }
+    .sign { display: grid; grid-template-columns: 36mm 1fr; align-items: center; margin-bottom: 10mm; }
+    .sign:last-child { margin-bottom: 0; }
+    .sign .role { font-weight: 700; letter-spacing: 6px; }
+    .sign .role.long { letter-spacing: 0; }
+    .sign .nm { display: flex; align-items: center; gap: 12mm; padding-left: 10mm; }
+    .seal { display: inline-flex; align-items: baseline; gap: 2.5mm; white-space: nowrap; }
+    .seal small { color: #c4c4c4; font-size: 8pt; letter-spacing: 0.5px; }
+    .sign .nm span:first-child { min-width: 26mm; text-align: center; }
+    .blank { color: transparent; }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .form-card { position: static; max-height: none; overflow: visible; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .header { padding: 18px 16px; flex-direction: column; align-items: flex-start; }
+      .card { padding: 18px 16px; }
+      .preview-card { padding: 12px; }
+      .paper-scroll { padding: 10px; }
+      .grid-m, .grid-3 { grid-template-columns: 1fr 1fr; }
+      .grid-m .form-group:first-child { grid-column: span 2; }
+      .tax-box .kv { grid-template-columns: auto 1fr; }
+    }
+
+    /* ---------- 로그인 잠금 ---------- */
+    .auth-buttons { display: flex; align-items: center; gap: 8px; }
+    .auth-buttons .btn { padding: 8px 14px; font-size: 13px; }
+    .btn-logout { background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; }
+    .btn-logout:hover { background: #8a6d3b; color: #fff; }
+    #planStatus:empty { display: none; }
+    .lock-wrap { position: relative; }
+    .lock-overlay { position: absolute; inset: 0; z-index: 20; display: flex; justify-content: center; align-items: flex-start; padding: 160px 20px 20px;
+      background: rgba(255,255,255,0.95); border-radius: 12px; }
+    .lock-box { position: sticky; top: 160px; text-align: center; }
+    .lock-box h3 { color: #1e293b; font-weight: 700; font-size: 18.7px; margin: 0 0 18px; }
+    .lock-box p { color: #666; font-size: 16px; line-height: 1.5; margin: 0 0 20px; }
+    .lock-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-login { background-color: #8a6d3b; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13.3px; font-family: inherit; }
+    .btn-login:hover { background-color: #74592e; }
+    .lock-box .btn-outline { padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13.3px; }
+    .lock-wrap.locked .layout { pointer-events: none; user-select: none; }
+    .modal { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
+    .modal-content { background: #fff; padding: 28px; border-radius: 12px; width: 400px; max-width: 100%; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,.15); max-height: 90vh; overflow-y: auto; }
+    .modal-content .close-btn { position: absolute; top: 12px; right: 16px; font-size: 22px; cursor: pointer; color: #94a3b8; }
+    .modal-content input { height: 40px; }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; font-family: inherit; }
+    .tab-btn.active { color: #8a6d3b; border-bottom: 2px solid #8a6d3b; margin-bottom: -2px; }
+    .modal-content .btn-main { width: 100%; padding: 11px; }
+
+    @page { size: A4; margin: 0; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .back-home, .header, .form-card, .actions, .preview-note, .lock-overlay, .modal { display: none !important; }
+      .layout { display: block; }
+      .card, .paper-scroll { border: none; box-shadow: none; padding: 0; background: none; border-radius: 0; overflow: visible; }
+      .paper { box-shadow: none; margin: 0; }
+    }
+  </style>
+<script src="/visit.js" defer></script>
+</head>
+<body>
+  <div class="wrapper">
+    <a href="/" class="back-home">← 세무회계강남 홈</a>
+    <div class="header">
+      <div>
+        <span class="eyebrow">세무회계강남</span>
+        <h1>차용증 작성하기 <small>증여세 없는 이자율 · 인쇄 / PDF</small></h1>
+      </div>
+      <div class="auth-buttons" id="authButtons">
+        <a id="adminLink" href="../양도세계산기/admin.html" style="display:none"></a>
+        <span id="planStatus" style="font-size:12px;color:#8a6d3b;font-weight:600"></span>
+        <button type="button" id="loginBtn" class="btn-login" onclick="openModal('login')" style="display:none">로그인</button>
+        <button type="button" id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;padding:8px 16px;font-size:13.3px;border-radius:6px">회원가입</button>
+        <button type="button" id="logoutBtn" class="btn btn-logout" onclick="handleLogout()" style="display:none">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="lock-wrap locked" id="lockWrap">
+    <div id="lockOverlay" class="lock-overlay">
+      <div class="lock-box">
+        <div id="lockChecking"><h3>로그인 상태 확인 중...</h3></div>
+        <div id="lockLogin" style="display:none">
+          <h3>로그인 후 이용 가능합니다</h3>
+          <p>회원가입 후 로그인하시면 차용증을 작성하실 수 있습니다.</p>
+          <div class="lock-btns">
+            <button type="button" class="btn-login" onclick="openModal('login')">로그인</button>
+            <button type="button" class="btn-outline" onclick="openModal('signup')">회원가입</button>
+          </div>
+        </div>
+        <div id="lockReady" style="display:none">
+          <h3>차용증 작성 서비스 준비 중</h3>
+          <p>더 나은 서비스로 곧 찾아뵙겠습니다.</p>
+          <a href="/" class="btn btn-outline" style="text-decoration:none;display:inline-block">홈으로 가기</a>
+        </div>
+        <div id="lockWait" style="display:none"></div>
+        <div id="lockPay" style="display:none"></div>
+      </div>
+    </div>
+    <div class="layout">
+      <!-- ================= 입력 ================= -->
+      <form class="card form-card" id="form" autocomplete="off" onsubmit="return false">
+        <div class="section-title">당사자</div>
+
+        <div class="person">
+          <b>채권자 <span class="hint">빌려주는 사람</span></b>
+          <div class="person-fields grid-p">
+            <div class="form-group"><label>성명</label><input data-k="crName" placeholder="홍길동"></div>
+            <div class="form-group"><label>주민등록번호</label><input data-k="crId" data-rrn placeholder="000000-0000000" inputmode="numeric" maxlength="14"></div>
+            <div class="form-group span2"><label>주소</label><input data-k="crAddr" placeholder="서울시 강남구 ..."></div>
+          </div>
+        </div>
+
+        <div class="person">
+          <b>채무자 <span class="hint">빌리는 사람</span></b>
+          <div class="person-fields grid-p">
+            <div class="form-group"><label>성명</label><input data-k="dbName" placeholder="김철수"></div>
+            <div class="form-group"><label>주민등록번호</label><input data-k="dbId" data-rrn placeholder="000000-0000000" inputmode="numeric" maxlength="14"></div>
+            <div class="form-group span2"><label>주소</label><input data-k="dbAddr" placeholder="인천시 ..."></div>
+          </div>
+        </div>
+
+        <div class="person off" id="guarantorBox">
+          <b>연대보증인 <label class="check-line inline"><input type="checkbox" id="hasGuarantor"> 입력 (선택)</label></b>
+          <div class="person-fields grid-p">
+            <div class="form-group"><label>성명</label><input data-k="gtName"></div>
+            <div class="form-group"><label>주민등록번호</label><input data-k="gtId" data-rrn placeholder="000000-0000000" inputmode="numeric" maxlength="14"></div>
+            <div class="form-group span2"><label>주소</label><input data-k="gtAddr"></div>
+          </div>
+        </div>
+        <label class="check-line"><input type="checkbox" id="maskId"> 인쇄 시 주민등록번호 뒷자리 가리기</label>
+
+        <div class="section-title">차용금액 및 이자 <small>증여세 없는 이자율 계산</small></div>
+        <div class="grid-m">
+          <div class="form-group">
+            <label>원금 (원)</label>
+            <input id="principal" data-money placeholder="215,000,000" inputmode="numeric">
+          </div>
+          <div class="form-group" id="interestRow"><label>이자율 (연 %)</label><input id="rate" type="number" step="any" min="0" placeholder="4.6"></div>
+          <div class="form-group" id="payDayRow"><label>이자 지급일</label><input id="payDay" type="number" min="1" max="31" placeholder="매월 25일"></div>
+        </div>
+        <div class="row-sub">
+          <div class="live-msg" id="principalKo"></div>
+          <label class="check-line inline"><input type="checkbox" id="noInterest"> 무이자</label>
+        </div>
+        <div class="tax-box" id="taxBox">원금을 넣으면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.</div>
+        <details class="rate-table" id="rateTableWrap">
+          <summary>차용금액별 최소 이자율 표 보기</summary>
+          <div class="rt-scroll"><table id="rateTable"></table></div>
+          <p class="hint" style="margin:6px 0 0">단위: 백만원 · 적정이자율 4.6% · 증여 제외 한도 연 1,000만원 미만 · 이자소득세 27.5%(지방소득세 포함)</p>
+        </details>
+
+        <div class="section-title">원금 변제</div>
+        <div class="grid-3">
+          <div class="form-group"><label>상환기한</label><input id="dueDate" type="date"></div>
+          <div class="form-group"><label>매월 최소 상환액 <span class="hint">(선택)</span></label><input id="monthly" data-money placeholder="500,000" inputmode="numeric"></div>
+          <div class="form-group"><label>작성일</label><input id="writeDate" type="date"></div>
+          <div class="form-group"><label>상환 은행</label><input data-k="bank" placeholder="OO은행"></div>
+          <div class="form-group"><label>계좌번호</label><input data-k="account" placeholder="000-000000-00-000"></div>
+          <div class="form-group"><label>예금주</label><input data-k="holder" placeholder="채권자 성명"></div>
+        </div>
+        <label class="check-line"><input type="checkbox" id="realEstate" checked> 상환기한 전 부동산 양도 시 잔액 전액 상환</label>
+
+        <details class="clause-edit">
+          <summary>조항 문구 직접 고치기 <span class="hint">(**강조**는 굵게)</span></summary>
+          <div class="form-group">
+            <label>원금 변제 조항</label>
+            <textarea id="repayText" rows="6"></textarea>
+            <label class="check-line" style="margin:4px 0 0"><input type="checkbox" id="repayAuto" checked> 위 입력값으로 자동 작성</label>
+          </div>
+          <div class="form-group">
+            <label>기한이익 상실 조항</label>
+            <textarea id="accelText" rows="4"></textarea>
+          </div>
+        </details>
+
+        <p class="notice">
+          ※ 입력한 내용(주민등록번호 포함)은 이 브라우저 안에서만 쓰이며 서버로 전송·저장되지 않습니다.<br>
+          ※ 이 서식은 일반적인 참고용입니다. 개별 사정에 맞는 검토가 필요하면 세무회계강남에 문의해 주세요.
+        </p>
+      </form>
+
+      <!-- ================= 미리보기 ================= -->
+      <div class="card preview-card">
+        <div class="paper-scroll">
+          <div class="paper" id="paper">
+            <h2>차용증</h2>
+
+            <div class="party">
+              <div class="role">채권자</div><div class="key">성 명</div><div class="val" data-v="crName"></div>
+              <div></div><div class="key">주 소</div><div class="val" data-v="crAddr"></div>
+              <div></div><div class="key">주민등록번호</div><div class="val" data-v="crId"></div>
+            </div>
+            <div class="party">
+              <div class="role">채무자</div><div class="key">성 명</div><div class="val" data-v="dbName"></div>
+              <div></div><div class="key">주 소</div><div class="val" data-v="dbAddr"></div>
+              <div></div><div class="key">주민등록번호</div><div class="val" data-v="dbId"></div>
+            </div>
+            <div class="party">
+              <div class="role long">연대보증인</div><div class="key">성 명</div><div class="val" data-v="gtName"></div>
+              <div></div><div class="key">주 소</div><div class="val" data-v="gtAddr"></div>
+              <div></div><div class="key">주민등록번호</div><div class="val" data-v="gtId"></div>
+            </div>
+
+            <div class="tbl-title">차용금액 및 변제조건</div>
+            <table class="loan-tbl">
+              <colgroup><col style="width:30mm"><col style="width:66mm"><col style="width:26mm"><col></colgroup>
+              <tr>
+                <th>원금</th>
+                <td colspan="3"><div class="amount-line"><span>일금&nbsp;&nbsp;&nbsp;<span id="pvKo"></span> 원정</span><span>( ₩ <span id="pvNum"></span> )</span></div></td>
+              </tr>
+              <tr>
+                <th>이자</th>
+                <td class="c" id="pvRate"></td>
+                <th>이자 지급일</th>
+                <td class="c" id="pvPayDay"></td>
+              </tr>
+              <tr>
+                <th>원금 변제일</th>
+                <td colspan="3" class="multiline" id="pvRepay"></td>
+              </tr>
+              <tr>
+                <th>기한이익 상실</th>
+                <td colspan="3" class="multiline" id="pvAccel"></td>
+              </tr>
+            </table>
+            <p class="closing" id="pvClosing"></p>
+
+            <div class="date" id="pvDate"></div>
+
+            <div class="sign"><div class="role">채권자 :</div><div class="nm"><span data-v="crName"></span><span class="seal">(인)<small>서명 및 날인</small></span></div></div>
+            <div class="sign"><div class="role">채무자 :</div><div class="nm"><span data-v="dbName"></span><span class="seal">(인)<small>서명 및 날인</small></span></div></div>
+            <div class="sign"><div class="role long">연대보증인 :</div><div class="nm"><span data-v="gtName"></span><span class="seal">(인)<small>서명 및 날인</small></span></div></div>
+          </div>
+        </div>
+        <div class="actions bottom">
+          <button type="button" class="btn btn-main" onclick="window.print()">인쇄 / PDF 저장</button>
+          <button type="button" class="btn btn-outline" id="toFunding">자금조달계획서에 반영 →</button>
+          <button type="button" class="btn btn-outline" id="resetBtn">입력 초기화</button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 94vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>아이디 (이메일)</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
+      </form>
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
+      </form>
+    </div>
+  </div>
+  <div id="result" style="display:none"></div>
+
+  <!-- 다른 계산기와 같은 회원 로그인 (이용권 없이 로그인만 하면 사용) -->
+  <script src="../양도세계산기/js/login.js"></script>
+  <script>
+    updateUi = function (user) {
+      const loggedIn = !!user;
+      document.getElementById('lockChecking').style.display = 'none';
+      if (loggedIn) closeModal();
+      document.getElementById('loginBtn').style.display = loggedIn ? 'none' : 'inline-block';
+      document.getElementById('signupBtn').style.display = loggedIn ? 'none' : 'inline-block';
+      document.getElementById('logoutBtn').style.display = loggedIn ? 'inline-block' : 'none';
+      document.getElementById('lockReady').style.display = 'none';
+      document.getElementById('lockLogin').style.display = loggedIn ? 'none' : 'block';
+      document.getElementById('lockOverlay').style.display = loggedIn ? 'none' : 'flex';
+      document.getElementById('lockWrap').classList.toggle('locked', !loggedIn);
+      document.getElementById('planStatus').innerText = loggedIn && user.name ? `${user.name}님` : '';
+    };
+  </script>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const form = $('form');
+  const DEFAULT_ACCEL = '1. 이자의 지급을 **1회라도 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원리금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.';
+  const DEFAULT_ACCEL_NO_INT = '1. 원금의 상환을 **2회 이상 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.';
+  const OFFICIAL_RATE = 4.6; // 상증법 시행규칙 제10조의5 적정이자율
+  const GIFT_LIMIT = 10000000; // 상증법 제41조의4: 연 이익 1천만원 미만은 증여 아님
+
+  // ---------- 숫자 ↔ 한글 금액 ----------
+  function toKorean(n) {
+    if (!n) return '';
+    const d = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+    const small = ['', '십', '백', '천'];
+    const big = ['', '만', '억', '조', '경'];
+    let s = String(Math.floor(n)), out = '', g = 0;
+    while (s.length) {
+      const chunk = s.slice(-4); s = s.slice(0, -4);
+      let part = '';
+      for (let i = 0; i < chunk.length; i++) {
+        const v = +chunk[chunk.length - 1 - i];
+        if (v) part = d[v] + small[i] + part;
+      }
+      if (part) out = part + big[g] + out;
+      g++;
+    }
+    return out;
+  }
+  const num = (v) => +String(v || '').replace(/[^0-9]/g, '') || 0;
+  const comma = (n) => n ? n.toLocaleString('ko-KR') : '';
+  const won = (n) => (Math.round(n) ? comma(Math.round(n)) : '0') + '원';
+
+  function fmtDate(v) {
+    if (!v) return '';
+    const [y, m, d] = v.split('-');
+    return `${y}년 ${m}월 ${d}일`;
+  }
+  function fmtRrn(v) {
+    const digits = v.replace(/[^0-9]/g, '').slice(0, 13);
+    return digits.length > 6 ? digits.slice(0, 6) + '-' + digits.slice(6) : digits;
+  }
+
+  // ---------- 원금 변제 조항 자동 문구 ----------
+  function repayDefault() {
+    const m = num($('monthly').value);
+    const due = fmtDate($('dueDate').value) || '\u3000\u3000\u3000년 \u3000\u3000월 \u3000\u3000일';
+    const items = [];
+    let first = `원금의 **상환기한은 ${due}**로 한다.`;
+    if ($('realEstate').checked) first += ' 다만, 상환기한 전에 차용 당시 매수한 부동산을 양도하는 경우에는 **양도대금 수령일에 차용금 잔액 전액을 상환**한다.';
+    items.push(first);
+    if (m) items.push(`채무자는 상환기한까지 수입에 따라 변동 가능하되, **매월 말일 ${toKorean(m)}원(₩${comma(m)}) 이상**씩 원금을 분할 상환한다.`);
+    const bank = field('bank'), acc = field('account'), holder = field('holder');
+    const accLine = [bank, acc, holder ? `(예금주 ${holder})` : ''].filter(Boolean).join(' ');
+    items.push(`${$('noInterest').checked ? '원금은' : '원금 및 이자는'} 아래 예금계좌로 송금하여 변제한다.\n상환계좌 : ${accLine ? '**' + accLine + '**' : '            은행'}`);
+    return items.map((t, i) => `${i + 1}. ${t}`).join('\n');
+  }
+
+  // 조항 문구 → 미리보기 HTML (번호 줄은 내어쓰기, **굵게** 지원)
+  function clauseHtml(text) {
+    const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const bold = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    return text.split('\n').map((line) => {
+      const m = line.match(/^\s*(\d+\.|[-·※])\s*(.*)$/);
+      if (m) return `<div class="cl"><span class="cl-no">${esc(m[1])}</span><span>${bold(m[2])}</span></div>`;
+      return line.trim() ? `<div class="cl-sub">${bold(line.trim())}</div>` : '<div class="cl-gap"></div>';
+    }).join('');
+  }
+
+  function field(k) { const el = form.querySelector(`[data-k="${k}"]`); return el ? el.value.trim() : ''; }
+
+  // ---------- 세무 점검 : 증여세 없는 최소 이자율 ----------
+  // 상증법 제41조의4: (원금 × 4.6% − 실제 이자) ≥ 1,000만원이면 그 차액이 증여
+  // → 차액을 990만원(TARGET_GAP)으로 맞춘 연 이자를 만원 단위로 올려 정하고, 이자율은 그 이자 ÷ 원금
+  //   적정이자 자체가 1,000만원 미만이면 무이자 가능
+  const TARGET_GAP = 9900000;
+  const WHT = 0.275;            // 비영업대금 이익 원천징수 25% + 지방소득세 2.5%
+  const COMP_LIMIT = 20000000;  // 금융소득 종합과세 기준
+  function minInterest(p) {     // 증여 없이 낼 최소 연 이자 (만원 단위)
+    if (!p) return 0;
+    const fair = Math.round(p * OFFICIAL_RATE / 100);
+    if (fair < GIFT_LIMIT) return 0;
+    return Math.ceil((fair - TARGET_GAP) / 10000) * 10000;
+  }
+  // 이자율(%) — 소수 넷째 자리에서 올림해 실제 이자가 목표 이자보다 작아지지 않게
+  const rateOf = (intr, p) => intr ? Math.ceil(intr / p * 1e6) / 1e4 : 0;
+  // 약정 연 이자: 이자율을 소수 넷째 자리에서 올렸기 때문에 생기는 몇백 원 차이는 만원 단위로 맞춤
+  function annualInterest(p, r) {
+    const raw = p * r / 100;
+    const snap = Math.round(raw / 10000) * 10000;
+    return Math.abs(raw - snap) <= p * 1e-6 + 1 ? snap : Math.round(raw);
+  }
+  const pct = (r) => (+r.toFixed(4)).toString() + '%';
+
+  function buildRateTable(p) {
+    const rows = [100, 200, 217, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000];
+    const pm = p / 1e6;
+    let cur = -1;
+    rows.forEach((r, i) => { if (pm >= r) cur = i; });
+    let h = '<tr><th>차용금액</th><th>적정이자<br>(4.6%)</th><th>증여 없이<br>낼 이자</th><th>최소<br>이자율</th><th>이자<br>소득세</th><th>구분</th></tr>';
+    rows.forEach((r, i) => {
+      const amt = r * 1e6;
+      const intr = minInterest(amt);
+      const cls = intr === 0 ? 'free' : intr > COMP_LIMIT ? 'comp' : 'sep';
+      const label = intr === 0 ? '무이자 가능' : intr > COMP_LIMIT ? '종합과세 대상' : '원천징수 27.5%';
+      h += `<tr class="${cls}${i === cur ? ' cur' : ''}"><td>${r.toLocaleString()}</td><td>${(amt * 0.046 / 1e6).toFixed(2)}</td>` +
+           `<td>${intr ? (intr / 1e6).toFixed(2) : '-'}</td><td class="min">${intr ? pct(rateOf(intr, amt)) : '0%'}</td>` +
+           `<td>${intr ? (intr * WHT / 1e6).toFixed(2) : '-'}</td><td style="text-align:center">${label}</td></tr>`;
+    });
+    $('rateTable').innerHTML = h;
+  }
+
+  function taxCheck(p, rate, noInt) {
+    const box = $('taxBox');
+    buildRateTable(p);
+    if (!p) { box.className = 'tax-box'; box.innerHTML = '원금을 넣으면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.'; return; }
+    const minI = minInterest(p);
+    const minR = rateOf(minI, p);
+    const r = noInt ? 0 : (isNaN(rate) ? null : rate);
+    const fair = p * OFFICIAL_RATE / 100;
+
+    let html = '<div class="rate-big"><div><small>증여세 없는 최소 이자율 · 차액 990만원</small>';
+    if (minI === 0) html += '<b>무이자 가능</b></div><button type="button" class="apply" data-apply="0">무이자로 입력하기</button></div>';
+    else html += `<b>연 ${pct(minR)}</b> <span style="font-size:12px">· 연 이자 ${won(minI)}</span></div><button type="button" class="apply" data-apply="${minR}">차용증에 입력하기</button></div>`;
+
+    html += `<div class="kv"><span>적정이자 (4.6%)</span><span>${won(fair)}</span>`;
+    if (r === null) {
+      box.className = 'tax-box';
+      box.innerHTML = html + '</div><ul><li>이자율을 입력하거나 [적용]을 누르면 증여 여부와 이자소득세를 계산해 드려요.</li></ul>';
+      return;
+    }
+    const actual = annualInterest(p, r);
+    const gap = fair - actual;
+    html += `<span>약정 이자 (연 ${r}%)</span><span>${won(actual)}</span>`;
+    html += `<span>차액 (증여 판단)</span><span>${won(Math.max(gap, 0))}</span>`;
+    if (actual > 0) {
+      html += `<span>월 이자</span><span>${won(actual / 12)}</span>`;
+      html += `<span>이자소득세 27.5% (연)</span><span>${won(actual * WHT)}</span>`;
+      html += `<span>매월 원천징수</span><span>${won(actual / 12 * WHT)}</span>`;
+    }
+    html += '</div><ul>';
+    if (gap >= GIFT_LIMIT) {
+      box.className = 'tax-box warn';
+      html += `<li>차액이 연 1,000만원 이상이어서 <b>차액 ${won(gap)} 전체가 매년 증여재산</b>이 됩니다 (상증법 제41조의4). 이자율을 <b>연 ${pct(minR)} 이상</b>으로 정하세요.</li>`;
+    } else {
+      box.className = 'tax-box ok';
+      html += '<li>차액이 연 1,000만원 미만이라 <b>이자 차액에 대한 증여세는 없습니다.</b></li>';
+    }
+    if (actual > COMP_LIMIT) html += '<li>연 이자가 2,000만원을 넘어 채권자는 <b>금융소득 종합과세</b> 대상입니다.</li>';
+    html += '</ul><details class="tips"><summary>세무 유의사항 보기</summary><ul>';
+    if (actual > 0) {
+      html += '<li>채무자는 이자를 줄 때 <b>27.5%를 원천징수</b>해 다음 달 10일까지 신고·납부하고, 나머지를 채권자에게 이체합니다.</li>';
+      if (actual > COMP_LIMIT) html += '<li>채권자는 다음 해 5월 종합소득세 신고 때 이자소득을 합산해 신고합니다.</li>';
+      else html += '<li>채권자의 다른 이자·배당과 합쳐 연 2,000만원을 넘으면 금융소득 종합과세 대상이 됩니다.</li>';
+    }
+    html += '<li>약정대로 <b>원금·이자를 계좌이체로 상환한 기록</b>이 있어야 차입금으로 인정받습니다.</li>';
+    html += '<li>작성 후 <b>내용증명이나 공증</b>으로 작성일을 확정해 두면 좋습니다.</li></ul></details>';
+    box.innerHTML = html;
+  }
+
+  $('taxBox').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-apply]');
+    if (!b) return;
+    const ar = +b.dataset.apply;
+    $('noInterest').checked = ar === 0;
+    $('rate').value = ar ? String(ar) : '';
+    render();
+  });
+
+  // ---------- 미리보기 렌더 ----------
+  function render() {
+    const mask = $('maskId').checked;
+    const hasGt = $('hasGuarantor').checked;
+    $('guarantorBox').classList.toggle('off', !hasGt);
+
+    form.querySelectorAll('[data-k]').forEach((el) => {
+      let v = el.value.trim();
+      if (el.hasAttribute('data-rrn') && mask && v.length > 8) v = v.slice(0, 8) + '******';
+      if (!hasGt && el.dataset.k.startsWith('gt')) v = '';
+      document.querySelectorAll(`[data-v="${el.dataset.k}"]`).forEach((t) => { t.textContent = v; });
+    });
+
+    const p = num($('principal').value);
+    $('principalKo').textContent = p ? `일금 ${toKorean(p)}원정` : '';
+    $('pvKo').textContent = p ? toKorean(p) : ' '.repeat(30);
+    $('pvNum').textContent = p ? comma(p) : ' '.repeat(20);
+
+    const noInt = $('noInterest').checked;
+    $('interestRow').style.visibility = noInt ? 'hidden' : '';
+    $('payDayRow').style.visibility = noInt ? 'hidden' : '';
+    const rate = parseFloat($('rate').value);
+    const payDay = $('payDay').value;
+    $('pvRate').textContent = noInt ? '무이자' : `연 ( ${isNaN(rate) ? '      ' : rate} )%` + (!isNaN(rate) && p ? `  (연 ${comma(annualInterest(p, rate))}원)` : '');
+    $('pvPayDay').textContent = noInt ? '-' : `매월 ( ${payDay || '    '} )일`;
+
+    if ($('repayAuto').checked) $('repayText').value = repayDefault();
+    $('pvRepay').innerHTML = clauseHtml($('repayText').value);
+
+    if (!$('accelText').dataset.edited) $('accelText').value = noInt ? DEFAULT_ACCEL_NO_INT : DEFAULT_ACCEL;
+    $('pvAccel').innerHTML = clauseHtml($('accelText').value);
+
+    $('pvClosing').textContent = hasGt
+      ? '채무자는 위와 같은 조건으로, 채권자로부터 틀림없이 위 돈을 차용하였으며, 연대보증인은 채무자의 채무이행을 연대보증 하기로 한다.'
+      : '채무자는 위와 같은 조건으로, 채권자로부터 틀림없이 위 돈을 차용하였음을 확인한다.';
+    $('pvDate').textContent = fmtDate($('writeDate').value) || '년     월     일';
+
+    taxCheck(p, rate, noInt);
+  }
+
+  // ---------- 이벤트 ----------
+  form.querySelectorAll('[data-money]').forEach((el) => el.addEventListener('input', () => {
+    const n = num(el.value); el.value = n ? comma(n) : '';
+  }));
+  form.querySelectorAll('[data-rrn]').forEach((el) => el.addEventListener('input', () => { el.value = fmtRrn(el.value); }));
+  $('repayText').addEventListener('input', () => { $('repayAuto').checked = false; });
+  $('accelText').addEventListener('input', () => { $('accelText').dataset.edited = '1'; });
+  // 채권자 성명 → 예금주 기본값
+  const holderEl = form.querySelector('[data-k="holder"]');
+  form.querySelector('[data-k="crName"]').addEventListener('input', (e) => {
+    if (!holderEl.dataset.edited) holderEl.value = e.target.value;
+  });
+  holderEl.addEventListener('input', () => { holderEl.dataset.edited = '1'; });
+
+  form.addEventListener('input', render);
+  form.addEventListener('change', render);
+
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm('입력한 내용을 모두 지울까요?')) return;
+    form.reset();
+    delete $('accelText').dataset.edited; delete holderEl.dataset.edited;
+    $('writeDate').value = today();
+    render();
+  });
+
+  // 자금조달계획서 ⑪ 그 밖의 차입금으로 넘기기 (같은 창 안에서만 잠시 보관)
+  $('toFunding').addEventListener('click', () => {
+    const amount = num($('principal').value);
+    if (!amount) { alert('원금을 먼저 입력해 주세요.'); return; }
+    try {
+      sessionStorage.setItem('fundingFromLoan', JSON.stringify({ amount, name: field('dbName'), rrn: field('dbId'), addr: field('dbAddr') }));
+    } catch (e) { /* 저장소를 못 쓰는 환경이면 금액 없이 이동 */ }
+    location.href = '../자금조달계획서/main.html';
+  });
+
+  $('writeDate').value = today();
+  render();
+})();
+</script>
+</body>
+</html>

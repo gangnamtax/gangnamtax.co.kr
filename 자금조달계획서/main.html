@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세무회계강남 자금조달계획서 작성하기</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="주택취득자금 조달 및 입주계획서(부동산 거래신고 등에 관한 법률 시행규칙 별지 제1호의3서식) 작성 도우미 - 공동명의 매수인별 작성, 소계·합계 자동 계산, 총 거래금액 대조, 첨부서류 안내 - 세무회계강남">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #f4f6fa; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #1e293b; margin: 0; padding: 40px 20px; }
+    .wrapper { max-width: 1440px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,.06); border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; padding: 24px 32px; }
+    .eyebrow { display: block; font-size: 12px; font-weight: 500; color: #a08452; letter-spacing: .5px; margin-bottom: 4px; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .header h1 small { font-size: 17px; font-weight: 500; color: #64748b; margin-left: 2px; }
+    .back-home { display: inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px; }
+    .back-home:hover { color: #8a6d3b; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 500px) minmax(0, 1fr); gap: 20px; align-items: start; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,.06); padding: 28px; }
+    .form-card { max-height: calc(100vh - 40px); overflow-y: auto; position: sticky; top: 20px; padding: 18px 20px; }
+
+    .section-title { font-size: 14px; font-weight: 700; color: #5b4a2e; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #eadfc9; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .section-title:first-child { margin-top: 0; }
+    .section-title small { font-size: 11px; font-weight: normal; color: #94a3b8; }
+    .section-title .sum { font-size: 12px; color: #8a6d3b; }
+    .form-group { margin-bottom: 8px; min-width: 0; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 3px; }
+    .hint { font-size: 11px; color: #94a3b8; font-weight: normal; }
+    input, select { width: 100%; padding: 6px 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #fff; font-family: inherit; color: inherit; height: 32px; }
+    input[type="checkbox"], input[type="radio"] { height: auto; width: auto; margin: 0; }
+    input[data-money] { text-align: right; }
+    input:focus, select:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 8px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 8px; }
+    .span2 { grid-column: span 2; }
+    .item { border: 1px solid #e2e8f0; border-left: 3px solid #b08d57; border-radius: 8px; padding: 8px 10px 2px; margin-bottom: 8px; background: #fcfcfd; }
+    .item > b { display: flex; justify-content: space-between; font-size: 13px; color: #5b4a2e; margin-bottom: 6px; }
+    .item > b span { font-weight: 600; color: #8a6d3b; font-size: 12px; }
+    .item.loan { border-left-color: #1e3a8a; background: #f8faff; }
+    .item.loan > b, .item.loan > b span { color: #1e3a8a; }
+    .radios { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+    .radios label { display: inline-flex; align-items: center; gap: 4px; font-weight: normal; font-size: 12px; color: #334155; margin: 0; cursor: pointer; }
+    .check-line { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: #334155; cursor: pointer; margin: 0; }
+    .import-bar { display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #1e3a8a; margin-bottom: 10px; }
+    .import-bar.show { display: block; }
+
+    .joint { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+    .joint .hint { color: #8a6d3b; }
+    .tabs { display: none; gap: 6px; margin-bottom: 10px; }
+    .tabs.show { display: flex; }
+    .tabs button { flex: 1; padding: 8px 6px; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 700; color: #475569; cursor: pointer; }
+    .tabs button small { display: block; font-size: 11px; font-weight: 500; color: #94a3b8; }
+    .tabs button.on { background: #8a6d3b; border-color: #8a6d3b; color: #fff; }
+    .tabs button.on small { color: #f5ecdc; }
+    .share-row { display: none; }
+    .share-row.show { display: grid; }
+
+    .check-box { border-radius: 8px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; background: #faf7f1; color: #5b4a2e; }
+    .check-box.ok { background: #f0fdf4; border-color: #bbf7d0; border-left-color: #15803d; color: #14532d; }
+    .check-box.warn { background: #fff7ed; border-color: #fed7aa; border-left-color: #c2410c; color: #7c2d12; }
+    .check-box .kv { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 1px 10px; font-size: 12px; white-space: nowrap; }
+    .check-box .kv span:nth-child(even) { text-align: right; font-weight: 700; }
+    .check-box ul { margin: 6px 0 0; padding-left: 18px; }
+    .check-box a { color: inherit; font-weight: 700; }
+    .docs { margin-top: 10px; font-size: 12.5px; }
+    .docs summary { cursor: pointer; color: #8a6d3b; font-weight: 600; }
+    .docs ul { margin: 6px 0 0; padding-left: 18px; color: #334155; line-height: 1.6; }
+    .notice { font-size: 11px; color: #64748b; line-height: 1.6; margin: 10px 0 0; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+    .btn { border: none; padding: 11px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-main { background: #8a6d3b; color: #fff; }
+    .btn-main:hover { background: #74592e; }
+    .btn-outline { background: #fff; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    /* ---------- 법정서식 미리보기: 원본 서식(한글 파일 → PDF → SVG)을 그대로 깔고 값만 좌표에 얹음 ---------- */
+    .preview-card { padding: 20px; }
+    .paper-scroll { overflow-x: auto; background: #e9edf3; border-radius: 8px; padding: 20px; }
+    .buyer-cap { width: 210mm; margin: 0 auto 6px; font-size: 13px; font-weight: 700; color: #5b4a2e; }
+    .screen-cap { width: 210mm; margin: 0 auto 6px; font-size: 12px; color: #64748b; }
+    .paper { position: relative; width: 595pt; height: 841pt; margin: 0 auto 20px; background: #fff; box-shadow: 0 2px 10px rgba(15,23,42,.12); overflow: hidden; }
+    .paper > img { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .ov { position: absolute; white-space: nowrap; color: #000; font-family: 'DotumChe', '돋움체', 'Dotum', '돋움', 'Malgun Gothic', sans-serif; font-size: 10pt; line-height: 10pt; font-weight: 700; }
+    .ov.r { text-align: right; }
+    .vline { position: absolute; width: 0; border-left: 0.36pt solid #939393; }
+    .ov.sm { font-size: 9pt; letter-spacing: -0.2pt; }
+    .ov.xs { font-size: 8pt; letter-spacing: -0.2pt; }
+    .ov.ck { width: 10pt; text-align: center; font-weight: 700; }
+    .ov.circ { border: 1px solid #000; border-radius: 50%; height: 11pt; }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .form-card { position: static; max-height: none; overflow: visible; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .header { padding: 18px 16px; flex-direction: column; align-items: flex-start; }
+      .card { padding: 18px 16px; }
+      .preview-card { padding: 12px; }
+      .paper-scroll { padding: 10px; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .check-box .kv { grid-template-columns: auto 1fr; }
+    }
+
+    /* ---------- 로그인 잠금 (다른 계산기와 동일) ---------- */
+    .auth-buttons { display: flex; align-items: center; gap: 8px; }
+    .btn-logout { background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; padding: 8px 14px; font-size: 13px; }
+    .btn-logout:hover { background: #8a6d3b; color: #fff; }
+    #planStatus:empty { display: none; }
+    .lock-wrap { position: relative; }
+    .lock-overlay { position: absolute; inset: 0; z-index: 20; display: flex; justify-content: center; align-items: flex-start; padding: 160px 20px 20px;
+      background: rgba(255,255,255,0.95); border-radius: 12px; }
+    .lock-box { position: sticky; top: 160px; text-align: center; }
+    .lock-box h3 { color: #1e293b; font-weight: 700; font-size: 18.7px; margin: 0 0 18px; }
+    .lock-box p { color: #666; font-size: 16px; line-height: 1.5; margin: 0 0 20px; }
+    .lock-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-login { background-color: #8a6d3b; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13.3px; font-family: inherit; }
+    .btn-login:hover { background-color: #74592e; }
+    .lock-box .btn-outline { padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13.3px; }
+    .lock-wrap.locked .layout { pointer-events: none; user-select: none; }
+    .modal { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
+    .modal-content { background: #fff; padding: 28px; border-radius: 12px; width: 400px; max-width: 100%; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,.15); max-height: 90vh; overflow-y: auto; }
+    .modal-content .close-btn { position: absolute; top: 12px; right: 16px; font-size: 22px; cursor: pointer; color: #94a3b8; }
+    .modal-content input { height: 40px; }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; font-family: inherit; }
+    .tab-btn.active { color: #8a6d3b; border-bottom: 2px solid #8a6d3b; margin-bottom: -2px; }
+    .modal-content .btn-main { width: 100%; padding: 11px; }
+
+    @page { size: A4; margin: 0; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .back-home, .header, .form-card, .actions, .lock-overlay, .modal, .buyer-cap { display: none !important; }
+      .layout { display: block; }
+      .card, .paper-scroll { border: none; box-shadow: none; padding: 0; background: none; border-radius: 0; overflow: visible; }
+      .paper { box-shadow: none; margin: 0; break-after: page; }
+      .paper.front.last { break-after: auto; }
+      .paper.back, .screen-cap { display: none !important; }
+    }
+  </style>
+<script src="/visit.js" defer></script>
+</head>
+<body>
+  <div class="wrapper">
+    <a href="/" class="back-home">← 세무회계강남 홈</a>
+    <div class="header">
+      <div>
+        <span class="eyebrow">세무회계강남</span>
+        <h1>자금조달계획서 작성하기 <small>주택취득자금 조달 및 입주계획서</small></h1>
+      </div>
+      <div class="auth-buttons" id="authButtons">
+        <a id="adminLink" href="../양도세계산기/admin.html" style="display:none"></a>
+        <span id="planStatus" style="font-size:12px;color:#8a6d3b;font-weight:600"></span>
+        <button type="button" id="loginBtn" class="btn-login" onclick="openModal('login')" style="display:none">로그인</button>
+        <button type="button" id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;padding:8px 16px;font-size:13.3px;border-radius:6px">회원가입</button>
+        <button type="button" id="logoutBtn" class="btn btn-logout" onclick="handleLogout()" style="display:none">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="lock-wrap locked" id="lockWrap">
+    <div id="lockOverlay" class="lock-overlay">
+      <div class="lock-box">
+        <div id="lockChecking"><h3>로그인 상태 확인 중...</h3></div>
+        <div id="lockLogin" style="display:none">
+          <h3>로그인 후 이용 가능합니다</h3>
+          <p>회원가입 후 로그인하시면 자금조달계획서를 작성하실 수 있습니다.</p>
+          <div class="lock-btns">
+            <button type="button" class="btn-login" onclick="openModal('login')">로그인</button>
+            <button type="button" class="btn-outline" onclick="openModal('signup')">회원가입</button>
+          </div>
+        </div>
+        <div id="lockReady" style="display:none">
+          <h3>자금조달계획서 작성 서비스 준비 중</h3>
+          <p>더 나은 서비스로 곧 찾아뵙겠습니다.</p>
+          <a href="/" class="btn btn-outline" style="text-decoration:none;display:inline-block">홈으로 가기</a>
+        </div>
+        <div id="lockWait" style="display:none"></div>
+        <div id="lockPay" style="display:none"></div>
+      </div>
+    </div>
+    <div class="layout">
+      <!-- ================= 입력 ================= -->
+      <form class="card form-card" id="form" autocomplete="off" onsubmit="return false">
+        <div class="import-bar" id="importBar"></div>
+
+        <div class="section-title">거래 <small>매수인 모두 같음</small></div>
+        <div class="grid-2">
+          <div class="form-group"><label>총 거래금액 (원) <span class="hint">계약서상 매매대금</span></label><input id="total" data-money inputmode="numeric" placeholder="900,000,000"></div>
+          <div class="form-group"><label>작성일</label><input id="writeDate" type="date"></div>
+        </div>
+        <div class="joint">
+          <label class="check-line"><input type="checkbox" id="joint"> 공동명의 (부부 등 매수인 2명)</label>
+          <span class="hint">매수인별로 1장씩 작성·제출</span>
+        </div>
+        <div class="tabs" id="tabs">
+          <button type="button" data-tab="0" class="on">매수인 1<small id="tabName0"></small></button>
+          <button type="button" data-tab="1">매수인 2<small id="tabName1"></small></button>
+        </div>
+
+        <div id="buyerFields">
+          <div class="section-title">제출인 (매수인<span id="buyerNo"></span>)</div>
+          <div class="grid-2">
+            <div class="form-group"><label>성명 (법인명)</label><input data-k="name" placeholder="홍길동"></div>
+            <div class="form-group"><label>주민등록번호</label><input data-k="rrn" data-rrn placeholder="000000-0000000" inputmode="numeric" maxlength="14"></div>
+            <div class="form-group"><label>주소 (법인소재지)</label><input data-k="addr" placeholder="서울시 강남구 ..."></div>
+            <div class="form-group"><label>(휴대)전화번호</label><input data-k="tel" placeholder="010-0000-0000" inputmode="tel"></div>
+          </div>
+          <div class="grid-2 share-row" id="shareRow">
+            <div class="form-group"><label>지분율 (%)</label><input data-k="share" type="number" min="0" max="100" step="any" placeholder="50"></div>
+            <div class="form-group"><label>이 매수인 몫 거래금액</label><input id="shareAmt" readonly tabindex="-1" style="background:#f8fafc;text-align:right"></div>
+          </div>
+
+          <div class="section-title">자기자금 <span class="sum" id="sumOwn"></span></div>
+          <div class="item">
+            <b>② 금융기관 예금액 <span id="s2"></span></b>
+            <div class="grid-3">
+              <div class="form-group"><label>예금액</label><input data-k="dep" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>해외예금 국내 송금분</label><input data-k="depFx" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>해외 금융기관명</label><input data-k="depFxBank"></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>③ 주식·채권·가상화폐 매각대금 <span id="s3"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>주식·채권 매각대금</label><input data-k="stock" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>가상화폐 매각대금</label><input data-k="coin" data-money inputmode="numeric"></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>④ 증여·상속 <span id="s4"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>증여 금액</label><input data-k="gift" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>증여세 신고 여부</label><select data-k="giftFiled"><option value="">선택</option><option value="y">신고</option><option value="n">미신고</option></select></div>
+              <div class="form-group"><label>상속 금액</label><input data-k="inh" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>상속세 신고 여부</label><select data-k="inhFiled"><option value="">선택</option><option value="y">신고</option><option value="n">미신고</option></select></div>
+              <div class="form-group"><label>자금 제공자와의 관계</label><select data-k="giftRel"><option value="">선택</option><option value="spouse">부부</option><option value="lineal">직계존비속</option><option value="other">그 밖의 관계</option></select></div>
+              <div class="form-group"><label>관계 <span class="hint">예) 부, 모</span></label><input data-k="giftRelText"></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>⑤ 현금 등 그 밖의 자금 <span id="s5"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>금액</label><input data-k="cash" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>자산 종류</label><select data-k="cashKind"><option value="">선택</option><option value="cash">보유 현금</option><option value="other">그 밖의 자산</option></select></div>
+              <div class="form-group"><label>그 밖의 자산 종류</label><input data-k="cashOther" placeholder="예) 보험 해약환급금"></div>
+              <div class="form-group"><label>그중 외화 <span class="hint">(원화 환산)</span></label><input data-k="fx" data-money inputmode="numeric"></div>
+              <div class="form-group span2"><label>외화반입 신고 여부</label><select data-k="fxFiled"><option value="">선택</option><option value="y">신고</option><option value="n">미신고</option></select></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>⑥ 부동산 처분대금 등 <span id="s6"></span></b>
+            <div class="grid-3">
+              <div class="form-group"><label>주택·토지</label><input data-k="reSale" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>임대보증금 <span class="hint">취득주택 외</span></label><input data-k="reDep" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>기타</label><input data-k="reEtc" data-money inputmode="numeric"></div>
+            </div>
+            <div class="form-group"><label>기타 종류</label><input data-k="reEtcKind"></div>
+          </div>
+
+          <div class="section-title">차입금 등 <span class="sum" id="sumLoan"></span></div>
+          <div class="item loan">
+            <b>⑧ 금융기관 대출액 합계 <span id="s8"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>주택담보대출</label><input data-k="lnMort" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>금융기관명</label><input data-k="lnMortBank"></div>
+              <div class="form-group"><label>신용대출</label><input data-k="lnCredit" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>금융기관명</label><input data-k="lnCreditBank"></div>
+              <div class="form-group"><label>사업자대출</label><input data-k="lnBiz" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>금융기관명</label><input data-k="lnBizBank"></div>
+              <div class="form-group"><label>해외 금융기관 대출</label><input data-k="lnFx" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>금융기관명</label><input data-k="lnFxBank"></div>
+              <div class="form-group"><label>그 밖의 대출</label><input data-k="lnEtc" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>대출 종류</label><input data-k="lnEtcKind"></div>
+              <div class="form-group"><label>기존 주택 보유 <span class="hint">주담대 있는 경우</span></label><select data-k="ownHouse"><option value="">선택</option><option value="no">미보유</option><option value="yes">보유</option></select></div>
+              <div class="form-group"><label>보유 건수</label><input data-k="ownCount" type="number" min="1" placeholder="건"></div>
+            </div>
+          </div>
+          <div class="item loan">
+            <b>⑨ 임대보증금 · ⑩ 회사지원금·사채 <span id="s910"></span></b>
+            <div class="grid-3">
+              <div class="form-group"><label>⑨ 취득주택 임대보증금</label><input data-k="tenantDep" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>⑩ 회사지원금</label><input data-k="company" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>⑩ 사채</label><input data-k="bond" data-money inputmode="numeric"></div>
+            </div>
+          </div>
+          <div class="item loan">
+            <b>⑪ 그 밖의 차입금 <span id="s11"></span></b>
+            <div class="grid-3">
+              <div class="form-group"><label>금액</label><input data-k="otherLoan" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>빌려준 사람과의 관계</label><select data-k="loanRel"><option value="">선택</option><option value="spouse">부부</option><option value="lineal">직계존비속</option><option value="other">그 밖의 관계</option></select></div>
+              <div class="form-group"><label>관계 <span class="hint">예) 부</span></label><input data-k="loanRelText"></div>
+            </div>
+          </div>
+
+          <div class="section-title">⑭ 조달자금 지급방식</div>
+          <div class="grid-3">
+            <div class="form-group"><label>⑮ 계좌이체</label><input data-k="payBank" data-money inputmode="numeric"></div>
+            <div class="form-group"><label>⑯ 보증금·대출 승계</label><input data-k="payAssume" data-money inputmode="numeric"></div>
+            <div class="form-group"><label>⑰ 현금 등</label><input data-k="payCash" data-money inputmode="numeric"></div>
+          </div>
+          <div class="form-group"><label>지급 사유 <span class="hint">⑰ 현금(수표) 등으로 지급하는 사유</span></label><input data-k="payReason"></div>
+
+          <div class="section-title">⑱ 입주 계획</div>
+          <div class="radios">
+            <label><input type="radio" name="move" value="self"> 본인입주</label>
+            <label><input type="radio" name="move" value="family"> 본인 외 가족입주</label>
+            <label><input type="radio" name="move" value="rent"> 임대</label>
+            <label><input type="radio" name="move" value="etc"> 그 밖의 경우 (재건축 등)</label>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>입주 예정 시기</label><input data-k="moveWhen" type="month"></div>
+            <div class="form-group"><label>임대 형태</label><select data-k="rentKind"><option value="">선택</option><option value="jeonse">전세</option><option value="wolse">월세</option></select></div>
+          </div>
+        </div>
+
+        <div class="section-title">점검</div>
+        <div class="check-box" id="checkBox">금액을 넣으면 합계와 총 거래금액을 맞춰 봐 드려요.</div>
+        <details class="docs">
+          <summary>첨부서류 안내 <span class="hint">(투기과열지구·토지거래허가구역)</span></summary>
+          <ul id="docsList"></ul>
+        </details>
+        <p class="notice">
+          ※ 입력한 내용(주민등록번호 포함)은 이 브라우저 안에서만 쓰이며 서버로 전송·저장되지 않습니다.<br>
+          ※ 실제 제출은 부동산거래관리시스템(rtms.molit.go.kr) 또는 신고관청에 하며, 이 화면은 작성 참고용입니다.
+        </p>
+      </form>
+
+      <!-- ================= 미리보기 ================= -->
+      <div class="card preview-card">
+        <div class="paper-scroll" id="papers"></div>
+        <div class="actions">
+          <button type="button" class="btn btn-main" onclick="window.print()">인쇄 / PDF 저장</button>
+          <button type="button" class="btn btn-outline" id="resetBtn">입력 초기화</button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 94vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>아이디 (이메일)</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
+      </form>
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
+      </form>
+    </div>
+  </div>
+  <div id="result" style="display:none"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const form = $('form');
+  const fieldsBox = $('buyerFields');
+  const SP = ' ';
+  const comma = (n) => n ? n.toLocaleString('ko-KR') : '';
+  const won = (n) => (n ? n.toLocaleString('ko-KR') : '0') + '원';
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const totalAmt = () => +String($('total').value).replace(/[^0-9]/g, '') || 0;
+
+  // ---------- 매수인별 입력값 (공동명의면 2명) ----------
+  const buyers = [{}, {}];
+  let cur = 0;
+  const buyerEls = () => fieldsBox.querySelectorAll('input[data-k], select[data-k], input[name="move"]');
+  function save() {
+    const o = {};
+    buyerEls().forEach((el) => {
+      if (el.type === 'radio') { if (el.checked) o.move = el.value; }
+      else o[el.dataset.k] = el.value;
+    });
+    buyers[cur] = o;
+  }
+  function load(i) {
+    const o = buyers[i] || {};
+    buyerEls().forEach((el) => {
+      if (el.type === 'radio') el.checked = o.move === el.value;
+      else el.value = o[el.dataset.k] || '';
+    });
+  }
+  const joint = () => $('joint').checked;
+  const count = () => joint() ? 2 : 1;
+
+  // 값 꺼내기
+  const S = (o, k) => (o[k] || '').trim();
+  const N = (o, k) => +String(o[k] || '').replace(/[^0-9]/g, '') || 0;
+
+  function calc(o) {
+    const v = {};
+    ['dep', 'depFx', 'stock', 'coin', 'gift', 'inh', 'cash', 'fx', 'reSale', 'reDep', 'reEtc', 'lnMort', 'lnCredit', 'lnBiz', 'lnFx', 'lnEtc',
+      'tenantDep', 'company', 'bond', 'otherLoan', 'payBank', 'payAssume', 'payCash'].forEach((k) => { v[k] = N(o, k); });
+    v.s2 = v.dep; v.s3 = v.stock + v.coin; v.s4 = v.gift + v.inh; v.s5 = v.cash; v.s6 = v.reSale + v.reDep + v.reEtc;
+    v.s7 = v.s2 + v.s3 + v.s4 + v.s5 + v.s6;
+    v.s8 = v.lnMort + v.lnCredit + v.lnBiz + v.lnFx + v.lnEtc; v.s9 = v.tenantDep; v.s10 = v.company + v.bond; v.s11 = v.otherLoan;
+    v.s12 = v.s8 + v.s9 + v.s10 + v.s11;
+    v.s13 = v.s7 + v.s12;
+    v.pay = v.payBank + v.payAssume + v.payCash;
+    return v;
+  }
+
+  // ---------- 서식 그리기: 원본 서식 좌표(pt, 왼쪽 위 기준)에 값 얹기 ----------
+  // 좌표는 한글 원본 서식을 PDF로 바꿔 각 글자 위치를 읽은 값
+  const T = (x, y, t, cls) => t ? `<div class="ov ${cls || ''}" style="left:${x}pt;top:${y}pt">${t}</div>` : '';
+  const A = (xEnd, y, n, cls) => n ? `<div class="ov r ${cls || ''}" style="right:${(595 - xEnd).toFixed(1)}pt;top:${y}pt">${comma(n)}</div>` : '';
+  const C = (x, y, on) => on ? `<div class="ov ck" style="left:${x}pt;top:${y}pt">√</div>` : '';
+  const TX = (x, y, t, cls) => t ? T(x, y, esc(t), cls) : '';
+
+  function front(o, last) {
+    const v = calc(o);
+    const mv = o.move;
+    const [wy, wm] = (S(o, 'moveWhen') || '-').split('-');
+    const inMove = mv === 'self' || mv === 'family';
+    const rk = S(o, 'rentKind');
+    const own = S(o, 'ownHouse');
+    const ck = S(o, 'cashKind');
+    const gr = S(o, 'giftRel'), lr = S(o, 'loanRel');
+    const d = $('writeDate').value;
+    let h = '';
+    // 제출인 (성명 | 주민등록번호 사이 구분선: 원본 칸 선과 같은 굵기·색)
+    h += '<div class="vline" style="left:300pt;top:114pt;height:31pt"></div>';
+    h += TX(110, 133, S(o, 'name')) + TX(309, 133, S(o, 'rrn')) + TX(110, 164, S(o, 'addr')) + TX(363, 164, S(o, 'tel'));
+    // ② · ③
+    h += A(335, 193.4, v.s2) + A(529.8, 193.4, v.s3);
+    h += TX(248, 226.4, S(o, 'depFxBank'), 'xs') + A(335, 226.2, v.depFx, 'sm');
+    h += C(360.1, 213.9, v.stock) + A(528.6, 213.9, v.stock);
+    h += C(360.1, 225.9, v.coin) + A(528.2, 225.9, v.coin);
+    // ④ 증여·상속
+    h += C(162.5, 259.4, v.gift) + A(330, 259.4, v.gift);
+    h += C(264.6, 271.4, S(o, 'giftFiled') === 'y') + C(304.7, 271.4, S(o, 'giftFiled') === 'n');
+    h += C(162.5, 283.4, v.inh) + A(330, 283.4, v.inh);
+    h += C(264.6, 295.4, S(o, 'inhFiled') === 'y') + C(304.7, 295.4, S(o, 'inhFiled') === 'n');
+    h += C(167.5, 318.7, gr === 'spouse') + C(212.5, 318.7, gr === 'lineal') + (gr === 'lineal' ? TX(311, 318.7, S(o, 'giftRelText'), 'sm') : '');
+    h += C(167.5, 330.7, gr === 'other') + (gr === 'other' ? TX(252, 330.7, S(o, 'giftRelText'), 'sm') : '');
+    // ⑤ 현금 등
+    h += A(528.8, 259.4, v.s5);
+    h += C(360.1, 272.4, v.fx) + A(528.2, 272.4, v.fx);
+    h += C(463.9, 284.4, S(o, 'fxFiled') === 'y') + C(501.6, 284.4, S(o, 'fxFiled') === 'n');
+    h += C(365.2, 318.7, ck === 'cash') + C(365.2, 330.7, ck === 'other') + (ck === 'other' ? TX(474, 330.7, S(o, 'cashOther'), 'sm') : '');
+    // ⑥ · ⑦
+    h += A(330.5, 348.3, v.s6);
+    h += C(162.5, 363.2, v.reSale) + A(330.5, 363.2, v.reSale);
+    h += C(162.5, 375.2, v.reDep) + A(330.5, 375.2, v.reDep);
+    h += C(162.5, 387.2, v.reEtc) + TX(231, 387.2, S(o, 'reEtcKind'), 'sm') + A(330.5, 387.2, v.reEtc);
+    h += A(529.8, 358.3, v.s7);
+    // ⑧ 금융기관 대출
+    h += A(261, 457.6, v.s8);
+    [['lnMort', 'lnMortBank', 407.6], ['lnCredit', 'lnCreditBank', 422.5], ['lnBiz', 'lnBizBank', 437.2], ['lnFx', 'lnFxBank', 452.1], ['lnEtc', 'lnEtcKind', 466.9]]
+      .forEach(([k, b, y]) => { h += TX(443, y + 1, S(o, b), 'xs') + A(527.4, y + 1, v[k], 'xs'); });
+    h += C(399.7, 481.8, own === 'no') + C(458.4, 481.8, own === 'yes') + (own === 'yes' ? A(524, 481.8, +S(o, 'ownCount')) : '');
+    // ⑨ · ⑩ · ⑪ · ⑫ · ⑬
+    h += A(335, 506.6, v.s9);
+    h += C(360.1, 511.4, v.company) + A(528.2, 511.4, v.company);
+    h += C(360.1, 523.4, v.bond) + A(528.2, 523.4, v.bond);
+    h += A(335, 546.2, v.s11);
+    h += C(167.5, 562.6, lr === 'spouse') + C(212.5, 562.6, lr === 'lineal') + (lr === 'lineal' ? TX(311, 562.6, S(o, 'loanRelText'), 'sm') : '');
+    h += C(167.5, 574.6, lr === 'other') + (lr === 'other' ? TX(252, 574.6, S(o, 'loanRelText'), 'sm') : '');
+    h += A(529.8, 576.2, v.s12) + A(529.8, 590.5, v.s13);
+    // ⑭ 지급방식
+    h += A(494.8, 609.8, totalAmt()) + A(494.8, 625.2, v.payBank) + A(494.8, 640.5, v.payAssume) + A(494.8, 655.3, v.payCash);
+    h += TX(232, 670.2, S(o, 'payReason'));
+    // ⑱ 입주 계획
+    h += C(169.8, 690.8, mv === 'self') + C(239.8, 690.8, mv === 'family');
+    if (inMove && wy) h += A(285.5, 704.7, +wy).replace(/,/g, '') + A(310.5, 704.7, +wm);
+    h += C(379.1, 691.3, mv === 'rent') + C(456.4, 691.3, mv === 'etc');
+    if (mv === 'rent' && rk === 'jeonse') h += `<div class="ov circ" style="left:378pt;top:703.2pt;width:12pt"></div>`;
+    if (mv === 'rent' && rk === 'wolse') h += `<div class="ov circ" style="left:397.5pt;top:703.2pt;width:22pt"></div>`;
+    // 작성일 · 제출인
+    if (d) h += A(466, 766.8, +d.slice(0, 4)).replace(/,/g, '') + A(497, 766.8, +d.slice(5, 7)) + A(528.5, 766.8, +d.slice(8, 10));
+    h += TX(330, 778.6, S(o, 'name'));
+    return `<div class="paper front${last ? ' last' : ''}"><img src="form-p1.svg" alt="주택취득자금 조달 및 입주계획서 앞쪽">${h}</div>`;
+  }
+
+  // ---------- 화면 갱신 ----------
+  function render() {
+    save();
+    const n = count();
+    const total = totalAmt();
+    const o = buyers[cur];
+    const v = calc(o);
+
+    // 입력 화면 소계
+    const tag = (x) => x ? won(x) : '';
+    $('s2').textContent = tag(v.s2); $('s3').textContent = tag(v.s3); $('s4').textContent = tag(v.s4);
+    $('s5').textContent = tag(v.s5); $('s6').textContent = tag(v.s6); $('s8').textContent = tag(v.s8);
+    $('s910').textContent = tag(v.s9 + v.s10); $('s11').textContent = tag(v.s11);
+    $('sumOwn').textContent = v.s7 ? `⑦ 소계 ${won(v.s7)}` : '';
+    $('sumLoan').textContent = v.s12 ? `⑫ 소계 ${won(v.s12)}` : '';
+
+    // 공동명의 탭 · 지분
+    $('tabs').classList.toggle('show', n > 1);
+    $('shareRow').classList.toggle('show', n > 1);
+    $('buyerNo').textContent = n > 1 ? ` ${cur + 1}` : '';
+    [0, 1].forEach((i) => { $('tabName' + i).textContent = S(buyers[i], 'name') || (i === 0 ? '대표 매수인' : '공동 매수인'); });
+    const share = parseFloat(S(o, 'share'));
+    $('shareAmt').value = n > 1 && total && share ? won(Math.round(total * share / 100)) : '';
+
+    // 서식: 매수인마다 앞쪽 1장, 뒤쪽(유의사항)은 맨 아래 1장만 화면에 표시 (인쇄 안 함)
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      if (n > 1) html += `<div class="buyer-cap">매수인 ${i + 1}${S(buyers[i], 'name') ? ' · ' + esc(S(buyers[i], 'name')) : ''}</div>`;
+      html += front(buyers[i], i === n - 1);
+    }
+    html += '<div class="screen-cap">뒤쪽 (유의사항 · 첨부서류 · 작성방법) — 화면 참고용, 인쇄되지 않습니다</div>' +
+      '<div class="paper back"><img src="form-p2.svg" alt="주택취득자금 조달 및 입주계획서 뒤쪽"></div>';
+    $('papers').innerHTML = html;
+
+    check();
+    docs(v);
+  }
+
+  // ---------- 점검 ----------
+  function check() {
+    const box = $('checkBox');
+    const n = count();
+    const total = totalAmt();
+    const vs = buyers.slice(0, n).map(calc);
+    const all13 = vs.reduce((a, x) => a + x.s13, 0);
+    const allPay = vs.reduce((a, x) => a + x.pay, 0);
+    if (!total && !all13) { box.className = 'check-box'; box.innerHTML = '금액을 넣으면 합계와 총 거래금액을 맞춰 봐 드려요.'; return; }
+    const o = buyers[cur];
+    const v = vs[cur];
+    const notes = [];
+    let bad = false;
+    const diff = all13 - total;
+    if (total && diff !== 0) {
+      bad = true;
+      notes.push(n > 1
+        ? `매수인 ${n}명의 ⑬ 합계를 더한 금액이 총 거래금액보다 <b>${won(Math.abs(diff))} ${diff > 0 ? '많습니다' : '부족합니다'}</b>. 매수인별 금액을 합한 총액이 거래금액과 일치해야 합니다.`
+        : `⑬ 합계가 총 거래금액보다 <b>${won(Math.abs(diff))} ${diff > 0 ? '많습니다' : '부족합니다'}</b>. 조달 금액 합계와 총 거래금액은 일치해야 합니다.`);
+    }
+    if (total && allPay && allPay !== total) { bad = true; notes.push(`⑮+⑯+⑰ 지급방식 금액${n > 1 ? '(매수인 합계)' : ''}이 총 거래금액과 <b>${won(Math.abs(allPay - total))}</b> 차이 납니다.`); }
+    if (n > 1) {
+      const sh = parseFloat(S(o, 'share'));
+      if (total && sh) {
+        const mine = Math.round(total * sh / 100);
+        if (v.s13 && v.s13 !== mine) notes.push(`매수인 ${cur + 1}의 ⑬ 합계(${won(v.s13)})가 지분 ${sh}% 몫(${won(mine)})과 다릅니다. 실제 부담한 금액 기준으로 적었는지 확인해 주세요.`);
+      }
+      const shares = buyers.slice(0, n).map((b) => parseFloat(S(b, 'share')) || 0);
+      if (shares.every((x) => x) && Math.abs(shares[0] + shares[1] - 100) > 0.001) notes.push(`지분율 합계가 ${shares[0] + shares[1]}%입니다. 100%가 되어야 합니다.`);
+      if (S(o, 'giftRel') === 'spouse' || S(o, 'loanRel') === 'spouse') notes.push('배우자에게서 받은 자금은 증여재산공제 6억원(10년 합산)을 넘으면 증여세가 나옵니다.');
+    }
+    if (v.payAssume && v.payAssume > v.s8 + v.s9) notes.push('⑯ 승계 금액이 ⑧ 대출액 + ⑨ 임대보증금보다 큽니다. 확인해 주세요.');
+    if (v.payCash && !S(o, 'payReason')) notes.push('⑰ 현금 등으로 지급하는 금액이 있으면 <b>지급 사유</b>를 적어 주세요.');
+    if (v.s4 && (S(o, 'giftFiled') === 'n' || S(o, 'inhFiled') === 'n')) notes.push('증여·상속을 <b>미신고</b>로 적으면 국세청 조사 대상이 될 수 있습니다. 증여일이 속한 달의 말일부터 3개월 안에 증여세를 신고하세요.');
+    if (v.s4 && !S(o, 'giftRel')) notes.push('④ 자금을 준 사람과의 관계를 선택해 주세요.');
+    if (v.s11) {
+      if (!S(o, 'loanRel')) notes.push('⑪ 돈을 빌려준 사람과의 관계를 선택해 주세요.');
+      if (S(o, 'loanRel') === 'spouse' || S(o, 'loanRel') === 'lineal') notes.push('가족에게 빌린 돈은 <b>차용증</b>과 약정대로 원금·이자를 갚은 <b>이체 기록</b>이 있어야 증여로 보지 않습니다. <a href="../차용증/main.html">차용증 작성하기 →</a>');
+    }
+    if (!o.move) notes.push('⑱ 입주 계획을 선택해 주세요.');
+    if (v.lnMort && !S(o, 'ownHouse')) notes.push('주택담보대출이 있으면 <b>기존 주택 보유 여부</b>를 적어야 합니다.');
+
+    box.className = 'check-box ' + (bad ? 'warn' : (total && all13 === total ? 'ok' : ''));
+    const who = n > 1 ? `매수인 ${cur + 1} ` : '';
+    box.innerHTML = `<div class="kv"><span>총 거래금액</span><span>${won(total)}</span><span>${n > 1 ? '매수인 합계 ⑬' : '⑬ 합계'}</span><span>${won(all13)}</span>` +
+      `<span>${who}⑦ 자기자금</span><span>${won(v.s7)}</span><span>${who}⑫ 차입금 등</span><span>${won(v.s12)}</span>` +
+      `<span>${who}⑬ 합계</span><span>${won(v.s13)}</span><span>지급방식 합계</span><span>${won(allPay)}</span></div>` +
+      `<ul>${(notes.length ? notes : ['합계와 총 거래금액이 일치합니다.']).map((t) => `<li>${t}</li>`).join('')}</ul>`;
+  }
+
+  function docs(v) {
+    const list = [];
+    if (v.s2) list.push('예금잔액증명서 등 (② 예금액)');
+    if (v.stock) list.push('주식거래내역서 또는 예금잔액증명서 등 (③ 주식·채권)');
+    if (v.s4) list.push('증여세·상속세 신고서 또는 납세증명서 등 (④ 증여·상속)');
+    if (v.s5) list.push('소득금액증명원, 근로소득 원천징수영수증 등' + (v.fx ? ', 외국환신고(확인)필증 등' : '') + ' (⑤ 현금 등)');
+    if (v.s6) list.push('부동산 매매계약서 또는 임대차계약서 등 (⑥ 부동산 처분대금)');
+    if (v.s8) list.push('금융거래확인서, 부채증명서 또는 대출신청서 등 (⑧ 금융기관 대출)');
+    if (v.s9) list.push('부동산 임대차계약서 (⑨ 임대보증금)');
+    if (v.s10 + v.s11) list.push('금전을 빌린 사실과 금액을 확인할 수 있는 서류 — 차용증, 이체내역 등 (⑩·⑪ 차입금)');
+    $('docsList').innerHTML = list.length
+      ? list.map((t) => `<li>${t}</li>`).join('') + '<li>대출 실행 전·매매계약 전이라 금액 증명이 어려우면 그 <b>사유서</b></li>'
+      : '<li>금액을 적은 항목에 맞는 서류가 여기에 표시됩니다.</li>';
+  }
+
+  // ---------- 입력 도우미 ----------
+  form.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.hasAttribute('data-money')) { const x = +el.value.replace(/[^0-9]/g, '') || 0; el.value = x ? x.toLocaleString('ko-KR') : ''; }
+    if (el.hasAttribute('data-rrn')) { const d = el.value.replace(/[^0-9]/g, '').slice(0, 13); el.value = d.length > 6 ? d.slice(0, 6) + '-' + d.slice(6) : d; }
+    render();
+  });
+  form.addEventListener('change', render);
+  $('joint').addEventListener('change', () => {
+    if (!joint() && cur === 1) { save(); cur = 0; load(0); setTab(); }
+    if (joint()) {
+      // 처음 공동명의로 바꾸면 지분 50:50, 매수인 2 관계는 '부부'로 기본값
+      if (!S(buyers[0], 'share')) { buyers[0].share = '50'; if (cur === 0) form.querySelector('[data-k="share"]').value = '50'; }
+      if (!S(buyers[1], 'share')) buyers[1].share = '50';
+    }
+    render();
+  });
+  function setTab() { document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', +b.dataset.tab === cur)); }
+  $('tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-tab]');
+    if (!b || +b.dataset.tab === cur) return;
+    save(); cur = +b.dataset.tab; load(cur); setTab(); render();
+    form.scrollTop = 0;
+  });
+
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm('입력한 내용을 모두 지울까요? (매수인 모두)')) return;
+    form.reset();
+    buyers[0] = {}; buyers[1] = {}; cur = 0; setTab();
+    $('writeDate').value = today();
+    $('importBar').classList.remove('show');
+    render();
+  });
+
+  // ---------- 차용증에서 넘어온 내용 불러오기 (매수인 1) ----------
+  function importLoan() {
+    let d = null;
+    try { d = JSON.parse(sessionStorage.getItem('fundingFromLoan') || 'null'); } catch (e) { d = null; }
+    try { sessionStorage.removeItem('fundingFromLoan'); } catch (e) { /* 저장소를 못 쓰는 환경 */ }
+    if (!d || !d.amount) return;
+    const set = (k, val) => { const el = form.querySelector(`[data-k="${k}"]`); if (el && val && !el.value) el.value = val; };
+    set('otherLoan', (+d.amount).toLocaleString('ko-KR'));
+    set('name', d.name); set('rrn', d.rrn); set('addr', d.addr);
+    const r = form.querySelector('[data-k="loanRel"]'); if (!r.value) r.value = 'lineal';
+    $('importBar').innerHTML = `차용증 내용을 불러왔어요: <b>⑪ 그 밖의 차입금 ${won(+d.amount)}</b> · 관계 '직계존비속' (다르면 고쳐 주세요)`;
+    $('importBar').classList.add('show');
+  }
+
+  $('writeDate').value = today();
+  importLoan();
+  render();
+})();
+</script>
+
+  <!-- 다른 계산기와 같은 회원 로그인 (이용권 없이 로그인만 하면 사용) -->
+  <script src="../양도세계산기/js/login.js"></script>
+  <script>
+    updateUi = function (user) {
+      const loggedIn = !!user;
+      document.getElementById('lockChecking').style.display = 'none';
+      if (loggedIn) closeModal();
+      document.getElementById('loginBtn').style.display = loggedIn ? 'none' : 'inline-block';
+      document.getElementById('signupBtn').style.display = loggedIn ? 'none' : 'inline-block';
+      document.getElementById('logoutBtn').style.display = loggedIn ? 'inline-block' : 'none';
+      document.getElementById('lockReady').style.display = 'none';
+      document.getElementById('lockLogin').style.display = loggedIn ? 'none' : 'block';
+      document.getElementById('lockOverlay').style.display = loggedIn ? 'none' : 'flex';
+      document.getElementById('lockWrap').classList.toggle('locked', !loggedIn);
+      document.getElementById('planStatus').innerText = loggedIn && user.name ? `${user.name}님` : '';
+    };
+  </script>
+</body>
+</html>
