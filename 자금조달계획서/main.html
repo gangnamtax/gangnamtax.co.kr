@@ -126,7 +126,7 @@
     .btn-login { background-color: #8a6d3b; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13.3px; font-family: inherit; }
     .btn-login:hover { background-color: #74592e; }
     .lock-box .btn-outline { padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13.3px; }
-    .lock-wrap.locked .layout { pointer-events: none; user-select: none; }
+    .lock-wrap.locked .layout { pointer-events: none; user-select: none; filter: blur(5px); opacity: .45; }
     .modal { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
     .modal-content { background: #fff; padding: 28px; border-radius: 12px; width: 400px; max-width: 100%; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,.15); max-height: 90vh; overflow-y: auto; }
     .modal-content .close-btn { position: absolute; top: 12px; right: 16px; font-size: 22px; cursor: pointer; color: #94a3b8; }
@@ -330,7 +330,7 @@
           <ul id="docsList"></ul>
         </details>
         <p class="notice">
-          ※ 입력한 내용(주민등록번호 포함)은 이 브라우저 안에서만 쓰이며 서버로 전송·저장되지 않습니다.<br>
+          ※ 성명·주민등록번호·주소·전화번호는 이 브라우저 안에서만 쓰이며 서버로 보내지 않습니다. 금액은 계산을 위해 보내지만 저장하지 않습니다.<br>
           ※ 실제 제출은 부동산거래관리시스템(rtms.molit.go.kr) 또는 신고관청에 하며, 이 화면은 작성 참고용입니다.
         </p>
       </form>
@@ -339,7 +339,7 @@
       <div class="card preview-card">
         <div class="paper-scroll" id="papers"></div>
         <div class="actions">
-          <button type="button" class="btn btn-main" onclick="window.print()">인쇄 / PDF 저장</button>
+          <button type="button" class="btn btn-main" onclick="printForm()">인쇄 / PDF 저장</button>
           <button type="button" class="btn btn-outline" id="resetBtn">입력 초기화</button>
         </div>
       </div>
@@ -400,12 +400,16 @@
 
 <script>
 (function () {
+  // 계산 · 서식에 값 얹기 · 점검은 서버(Apps Script)에서 함. 이 화면은 입력값을 보내고 결과를 그리기만 함.
+  // 성명 · 주민등록번호 · 주소 · 전화번호는 서버로 보내지 않고, 돌려받은 서식의 빈 자리에 이 브라우저 안에서만 채움.
+  const FORM = 'house';
+  const PII = ['name', 'rrn', 'addr', 'tel'];
+  const SUM_KEYS = ['s2', 's3', 's4', 's5', 's6', 's8', 's910', 's11'];
+  const OWN_LABEL = '⑦', OWN_KEY = 's7';
   const $ = (id) => document.getElementById(id);
   const form = $('form');
   const fieldsBox = $('buyerFields');
-  const SP = ' ';
-  const comma = (n) => n ? n.toLocaleString('ko-KR') : '';
-  const won = (n) => (n ? n.toLocaleString('ko-KR') : '0') + '원';
+  const won = (n) => (n ? Math.round(n).toLocaleString('ko-KR') : '0') + '원';
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const totalAmt = () => +String($('total').value).replace(/[^0-9]/g, '') || 0;
 
@@ -430,197 +434,92 @@
   }
   const joint = () => $('joint').checked;
   const count = () => joint() ? 2 : 1;
+  const S = (o, k) => String((o && o[k]) || '').trim();
 
-  // 값 꺼내기
-  const S = (o, k) => (o[k] || '').trim();
-  const N = (o, k) => +String(o[k] || '').replace(/[^0-9]/g, '') || 0;
+  // ---------- 서버 계산 ----------
+  let last = null, seq = 0, timer = null, pending = null, dirty = true;
+  function payload() {
+    return {
+      product: 'fundingform', form: FORM, total: $('total').value, writeDate: $('writeDate').value, cur,
+      buyers: buyers.slice(0, count()).map((o) => { const c = Object.assign({}, o); PII.forEach((k) => delete c[k]); return c; })
+    };
+  }
+  function schedule() { dirty = true; clearTimeout(timer); timer = setTimeout(fetchCalc, 350); }
+  function fetchCalc() {
+    clearTimeout(timer);
+    if (typeof api !== 'function' || typeof getToken !== 'function' || !getToken()) return Promise.resolve();
+    const my = ++seq;
+    dirty = false;
+    pending = api('/api/calculate', payload()).then((res) => {
+      if (my !== seq) return;
+      if (!res.ok) { showError(res.data.message || '계산하지 못했습니다.'); if (res.status === 401 && typeof refreshUser === 'function') refreshUser(); return; }
+      last = res.data.result;
+      paint();
+    }).catch(() => { if (my === seq) showError('서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
+    return pending;
+  }
+  function showError(msg) { const box = $('checkBox'); box.className = 'check-box warn'; box.textContent = msg; }
+  window.formRecalc = fetchCalc;
+  // 인쇄 전에 마지막 입력까지 계산이 끝났는지 확인
+  window.printForm = async function () {
+    if (dirty) await fetchCalc(); else if (pending) await pending;
+    window.print();
+  };
 
-  function calc(o) {
-    const v = {};
-    ['dep', 'depFx', 'stock', 'coin', 'gift', 'inh', 'cash', 'fx', 'reSale', 'reDep', 'reEtc', 'lnMort', 'lnCredit', 'lnBiz', 'lnFx', 'lnEtc',
-      'tenantDep', 'company', 'bond', 'otherLoan', 'payBank', 'payAssume', 'payCash'].forEach((k) => { v[k] = N(o, k); });
-    v.s2 = v.dep; v.s3 = v.stock + v.coin; v.s4 = v.gift + v.inh; v.s5 = v.cash; v.s6 = v.reSale + v.reDep + v.reEtc;
-    v.s7 = v.s2 + v.s3 + v.s4 + v.s5 + v.s6;
-    v.s8 = v.lnMort + v.lnCredit + v.lnBiz + v.lnFx + v.lnEtc; v.s9 = v.tenantDep; v.s10 = v.company + v.bond; v.s11 = v.otherLoan;
-    v.s12 = v.s8 + v.s9 + v.s10 + v.s11;
-    v.s13 = v.s7 + v.s12;
-    v.pay = v.payBank + v.payAssume + v.payCash;
-    return v;
+  // 괄호 안 좁은 칸: 실제 글자 폭을 재서 칸(data-w pt)을 넘으면 글씨를 줄임
+  function fitAll(root) {
+    root.querySelectorAll('.ov.fit').forEach((el) => {
+      const maxPx = +el.dataset.w * 4 / 3, pt = +el.dataset.pt;
+      const paper = el.closest('.paper');
+      const w = el.getBoundingClientRect().width / (paper.getBoundingClientRect().width / (595 * 4 / 3));
+      if (w > maxPx) {
+        const size = Math.max(5, pt * maxPx / w);
+        el.style.fontSize = size.toFixed(2) + 'pt';
+        el.style.top = (+el.dataset.y + (pt - size) * 0.8).toFixed(1) + 'pt';
+      }
+    });
   }
 
-  // ---------- 서식 그리기: 원본 서식 좌표(pt, 왼쪽 위 기준)에 값 얹기 ----------
-  // 좌표는 한글 원본 서식을 PDF로 바꿔 각 글자 위치를 읽은 값
-  const T = (x, y, t, cls) => t ? `<div class="ov ${cls || ''}" style="left:${x}pt;top:${y}pt">${t}</div>` : '';
-  const A = (xEnd, y, n, cls) => n ? `<div class="ov r ${cls || ''}" style="right:${(595 - xEnd).toFixed(1)}pt;top:${y}pt">${comma(n)}</div>` : '';
-  const C = (x, y, on) => on ? `<div class="ov ck" style="left:${x}pt;top:${y}pt">√</div>` : '';
-  const TX = (x, y, t, cls) => t ? T(x, y, esc(t), cls) : '';
+  // ---------- 화면 그리기 (서버 결과 + 이 브라우저의 개인정보) ----------
+  function paint() {
+    const n = count();
+    const v = last ? last.sums : {};
+    const tag = (x) => x ? won(x) : '';
+    SUM_KEYS.forEach((k) => { $(k).textContent = tag(v[k]); });
+    $('sumOwn').textContent = v[OWN_KEY] ? `${OWN_LABEL} 소계 ${won(v[OWN_KEY])}` : '';
+    $('sumLoan').textContent = v.s12 ? `⑫ 소계 ${won(v.s12)}` : '';
 
-  function front(o, last) {
-    const v = calc(o);
-    const mv = o.move;
-    const wy = S(o, 'moveY'), wm = S(o, 'moveM');
-    const inMove = mv === 'self' || mv === 'family';
-    const rk = S(o, 'rentKind');
-    const own = S(o, 'ownHouse');
-    const ck = S(o, 'cashKind');
-    const gr = S(o, 'giftRel'), lr = S(o, 'loanRel');
-    const d = FormTools.isDate($('writeDate').value) ? $('writeDate').value : '';
-    let h = '';
-    // 제출인 (성명 | 주민등록번호 사이 구분선: 원본 칸 선과 같은 굵기·색)
-    h += '<div class="vline" style="left:300pt;top:114pt;height:31pt"></div>';
-    h += TX(110, 133, S(o, 'name')) + TX(309, 133, S(o, 'rrn')) + TX(110, 164, S(o, 'addr')) + TX(363, 164, S(o, 'tel'));
-    // ② · ③
-    h += A(335, 193.4, v.s2) + A(529.8, 193.4, v.s3);
-    h += TX(248, 226.4, S(o, 'depFxBank'), 'xs') + A(335, 226.2, v.depFx, 'sm');
-    h += C(360.1, 213.9, v.stock) + A(528.6, 213.9, v.stock);
-    h += C(360.1, 225.9, v.coin) + A(528.2, 225.9, v.coin);
-    // ④ 증여·상속
-    h += C(162.5, 259.4, v.gift) + A(330, 259.4, v.gift);
-    h += C(264.6, 271.4, S(o, 'giftFiled') === 'y') + C(304.7, 271.4, S(o, 'giftFiled') === 'n');
-    h += C(162.5, 283.4, v.inh) + A(330, 283.4, v.inh);
-    h += C(264.6, 295.4, S(o, 'inhFiled') === 'y') + C(304.7, 295.4, S(o, 'inhFiled') === 'n');
-    h += C(167.5, 318.7, gr === 'spouse') + C(212.5, 318.7, gr === 'lineal') + (gr === 'lineal' ? TX(311, 318.7, S(o, 'giftRelText'), 'sm') : '');
-    h += C(167.5, 330.7, gr === 'other') + (gr === 'other' ? TX(252, 330.7, S(o, 'giftRelText'), 'sm') : '');
-    // ⑤ 현금 등
-    h += A(528.8, 259.4, v.s5);
-    h += C(360.1, 272.4, v.fx) + A(528.2, 272.4, v.fx);
-    h += C(463.9, 284.4, S(o, 'fxFiled') === 'y') + C(501.6, 284.4, S(o, 'fxFiled') === 'n');
-    h += C(365.2, 318.7, ck === 'cash') + C(365.2, 330.7, ck === 'other') + (ck === 'other' ? TX(474, 330.7, S(o, 'cashOther'), 'sm') : '');
-    // ⑥ · ⑦
-    h += A(330.5, 348.3, v.s6);
-    h += C(162.5, 363.2, v.reSale) + A(330.5, 363.2, v.reSale);
-    h += C(162.5, 375.2, v.reDep) + A(330.5, 375.2, v.reDep);
-    h += C(162.5, 387.2, v.reEtc) + TX(231, 387.2, S(o, 'reEtcKind'), 'sm') + A(330.5, 387.2, v.reEtc);
-    h += A(529.8, 358.3, v.s7);
-    // ⑧ 금융기관 대출
-    h += A(261, 457.6, v.s8);
-    [['lnMort', 'lnMortBank', 407.6], ['lnCredit', 'lnCreditBank', 422.5], ['lnBiz', 'lnBizBank', 437.2], ['lnFx', 'lnFxBank', 452.1], ['lnEtc', 'lnEtcKind', 466.9]]
-      .forEach(([k, b, y]) => { h += TX(443, y + 1, S(o, b), 'xs') + A(527.4, y + 1, v[k], 'xs'); });
-    h += C(399.7, 481.8, own === 'no') + C(458.4, 481.8, own === 'yes') + (own === 'yes' ? A(524, 481.8, +S(o, 'ownCount')) : '');
-    // ⑨ · ⑩ · ⑪ · ⑫ · ⑬
-    h += A(335, 506.6, v.s9);
-    h += C(360.1, 511.4, v.company) + A(528.2, 511.4, v.company);
-    h += C(360.1, 523.4, v.bond) + A(528.2, 523.4, v.bond);
-    h += A(335, 546.2, v.s11);
-    h += C(167.5, 562.6, lr === 'spouse') + C(212.5, 562.6, lr === 'lineal') + (lr === 'lineal' ? TX(311, 562.6, S(o, 'loanRelText'), 'sm') : '');
-    h += C(167.5, 574.6, lr === 'other') + (lr === 'other' ? TX(252, 574.6, S(o, 'loanRelText'), 'sm') : '');
-    h += A(529.8, 576.2, v.s12) + A(529.8, 590.5, v.s13);
-    // ⑭ 지급방식
-    h += A(494.8, 609.8, totalAmt()) + A(494.8, 625.2, v.payBank) + A(494.8, 640.5, v.payAssume) + A(494.8, 655.3, v.payCash);
-    h += TX(232, 670.2, S(o, 'payReason'));
-    // ⑱ 입주 계획
-    h += C(169.8, 690.8, mv === 'self') + C(239.8, 690.8, mv === 'family');
-    if (inMove && wy) h += A(285.5, 704.7, +wy).replace(/,/g, '') + A(310.5, 704.7, +wm);
-    h += C(379.1, 691.3, mv === 'rent') + C(456.4, 691.3, mv === 'etc');
-    if (mv === 'rent' && rk === 'jeonse') h += `<div class="ov circ" style="left:378pt;top:703.2pt;width:12pt"></div>`;
-    if (mv === 'rent' && rk === 'wolse') h += `<div class="ov circ" style="left:397.5pt;top:703.2pt;width:22pt"></div>`;
-    // 작성일 · 제출인
-    if (d) h += A(466, 766.8, +d.slice(0, 4)).replace(/,/g, '') + A(497, 766.8, +d.slice(5, 7)) + A(528.5, 766.8, +d.slice(8, 10));
-    h += TX(330, 778.6, S(o, 'name'));
-    return `<div class="paper front${last ? ' last' : ''}"><img src="form-p1.svg" alt="주택취득자금 조달 및 입주계획서 앞쪽">${h}</div>`;
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      if (n > 1) html += `<div class="buyer-cap">매수인 ${i + 1}${S(buyers[i], 'name') ? ' · ' + esc(S(buyers[i], 'name')) : ''}</div>`;
+      html += `<div class="paper front${i === n - 1 ? ' last' : ''}" data-i="${i}"><img src="form-p1.svg" alt="주택취득자금 조달 및 입주계획서 앞쪽">${last && last.papers[i] || ''}</div>`;
+    }
+    html += '<div class="screen-cap">뒤쪽 (유의사항 · 첨부서류 · 작성방법) — 화면 참고용, 인쇄되지 않습니다</div>' +
+      '<div class="paper back"><img src="form-p2.svg" alt="주택취득자금 조달 및 입주계획서 뒤쪽"></div>';
+    $('papers').innerHTML = html;
+    $('papers').querySelectorAll('.paper[data-i]').forEach((p) => {
+      const o = buyers[+p.dataset.i] || {};
+      p.querySelectorAll('[data-pii]').forEach((el) => { el.textContent = S(o, el.dataset.pii); });
+    });
+    fitAll($('papers'));
+
+    const box = $('checkBox');
+    if (last) { box.className = 'check-box ' + (last.checkCls || ''); box.innerHTML = last.checkHtml; $('docsList').innerHTML = last.docsHtml || ''; }
   }
 
-  // ---------- 화면 갱신 ----------
   function render() {
     save();
     const n = count();
     const total = totalAmt();
     const o = buyers[cur];
-    const v = calc(o);
-
-    // 입력 화면 소계
-    const tag = (x) => x ? won(x) : '';
-    $('s2').textContent = tag(v.s2); $('s3').textContent = tag(v.s3); $('s4').textContent = tag(v.s4);
-    $('s5').textContent = tag(v.s5); $('s6').textContent = tag(v.s6); $('s8').textContent = tag(v.s8);
-    $('s910').textContent = tag(v.s9 + v.s10); $('s11').textContent = tag(v.s11);
-    $('sumOwn').textContent = v.s7 ? `⑦ 소계 ${won(v.s7)}` : '';
-    $('sumLoan').textContent = v.s12 ? `⑫ 소계 ${won(v.s12)}` : '';
-
-    // 공동명의 탭 · 지분
     $('tabs').classList.toggle('show', n > 1);
     $('shareRow').classList.toggle('show', n > 1);
     $('buyerNo').textContent = n > 1 ? ` ${cur + 1}` : '';
     [0, 1].forEach((i) => { $('tabName' + i).textContent = S(buyers[i], 'name') || (i === 0 ? '대표 매수인' : '공동 매수인'); });
     const share = parseFloat(S(o, 'share'));
     $('shareAmt').value = n > 1 && total && share ? won(Math.round(total * share / 100)) : '';
-
-    // 서식: 매수인마다 앞쪽 1장, 뒤쪽(유의사항)은 맨 아래 1장만 화면에 표시 (인쇄 안 함)
-    let html = '';
-    for (let i = 0; i < n; i++) {
-      if (n > 1) html += `<div class="buyer-cap">매수인 ${i + 1}${S(buyers[i], 'name') ? ' · ' + esc(S(buyers[i], 'name')) : ''}</div>`;
-      html += front(buyers[i], i === n - 1);
-    }
-    html += '<div class="screen-cap">뒤쪽 (유의사항 · 첨부서류 · 작성방법) — 화면 참고용, 인쇄되지 않습니다</div>' +
-      '<div class="paper back"><img src="form-p2.svg" alt="주택취득자금 조달 및 입주계획서 뒤쪽"></div>';
-    $('papers').innerHTML = html;
-
-    check();
-    docs(v);
-  }
-
-  // ---------- 점검 ----------
-  function check() {
-    const box = $('checkBox');
-    const n = count();
-    const total = totalAmt();
-    const vs = buyers.slice(0, n).map(calc);
-    const all13 = vs.reduce((a, x) => a + x.s13, 0);
-    const allPay = vs.reduce((a, x) => a + x.pay, 0);
-    if (!total && !all13) { box.className = 'check-box'; box.innerHTML = '금액을 넣으면 합계와 총 거래금액을 맞춰 봐 드려요.'; return; }
-    const o = buyers[cur];
-    const v = vs[cur];
-    const notes = [];
-    let bad = false;
-    const diff = all13 - total;
-    if (total && diff !== 0) {
-      bad = true;
-      notes.push(n > 1
-        ? `매수인 ${n}명의 ⑬ 합계를 더한 금액이 총 거래금액보다 <b>${won(Math.abs(diff))} ${diff > 0 ? '많습니다' : '부족합니다'}</b>. 매수인별 금액을 합한 총액이 거래금액과 일치해야 합니다.`
-        : `⑬ 합계가 총 거래금액보다 <b>${won(Math.abs(diff))} ${diff > 0 ? '많습니다' : '부족합니다'}</b>. 조달 금액 합계와 총 거래금액은 일치해야 합니다.`);
-    }
-    if (total && allPay && allPay !== total) { bad = true; notes.push(`⑮+⑯+⑰ 지급방식 금액${n > 1 ? '(매수인 합계)' : ''}이 총 거래금액과 <b>${won(Math.abs(allPay - total))}</b> 차이 납니다.`); }
-    if (n > 1) {
-      const sh = parseFloat(S(o, 'share'));
-      if (total && sh) {
-        const mine = Math.round(total * sh / 100);
-        if (v.s13 && v.s13 !== mine) notes.push(`매수인 ${cur + 1}의 ⑬ 합계(${won(v.s13)})가 지분 ${sh}% 몫(${won(mine)})과 다릅니다. 실제 부담한 금액 기준으로 적었는지 확인해 주세요.`);
-      }
-      const shares = buyers.slice(0, n).map((b) => parseFloat(S(b, 'share')) || 0);
-      if (shares.every((x) => x) && Math.abs(shares[0] + shares[1] - 100) > 0.001) notes.push(`지분율 합계가 ${shares[0] + shares[1]}%입니다. 100%가 되어야 합니다.`);
-      if (S(o, 'giftRel') === 'spouse' || S(o, 'loanRel') === 'spouse') notes.push('배우자에게서 받은 자금은 증여재산공제 6억원(10년 합산)을 넘으면 증여세가 나옵니다.');
-    }
-    if (v.payAssume && v.payAssume > v.s8 + v.s9) notes.push('⑯ 승계 금액이 ⑧ 대출액 + ⑨ 임대보증금보다 큽니다. 확인해 주세요.');
-    if (v.payCash && !S(o, 'payReason')) notes.push('⑰ 현금 등으로 지급하는 금액이 있으면 <b>지급 사유</b>를 적어 주세요.');
-    if (v.s4 && (S(o, 'giftFiled') === 'n' || S(o, 'inhFiled') === 'n')) notes.push('증여·상속을 <b>미신고</b>로 적으면 국세청 조사 대상이 될 수 있습니다. 증여일이 속한 달의 말일부터 3개월 안에 증여세를 신고하세요.');
-    if (v.s4 && !S(o, 'giftRel')) notes.push('④ 자금을 준 사람과의 관계를 선택해 주세요.');
-    if (v.s11) {
-      if (!S(o, 'loanRel')) notes.push('⑪ 돈을 빌려준 사람과의 관계를 선택해 주세요.');
-      if (S(o, 'loanRel') === 'spouse' || S(o, 'loanRel') === 'lineal') notes.push('가족에게 빌린 돈은 <b>차용증</b>과 약정대로 원금·이자를 갚은 <b>이체 기록</b>이 있어야 증여로 보지 않습니다. <a href="../차용증/main.html">차용증 작성하기 →</a>');
-    }
-    if (!o.move) notes.push('⑱ 입주 계획을 선택해 주세요.');
-    if (v.lnMort && !S(o, 'ownHouse')) notes.push('주택담보대출이 있으면 <b>기존 주택 보유 여부</b>를 적어야 합니다.');
-
-    box.className = 'check-box ' + (bad ? 'warn' : (total && all13 === total ? 'ok' : ''));
-    const who = n > 1 ? `매수인 ${cur + 1} ` : '';
-    box.innerHTML = `<div class="kv"><span>총 거래금액</span><span>${won(total)}</span><span>${n > 1 ? '매수인 합계 ⑬' : '⑬ 합계'}</span><span>${won(all13)}</span>` +
-      `<span>${who}⑦ 자기자금</span><span>${won(v.s7)}</span><span>${who}⑫ 차입금 등</span><span>${won(v.s12)}</span>` +
-      `<span>${who}⑬ 합계</span><span>${won(v.s13)}</span><span>지급방식 합계</span><span>${won(allPay)}</span></div>` +
-      `<ul>${(notes.length ? notes : ['합계와 총 거래금액이 일치합니다.']).map((t) => `<li>${t}</li>`).join('')}</ul>`;
-  }
-
-  function docs(v) {
-    const list = [];
-    if (v.s2) list.push('예금잔액증명서 등 (② 예금액)');
-    if (v.stock) list.push('주식거래내역서 또는 예금잔액증명서 등 (③ 주식·채권)');
-    if (v.s4) list.push('증여세·상속세 신고서 또는 납세증명서 등 (④ 증여·상속)');
-    if (v.s5) list.push('소득금액증명원, 근로소득 원천징수영수증 등' + (v.fx ? ', 외국환신고(확인)필증 등' : '') + ' (⑤ 현금 등)');
-    if (v.s6) list.push('부동산 매매계약서 또는 임대차계약서 등 (⑥ 부동산 처분대금)');
-    if (v.s8) list.push('금융거래확인서, 부채증명서 또는 대출신청서 등 (⑧ 금융기관 대출)');
-    if (v.s9) list.push('부동산 임대차계약서 (⑨ 임대보증금)');
-    if (v.s10 + v.s11) list.push('금전을 빌린 사실과 금액을 확인할 수 있는 서류 — 차용증, 이체내역 등 (⑩·⑪ 차입금)');
-    $('docsList').innerHTML = list.length
-      ? list.map((t) => `<li>${t}</li>`).join('') + '<li>대출 실행 전·매매계약 전이라 금액 증명이 어려우면 그 <b>사유서</b></li>'
-      : '<li>금액을 적은 항목에 맞는 서류가 여기에 표시됩니다.</li>';
+    paint();
+    schedule();
   }
 
   // ---------- 입력 도우미 ----------
@@ -634,7 +533,7 @@
   $('joint').addEventListener('change', () => {
     if (!joint() && cur === 1) { save(); cur = 0; load(0); setTab(); }
     if (joint()) {
-      // 처음 공동명의로 바꾸면 지분 50:50, 매수인 2 관계는 '부부'로 기본값
+      // 처음 공동명의로 바꾸면 지분 50:50
       if (!S(buyers[0], 'share')) { buyers[0].share = '50'; if (cur === 0) form.querySelector('[data-k="share"]').value = '50'; }
       if (!S(buyers[1], 'share')) buyers[1].share = '50';
     }
@@ -658,6 +557,9 @@
     buyers[0] = {}; buyers[1] = {}; cur = 0; setTab();
     $('writeDate').value = today();
     $('importBar').classList.remove('show');
+    last = null;
+    $('checkBox').className = 'check-box'; $('checkBox').textContent = '금액을 넣으면 합계와 총 거래금액을 맞춰 봐 드려요.';
+    $('docsList').innerHTML = '<li>금액을 적은 항목에 맞는 서류가 여기에 표시됩니다.</li>';
     render();
   });
 
@@ -702,6 +604,7 @@
       document.getElementById('lockOverlay').style.display = loggedIn ? 'none' : 'flex';
       document.getElementById('lockWrap').classList.toggle('locked', !loggedIn);
       document.getElementById('planStatus').innerText = loggedIn && user.name ? `${user.name}님` : '';
+      if (loggedIn && window.formRecalc) window.formRecalc();
     };
   </script>
 </body>

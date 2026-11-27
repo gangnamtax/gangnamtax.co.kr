@@ -184,7 +184,7 @@
     .btn-login { background-color: #8a6d3b; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13.3px; font-family: inherit; }
     .btn-login:hover { background-color: #74592e; }
     .lock-box .btn-outline { padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13.3px; }
-    .lock-wrap.locked .layout { pointer-events: none; user-select: none; }
+    .lock-wrap.locked .layout { pointer-events: none; user-select: none; filter: blur(5px); opacity: .45; }
     .modal { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
     .modal-content { background: #fff; padding: 28px; border-radius: 12px; width: 400px; max-width: 100%; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,.15); max-height: 90vh; overflow-y: auto; }
     .modal-content .close-btn { position: absolute; top: 12px; right: 16px; font-size: 22px; cursor: pointer; color: #94a3b8; }
@@ -329,7 +329,7 @@
         </details>
 
         <p class="notice">
-          ※ 입력한 내용(주민등록번호 포함)은 이 브라우저 안에서만 쓰이며 서버로 전송·저장되지 않습니다.<br>
+          ※ 성명·주민등록번호·주소·계좌는 이 브라우저 안에서만 쓰이며 서버로 보내지 않습니다. 원금·이자율은 계산을 위해 보내지만 저장하지 않습니다.<br>
           ※ 이 서식은 일반적인 참고용입니다. 개별 사정에 맞는 검토가 필요하면 세무회계강남에 문의해 주세요.
         </p>
       </form>
@@ -389,7 +389,7 @@
         </div>
         <div class="filing-note" id="filingNote"></div>
         <div class="actions bottom">
-          <button type="button" class="btn btn-main" onclick="window.print()">인쇄 / PDF 저장</button>
+          <button type="button" class="btn btn-main" onclick="printForm()">인쇄 / PDF 저장</button>
           <button type="button" class="btn btn-main" id="filingBtnBottom" onclick="openFiling()">신고납부 의뢰하기</button>
           <button type="button" class="btn btn-outline" id="toFunding">자금조달계획서에 반영 →</button>
           <button type="button" class="btn btn-outline" id="resetBtn">입력 초기화</button>
@@ -488,6 +488,7 @@
       document.getElementById('lockOverlay').style.display = loggedIn ? 'none' : 'flex';
       document.getElementById('lockWrap').classList.toggle('locked', !loggedIn);
       document.getElementById('planStatus').innerText = loggedIn && user.name ? `${user.name}님` : '';
+      if (loggedIn && window.formRecalc) window.formRecalc();
     };
   </script>
 
@@ -498,8 +499,6 @@
   const accelDefault = (noInt, n) => noInt
     ? `1. 원금의 상환을 **${n}회 이상 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.`
     : `1. 이자의 지급을 **${n}회 이상 연체**하는 경우, 채무자는 **기한의 이익을 상실**한다.\n2. 이 경우 채권자가 원금 변제일 전이라도 원리금을 청구하면, 채무자는 **이의 없이 즉시 변제**한다.`;
-  const OFFICIAL_RATE = 4.6; // 상증법 시행규칙 제10조의5 적정이자율
-  const GIFT_LIMIT = 10000000; // 상증법 제41조의4: 연 이익 1천만원 미만은 증여 아님
 
   // ---------- 숫자 ↔ 한글 금액 ----------
   function toKorean(n) {
@@ -548,7 +547,7 @@
     if (m) items.push(`채무자는 ${due ? '상환기한까지 ' : ''}수입에 따라 변동 가능하되, **매월 말일 ${toKorean(m)}원(₩${comma(m)}) 이상**씩 원금을 분할 상환한다.`);
     const rate = parseFloat($('rate').value), p = num($('principal').value);
     if (!$('noInterest').checked && rate > 0 && p) {
-      const w = monthlyWht(annualInterest(p, rate));
+      const w = fresh() ? L.wht : {};
       items.push(`채무자는 이자를 지급할 때 **이자소득세 및 지방소득세를 원천징수**하여 신고·납부하고, 그 나머지 금액` +
         (w.net ? `(월 ${comma(w.net)}원)` : '') + `을 채권자에게 지급한다.`);
     }
@@ -577,107 +576,43 @@
   function field(k) { const el = form.querySelector(`[data-k="${k}"]`); return el ? el.value.trim() : ''; }
 
   // ---------- 세무 점검 : 증여세 없는 최소 이자율 ----------
-  // 상증법 제41조의4: (원금 × 4.6% − 실제 이자) ≥ 1,000만원이면 그 차액이 증여
-  // → 차액을 990만원(TARGET_GAP)으로 맞춘 연 이자를 만원 단위로 올려 정하고, 이자율은 그 이자 ÷ 원금
-  //   적정이자 자체가 1,000만원 미만이면 무이자 가능
-  const TARGET_GAP = 9900000;
-  const WHT = 0.275;            // 비영업대금 이익 원천징수 25% + 지방소득세 2.5%
-  // 신고·납부 의뢰 안내 문구 · 버튼 이름 (수수료)
+  // 최소 이자율 · 증여 판단 · 원천징수 · 금액별 표는 서버(Apps Script)에서 계산. 원금 · 이자율만 보냄 (이름 등은 보내지 않음)
   const escH = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function filingNoteHtml() {
     const nm = field('dbName').replace(/\s+/g, '');
     return `${nm ? `채무자 <b>${escH(nm)}님</b>은` : '채무자님은'} 매월 이자를 지급할 때 <b>이자소득세(지방세 포함)를 신고납부</b>하여야 합니다.<br>신고의뢰를 희망하시면 아래의 버튼을 눌러주세요.`;
   }
-  // 매월 이자 지급 시 원천징수: 소득세 25%(10원 미만 절사, 1천원 미만 소액부징수) + 지방소득세(소득세의 10%)
-  function monthlyWht(yearly) {
-    const monthly = Math.round(yearly / 12);
-    let incomeTax = Math.floor(monthly * 0.25 / 10) * 10;
-    if (incomeTax < 1000) incomeTax = 0;
-    const localTax = Math.floor(incomeTax * 0.1 / 10) * 10;
-    return { monthly, incomeTax, localTax, tax: incomeTax + localTax, net: monthly - incomeTax - localTax };
-  }
-  const COMP_LIMIT = 20000000;  // 금융소득 종합과세 기준
-  function minInterest(p) {     // 증여 없이 낼 최소 연 이자 (만원 단위)
-    if (!p) return 0;
-    const fair = Math.round(p * OFFICIAL_RATE / 100);
-    if (fair < GIFT_LIMIT) return 0;
-    return Math.ceil((fair - TARGET_GAP) / 10000) * 10000;
-  }
-  // 이자율(%) — 소수 넷째 자리에서 올림해 실제 이자가 목표 이자보다 작아지지 않게
-  // 이자율: 소수 셋째 자리에서 올림해 둘째 자리까지 (올림이라 실제 이자가 목표보다 작아지지 않음 → 차액 990만원 이하)
-  function rateOf(intr, p) {
-    if (!intr) return 0;
-    return Math.ceil(intr / p * 1e4 - 1e-9) / 100;
-  }
   const annualInterest = (p, r) => Math.round(p * r / 100);
-  const pct = (r) => r.toFixed(2) + '%';
 
-  function buildRateTable(p) {
-    const rows = [100, 200, 217, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000];
-    const pm = p / 1e6;
-    let cur = -1;
-    rows.forEach((r, i) => { if (pm >= r) cur = i; });
-    let h = '<tr><th>차용금액</th><th>적정이자<br>(4.6%)</th><th>증여 없이<br>낼 이자</th><th>최소<br>이자율</th><th>이자<br>소득세</th><th>구분</th></tr>';
-    rows.forEach((r, i) => {
-      const amt = r * 1e6;
-      const intr = minInterest(amt) && annualInterest(amt, rateOf(minInterest(amt), amt));
-      const cls = intr === 0 ? 'free' : intr > COMP_LIMIT ? 'comp' : 'sep';
-      const label = intr === 0 ? '무이자 가능' : intr > COMP_LIMIT ? '종합과세 대상' : '원천징수 27.5%';
-      h += `<tr class="${cls}${i === cur ? ' cur' : ''}"><td>${r.toLocaleString()}</td><td>${(amt * 0.046 / 1e6).toFixed(2)}</td>` +
-           `<td>${intr ? (intr / 1e6).toFixed(2) : '-'}</td><td class="min">${intr ? pct(rateOf(intr, amt)) : '0%'}</td>` +
-           `<td>${intr ? (intr * WHT / 1e6).toFixed(2) : '-'}</td><td style="text-align:center">${label}</td></tr>`;
-    });
-    $('rateTable').innerHTML = h;
+  let L = null, seq = 0, timer = null, pending = null;
+  const loanInput = () => ({ p: num($('principal').value), rate: $('rate').value.trim(), noInt: $('noInterest').checked });
+  const sigOf = (x) => JSON.stringify(x);
+  const fresh = () => !!L && L.sig === sigOf(loanInput());
+  function fetchLoan() {
+    clearTimeout(timer);
+    if (typeof api !== 'function' || typeof getToken !== 'function' || !getToken()) return Promise.resolve();
+    const input = loanInput(), sig = sigOf(input), my = ++seq;
+    pending = api('/api/calculate', Object.assign({ product: 'loanform' }, input)).then((res) => {
+      if (my !== seq) return;
+      if (!res.ok) {
+        $('taxBox').className = 'tax-box warn'; $('taxBox').textContent = res.data.message || '계산하지 못했습니다.';
+        if (res.status === 401 && typeof refreshUser === 'function') refreshUser();
+        return;
+      }
+      L = Object.assign({ sig }, res.data.result);
+      render();
+    }).catch(() => { if (my === seq) { $('taxBox').className = 'tax-box warn'; $('taxBox').textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.'; } });
+    return pending;
   }
+  window.formRecalc = fetchLoan;
+  async function ensureFresh() { if (!fresh()) await fetchLoan(); else if (pending) await pending; }
+  window.printForm = async function () { await ensureFresh(); window.print(); };
 
-  function taxCheck(p, rate, noInt) {
-    const box = $('taxBox');
-    buildRateTable(p);
-    if (!p) { box.className = 'tax-box'; box.innerHTML = '원금을 넣으면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.'; return; }
-    const minI = minInterest(p);
-    const minR = rateOf(minI, p);
-    const r = noInt ? 0 : (isNaN(rate) ? null : rate);
-    const fair = p * OFFICIAL_RATE / 100;
-
-    let html = '<div class="rate-big"><div><small>증여세 없는 최소 이자율 · 차액 990만원</small>';
-    if (minI === 0) html += '<b>무이자 가능</b></div><button type="button" class="apply" data-apply="0">무이자로 입력하기</button></div>';
-    else html += `<b>연 ${pct(minR)}</b> <span style="font-size:12px">· 연 이자 ${won(annualInterest(p, minR))}</span></div><button type="button" class="apply" data-apply="${minR}">차용증에 입력하기</button></div>`;
-
-    html += `<div class="kv"><span>적정이자 (4.6%)</span><span>${won(fair)}</span>`;
-    if (r === null) {
-      box.className = 'tax-box';
-      box.innerHTML = html + '</div><ul><li>이자율을 입력하거나 [적용]을 누르면 증여 여부와 이자소득세를 계산해 드려요.</li></ul>';
-      return;
-    }
-    const actual = annualInterest(p, r);
-    const gap = fair - actual;
-    html += `<span>약정 이자 (연 ${r}%)</span><span>${won(actual)}</span>`;
-    html += `<span>차액 (증여 판단)</span><span>${won(Math.max(gap, 0))}</span>`;
-    html += '</div>';
-    if (actual > 0) {
-      const w = monthlyWht(actual);
-      html += `<div class="wht"><div class="wht-title">매월 이자 지급 (원천징수 후)</div><div class="kv">` +
-        `<span>월 이자</span><span>${won(w.monthly)}</span><span>이자소득세 25%</span><span>${won(w.incomeTax)}</span>` +
-        `<span>지방소득세 2.5%</span><span>${won(w.localTax)}</span><span>채권자에게 지급</span><span class="net">${won(w.net)}</span></div></div>`;
-    }
-    html += '<ul>';
-    if (gap >= GIFT_LIMIT) {
-      box.className = 'tax-box warn';
-      html += `<li>차액이 연 1,000만원 이상이어서 <b>차액 ${won(gap)} 전체가 매년 증여재산</b>이 됩니다 (상증법 제41조의4). 이자율을 <b>연 ${pct(minR)} 이상</b>으로 정하세요.</li>`;
-    } else {
-      box.className = 'tax-box ok';
-      html += '<li>차액이 연 1,000만원 미만이라 <b>이자 차액에 대한 증여세는 없습니다.</b></li>';
-    }
-    if (actual > COMP_LIMIT) html += '<li>연 이자가 2,000만원을 넘어 채권자는 <b>금융소득 종합과세</b> 대상입니다.</li>';
-    html += '</ul><details class="tips"><summary>세무 유의사항 보기</summary><ul>';
-    if (actual > 0) {
-      html += '<li>채무자는 이자를 줄 때 <b>27.5%(소득세 25% + 지방소득세 2.5%)를 원천징수</b>해 다음 달 10일까지 원천징수이행상황신고서로 신고·납부하고, 나머지를 채권자에게 이체합니다. 다음 해 2월 말까지 이자소득 지급명세서도 제출합니다.</li>';
-      if (actual > COMP_LIMIT) html += '<li>채권자는 다음 해 5월 종합소득세 신고 때 이자소득을 합산해 신고합니다.</li>';
-      else html += '<li>채권자의 다른 이자·배당과 합쳐 연 2,000만원을 넘으면 금융소득 종합과세 대상이 됩니다.</li>';
-    }
-    html += '<li>약정대로 <b>원금·이자를 계좌이체로 상환한 기록</b>이 있어야 차입금으로 인정받습니다.</li>';
-    html += '<li>작성 후 <b>내용증명이나 공증</b>으로 작성일을 확정해 두면 좋습니다.</li></ul></details>';
-    box.innerHTML = html;
+  function taxCheck() {
+    if (!fresh()) { clearTimeout(timer); timer = setTimeout(fetchLoan, 350); return; }
+    $('rateTable').innerHTML = L.tableHtml;
+    $('taxBox').className = 'tax-box ' + (L.taxCls || '');
+    $('taxBox').innerHTML = L.taxHtml;
   }
 
   $('taxBox').addEventListener('click', (e) => {
@@ -729,7 +664,7 @@
       : '채무자는 위와 같은 조건으로, 채권자로부터 틀림없이 위 돈을 차용하였음을 확인한다.';
     $('pvDate').textContent = fmtDate($('writeDate').value) || '년     월     일';
 
-    taxCheck(p, rate, noInt);
+    taxCheck();
     // 이자가 있을 때만 차용증 아래 [신고·납부 의뢰] 버튼 표시
     const hasInt = !noInt && rate > 0 && p;
     $('filingBtnBottom').style.display = hasInt ? '' : 'none';
@@ -781,10 +716,11 @@
   // ---------- 이자소득세 신고·납부 의뢰 ----------
   function loanInfo() {
     const p = num($('principal').value), rate = parseFloat($('rate').value) || 0;
-    const w = monthlyWht(annualInterest(p, rate));
+    const w = fresh() ? L.wht : { monthly: 0, incomeTax: 0, localTax: 0, tax: 0, net: 0 };
     return { p, rate, w, creditor: field('crName'), debtor: field('dbName'), payDay: $('payDay').value, writeDate: $('writeDate').value };
   }
-  window.openFiling = function () {
+  window.openFiling = async function () {
+    await ensureFresh();
     const d = loanInfo();
     if (!d.p || !d.rate || $('noInterest').checked) { alert('원금과 이자율을 먼저 입력해 주세요.'); return; }
     $('filingSum').innerHTML = `채권자 <b>${escH(d.creditor || '-')}</b> · 채무자 <b>${escH(d.debtor || '-')}</b><br>` +
@@ -800,6 +736,7 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeFiling(); });
   window.submitFiling = async function (event) {
     event.preventDefault();
+    await ensureFresh();
     const d = loanInfo();
     const btn = $('filingSubmit');
     btn.disabled = true; btn.innerText = '보내는 중...';

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세무회계강남 토지취득자금 조달계획서 작성하기</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="토지취득자금 조달계획서(부동산 거래신고 등에 관한 법률 시행규칙 별지 제10호서식) 작성 도우미 - 공동명의 매수인별 작성, 소계·합계 자동 계산, 총 거래금액 대조 - 세무회계강남">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
+  <link rel="apple-touch-icon" href="/images/icon-180.png">
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #f4f6fa; font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif; color: #1e293b; margin: 0; padding: 40px 20px; }
+    .wrapper { max-width: 1440px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; background: #fff; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,.06); border: 1px solid #e2e8f0; border-top: 3px solid #b08d57; padding: 24px 32px; }
+    .eyebrow { display: block; font-size: 12px; font-weight: 500; color: #a08452; letter-spacing: .5px; margin-bottom: 4px; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+    .header h1 small { font-size: 17px; font-weight: 500; color: #64748b; margin-left: 2px; }
+    .back-home { display: inline-block; font-size: 13px; color: #64748b; text-decoration: none; margin-bottom: 10px; }
+    .back-home:hover { color: #8a6d3b; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 500px) minmax(0, 1fr); gap: 20px; align-items: start; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(15,23,42,.06); padding: 28px; }
+    .form-card { max-height: calc(100vh - 40px); overflow-y: auto; position: sticky; top: 20px; padding: 18px 20px; }
+
+    .section-title { font-size: 14px; font-weight: 700; color: #5b4a2e; margin: 16px 0 8px; padding-bottom: 4px; border-bottom: 2px solid #eadfc9; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .section-title:first-child { margin-top: 0; }
+    .section-title small { font-size: 11px; font-weight: normal; color: #94a3b8; }
+    .section-title .sum { font-size: 12px; color: #8a6d3b; }
+    .form-group { margin-bottom: 8px; min-width: 0; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 3px; }
+    .hint { font-size: 11px; color: #94a3b8; font-weight: normal; }
+    input, select { width: 100%; padding: 6px 9px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; background: #fff; font-family: inherit; color: inherit; height: 32px; }
+    input[type="checkbox"], input[type="radio"] { height: auto; width: auto; margin: 0; }
+    input[data-money] { text-align: right; }
+    input:focus, select:focus { border-color: #8a6d3b; box-shadow: 0 0 0 3px rgba(138,109,59,.12); }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 8px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 8px; }
+    .span2 { grid-column: span 2; }
+    .item { border: 1px solid #e2e8f0; border-left: 3px solid #b08d57; border-radius: 8px; padding: 8px 10px 2px; margin-bottom: 8px; background: #fcfcfd; }
+    .item > b { display: flex; justify-content: space-between; font-size: 13px; color: #5b4a2e; margin-bottom: 6px; }
+    .item > b span { font-weight: 600; color: #8a6d3b; font-size: 12px; }
+    .item.loan { border-left-color: #1e3a8a; background: #f8faff; }
+    .item.loan > b, .item.loan > b span { color: #1e3a8a; }
+    .radios { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+    .radios label { display: inline-flex; align-items: center; gap: 4px; font-weight: normal; font-size: 12px; color: #334155; margin: 0; cursor: pointer; }
+    .check-line { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; color: #334155; cursor: pointer; margin: 0; }
+    .import-bar { display: none; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 8px 10px; font-size: 12px; color: #1e3a8a; margin-bottom: 10px; }
+    .import-bar.show { display: block; }
+
+    .joint { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; }
+    .joint .hint { color: #8a6d3b; }
+    .tabs { display: none; gap: 6px; margin-bottom: 10px; }
+    .tabs.show { display: flex; }
+    .tabs button { flex: 1; padding: 8px 6px; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 700; color: #475569; cursor: pointer; }
+    .tabs button small { display: block; font-size: 11px; font-weight: 500; color: #94a3b8; }
+    .tabs button.on { background: #8a6d3b; border-color: #8a6d3b; color: #fff; }
+    .tabs button.on small { color: #f5ecdc; }
+    .share-row { display: none; }
+    .share-row.show { display: grid; }
+
+    .check-box { border-radius: 8px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; background: #faf7f1; color: #5b4a2e; }
+    .check-box.ok { background: #f0fdf4; border-color: #bbf7d0; border-left-color: #15803d; color: #14532d; }
+    .check-box.warn { background: #fff7ed; border-color: #fed7aa; border-left-color: #c2410c; color: #7c2d12; }
+    .check-box .kv { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 1px 10px; font-size: 12px; white-space: nowrap; }
+    .check-box .kv span:nth-child(even) { text-align: right; font-weight: 700; }
+    .check-box ul { margin: 6px 0 0; padding-left: 18px; }
+    .check-box a { color: inherit; font-weight: 700; }
+    .docs { margin-top: 10px; font-size: 12.5px; }
+    .docs summary { cursor: pointer; color: #8a6d3b; font-weight: 600; }
+    .docs ul { margin: 6px 0 0; padding-left: 18px; color: #334155; line-height: 1.6; }
+    .notice { font-size: 11px; color: #64748b; line-height: 1.6; margin: 10px 0 0; }
+
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+    .btn { border: none; padding: 11px 18px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-main { background: #8a6d3b; color: #fff; }
+    .btn-main:hover { background: #74592e; }
+    .btn-outline { background: #fff; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    /* ---------- 법정서식 미리보기: 원본 서식(한글 파일 → PDF → SVG)을 그대로 깔고 값만 좌표에 얹음 ---------- */
+    .preview-card { padding: 20px; }
+    .paper-scroll { overflow-x: auto; background: #e9edf3; border-radius: 8px; padding: 20px; }
+    .buyer-cap { width: 210mm; margin: 0 auto 6px; font-size: 13px; font-weight: 700; color: #5b4a2e; }
+    .screen-cap { width: 210mm; margin: 0 auto 6px; font-size: 12px; color: #64748b; }
+    .paper { position: relative; width: 595pt; height: 841pt; margin: 0 auto 20px; background: #fff; box-shadow: 0 2px 10px rgba(15,23,42,.12); overflow: hidden; }
+    .paper > img { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .ov { position: absolute; white-space: nowrap; color: #000; font-family: 'DotumChe', '돋움체', 'Dotum', '돋움', 'Malgun Gothic', sans-serif; font-size: 10pt; line-height: 10pt; font-weight: 700; }
+    .ov.r { text-align: right; }
+    .vline { position: absolute; width: 0; border-left: 0.36pt solid #939393; }
+    .ov.sm { font-size: 9pt; letter-spacing: -0.2pt; }
+    .ov.xs { font-size: 8pt; letter-spacing: -0.2pt; }
+    .ov.ck { width: 10pt; text-align: center; font-weight: 700; }
+    .ov.circ { border: 1px solid #000; border-radius: 50%; height: 11pt; }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .form-card { position: static; max-height: none; overflow: visible; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .header { padding: 18px 16px; flex-direction: column; align-items: flex-start; }
+      .card { padding: 18px 16px; }
+      .preview-card { padding: 12px; }
+      .paper-scroll { padding: 10px; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .check-box .kv { grid-template-columns: auto 1fr; }
+    }
+
+    /* ---------- 로그인 잠금 (다른 계산기와 동일) ---------- */
+    .auth-buttons { display: flex; align-items: center; gap: 8px; }
+    .btn-logout { background: #fff; color: #8a6d3b; border: 1px solid #8a6d3b; padding: 8px 14px; font-size: 13px; }
+    .btn-logout:hover { background: #8a6d3b; color: #fff; }
+    #planStatus:empty { display: none; }
+    .lock-wrap { position: relative; }
+    .lock-overlay { position: absolute; inset: 0; z-index: 20; display: flex; justify-content: center; align-items: flex-start; padding: 160px 20px 20px;
+      background: rgba(255,255,255,0.95); border-radius: 12px; }
+    .lock-box { position: sticky; top: 160px; text-align: center; }
+    .lock-box h3 { color: #1e293b; font-weight: 700; font-size: 18.7px; margin: 0 0 18px; }
+    .lock-box p { color: #666; font-size: 16px; line-height: 1.5; margin: 0 0 20px; }
+    .lock-btns { display: flex; gap: 10px; justify-content: center; }
+    .btn-login { background-color: #8a6d3b; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13.3px; font-family: inherit; }
+    .btn-login:hover { background-color: #74592e; }
+    .lock-box .btn-outline { padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13.3px; }
+    .lock-wrap.locked .layout { pointer-events: none; user-select: none; filter: blur(5px); opacity: .45; }
+    .modal { position: fixed; inset: 0; background: rgba(15,23,42,.5); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
+    .modal-content { background: #fff; padding: 28px; border-radius: 12px; width: 400px; max-width: 100%; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,.15); max-height: 90vh; overflow-y: auto; }
+    .modal-content .close-btn { position: absolute; top: 12px; right: 16px; font-size: 22px; cursor: pointer; color: #94a3b8; }
+    .modal-content input { height: 40px; }
+    .modal-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: none; border: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #888; font-family: inherit; }
+    .tab-btn.active { color: #8a6d3b; border-bottom: 2px solid #8a6d3b; margin-bottom: -2px; }
+    .modal-content .btn-main { width: 100%; padding: 11px; }
+
+    @page { size: A4; margin: 0; }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .back-home, .header, .form-card, .actions, .lock-overlay, .modal, .buyer-cap { display: none !important; }
+      .layout { display: block; }
+      .card, .paper-scroll { border: none; box-shadow: none; padding: 0; background: none; border-radius: 0; overflow: visible; }
+      .paper { box-shadow: none; margin: 0; break-after: page; }
+      .paper.front.last { break-after: auto; }
+      .paper.back, .screen-cap { display: none !important; }
+    }
+  </style>
+<script src="/visit.js" defer></script>
+<script src="../js/form-tools.js"></script>
+</head>
+<body>
+  <div class="wrapper">
+    <a href="/" class="back-home">← 세무회계강남 홈</a>
+    <div class="header">
+      <div>
+        <span class="eyebrow">세무회계강남</span>
+        <h1>토지취득자금 작성하기 <small>토지취득자금 조달계획서</small></h1>
+      </div>
+      <div class="auth-buttons" id="authButtons">
+        <a id="adminLink" href="../양도세계산기/admin.html" style="display:none"></a>
+        <span id="planStatus" style="font-size:12px;color:#8a6d3b;font-weight:600"></span>
+        <button type="button" id="loginBtn" class="btn-login" onclick="openModal('login')" style="display:none">로그인</button>
+        <button type="button" id="signupBtn" class="btn btn-outline" onclick="openModal('signup')" style="display:none;padding:8px 16px;font-size:13.3px;border-radius:6px">회원가입</button>
+        <button type="button" id="logoutBtn" class="btn btn-logout" onclick="handleLogout()" style="display:none">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="lock-wrap locked" id="lockWrap">
+    <div id="lockOverlay" class="lock-overlay">
+      <div class="lock-box">
+        <div id="lockChecking"><h3>로그인 상태 확인 중...</h3></div>
+        <div id="lockLogin" style="display:none">
+          <h3>로그인 후 이용 가능합니다</h3>
+          <p>회원가입 후 로그인하시면 토지취득자금 조달계획서를 작성하실 수 있습니다.</p>
+          <div class="lock-btns">
+            <button type="button" class="btn-login" onclick="openModal('login')">로그인</button>
+            <button type="button" class="btn-outline" onclick="openModal('signup')">회원가입</button>
+          </div>
+        </div>
+        <div id="lockReady" style="display:none">
+          <h3>토지취득자금 조달계획서 작성 서비스 준비 중</h3>
+          <p>더 나은 서비스로 곧 찾아뵙겠습니다.</p>
+          <a href="/" class="btn btn-outline" style="text-decoration:none;display:inline-block">홈으로 가기</a>
+        </div>
+        <div id="lockWait" style="display:none"></div>
+        <div id="lockPay" style="display:none"></div>
+      </div>
+    </div>
+    <div class="layout">
+      <!-- ================= 입력 ================= -->
+      <form class="card form-card" id="form" autocomplete="off" onsubmit="return false">
+        <div class="import-bar" id="importBar"></div>
+
+        <div class="section-title">거래 <small>매수인 모두 같음</small></div>
+        <div class="grid-2">
+          <div class="form-group"><label>총 거래금액 (원) <span class="hint">토지 매매대금 · 서식엔 안 나옴</span></label><input id="total" data-money inputmode="numeric" placeholder="500,000,000"></div>
+          <div class="form-group"><label>작성일</label><input id="writeDate" data-date></div>
+        </div>
+        <div class="joint">
+          <label class="check-line"><input type="checkbox" id="joint"> 공동명의 (매수인 2명)</label>
+          <span class="hint">매수인별로 1장씩 작성·제출</span>
+        </div>
+        <div class="tabs" id="tabs">
+          <button type="button" data-tab="0" class="on">매수인 1<small id="tabName0"></small></button>
+          <button type="button" data-tab="1">매수인 2<small id="tabName1"></small></button>
+        </div>
+
+        <div id="buyerFields">
+          <div class="section-title">제출인 (매수인<span id="buyerNo"></span>)</div>
+          <div class="grid-2">
+            <div class="form-group"><label>성명 (법인명)</label><input data-k="name" placeholder="홍길동"></div>
+            <div class="form-group"><label>주민등록번호 <span class="hint">법인·외국인등록번호</span></label><input data-k="rrn" data-rrn placeholder="000000-0000000" inputmode="numeric" maxlength="14"></div>
+            <div class="form-group"><label>주소 (법인소재지)</label><input data-k="addr" placeholder="서울시 강남구 ..."></div>
+            <div class="form-group"><label>(휴대)전화번호</label><input data-k="tel" placeholder="010-0000-0000" inputmode="tel"></div>
+          </div>
+          <div class="grid-2 share-row" id="shareRow">
+            <div class="form-group"><label>지분율 (%)</label><input data-k="share" type="number" min="0" max="100" step="any" placeholder="50"></div>
+            <div class="form-group"><label>이 매수인 몫 거래금액</label><input id="shareAmt" readonly tabindex="-1" style="background:#f8fafc;text-align:right"></div>
+          </div>
+
+          <div class="section-title">① 자기자금 <span class="sum" id="sumOwn"></span></div>
+          <div class="item">
+            <b>② 금융기관 예금액 <span id="s2"></span></b>
+            <div class="grid-3">
+              <div class="form-group"><label>예금액</label><input data-k="dep" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>해외예금 국내 송금분</label><input data-k="depFx" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>해외 금융기관명</label><input data-k="depFxBank"></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>③ 주식·채권·가상화폐 매각대금 <span id="s3"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>주식·채권 매각대금</label><input data-k="stock" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>가상화폐 매각대금</label><input data-k="coin" data-money inputmode="numeric"></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>④ 증여·상속 <span id="s4"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>증여 금액</label><input data-k="gift" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>증여세 신고 여부</label><select data-k="giftFiled"><option value="">선택</option><option value="y">신고</option><option value="n">미신고</option></select></div>
+              <div class="form-group"><label>상속 금액</label><input data-k="inh" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>상속세 신고 여부</label><select data-k="inhFiled"><option value="">선택</option><option value="y">신고</option><option value="n">미신고</option></select></div>
+              <div class="form-group"><label>자금 제공자와의 관계</label><select data-k="giftRel"><option value="">선택</option><option value="spouse">부부</option><option value="lineal">직계존비속</option><option value="other">그 밖의 관계</option></select></div>
+              <div class="form-group"><label>관계 <span class="hint">예) 부, 모</span></label><input data-k="giftRelText"></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>⑤ 현금 등 그 밖의 자금 <span id="s5"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>금액</label><input data-k="cash" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>자산 종류</label><select data-k="cashKind"><option value="">선택</option><option value="cash">보유 현금</option><option value="other">그 밖의 자산</option></select></div>
+              <div class="form-group"><label>그 밖의 자산 종류</label><input data-k="cashOther" placeholder="예) 보험 해약환급금"></div>
+              <div class="form-group"><label>그중 외화 <span class="hint">(원화 환산)</span></label><input data-k="fx" data-money inputmode="numeric"></div>
+              <div class="form-group span2"><label>외화반입 신고 여부</label><select data-k="fxFiled"><option value="">선택</option><option value="y">신고</option><option value="n">미신고</option></select></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>⑥ 부동산 처분대금 등 <span id="s6"></span></b>
+            <div class="grid-3">
+              <div class="form-group"><label>주택·토지</label><input data-k="reSale" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>기타</label><input data-k="reEtc" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>기타 종류</label><input data-k="reEtcKind"></div>
+            </div>
+          </div>
+          <div class="item">
+            <b>⑦ 토지보상금 <span id="s7"></span></b>
+            <div class="form-group"><label>금액 <span class="hint">수용·협의양도로 받은 보상금 (예금·현금으로 보유 중이어도 여기에)</span></label><input data-k="comp" data-money inputmode="numeric"></div>
+          </div>
+
+          <div class="section-title">⑨ 차입금 등 <span class="sum" id="sumLoan"></span></div>
+          <div class="item loan">
+            <b>⑩ 금융기관 대출액 합계 <span id="s10"></span></b>
+            <div class="grid-2">
+              <div class="form-group"><label>토지담보대출</label><input data-k="lnLand" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>금융기관명</label><input data-k="lnLandBank"></div>
+              <div class="form-group"><label>신용대출</label><input data-k="lnCredit" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>금융기관명</label><input data-k="lnCreditBank"></div>
+              <div class="form-group"><label>해외 금융기관 대출</label><input data-k="lnFx" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>금융기관명</label><input data-k="lnFxBank"></div>
+              <div class="form-group"><label>그 밖의 대출</label><input data-k="lnEtc" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>대출 종류</label><input data-k="lnEtcKind"></div>
+            </div>
+          </div>
+          <div class="item loan">
+            <b>⑪ 그 밖의 차입금 <span id="s11"></span></b>
+            <div class="grid-3">
+              <div class="form-group"><label>금액</label><input data-k="otherLoan" data-money inputmode="numeric"></div>
+              <div class="form-group"><label>빌려준 사람과의 관계</label><select data-k="loanRel"><option value="">선택</option><option value="spouse">부부</option><option value="lineal">직계존비속</option><option value="other">그 밖의 관계</option></select></div>
+              <div class="form-group"><label>관계 <span class="hint">예) 부</span></label><input data-k="loanRelText"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">점검</div>
+        <div class="check-box" id="checkBox">금액을 넣으면 합계와 총 거래금액을 맞춰 봐 드려요.</div>
+        <p class="notice">
+          ※ 성명·주민등록번호·주소·전화번호는 이 브라우저 안에서만 쓰이며 서버로 보내지 않습니다. 금액은 계산을 위해 보내지만 저장하지 않습니다.<br>
+          ※ 실제 제출은 부동산거래관리시스템(rtms.molit.go.kr) 또는 신고관청에 하며, 이 화면은 작성 참고용입니다.<br>
+          ※ 주택을 사는 경우에는 <a href="../자금조달계획서/main.html" style="color:#8a6d3b">주택취득자금 조달 및 입주계획서</a>를 작성하세요.
+        </p>
+      </form>
+
+      <!-- ================= 미리보기 ================= -->
+      <div class="card preview-card">
+        <div class="paper-scroll" id="papers"></div>
+        <div class="actions">
+          <button type="button" class="btn btn-main" onclick="printForm()">인쇄 / PDF 저장</button>
+          <button type="button" class="btn btn-outline" id="resetBtn">입력 초기화</button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+
+  <div id="authModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; width: 420px; max-width: 94vw; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;">
+      <span class="close-btn" onclick="closeModal()" style="position: absolute; top: 15px; right: 20px; font-size: 22px; cursor: pointer; color: #999;">&times;</span>
+      <div class="modal-tabs">
+        <button type="button" class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">로그인</button>
+        <button type="button" class="tab-btn" id="signupTabBtn" onclick="switchTab('signup')">회원가입</button>
+      </div>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>아이디 (이메일)</label>
+          <input type="text" id="loginId" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="loginPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">로그인</button>
+      </form>
+      <form id="signupForm" onsubmit="handleSignup(event)" style="display: none;">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>이름</label>
+          <input type="text" id="signupName" placeholder="홍길동" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>연락처 (휴대폰 번호)</label>
+          <input type="text" id="signupPhone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>아이디 (이메일)</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="signupId" placeholder="example@email.com" style="flex: 1;" required>
+            <button type="button" class="btn btn-outline" onclick="sendVerificationCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증요청</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>인증번호 입력</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="verifyCodeInput" placeholder="6자리 입력" style="flex: 1;">
+            <button type="button" class="btn btn-outline" onclick="verifyEmailCode()" style="white-space: nowrap; font-size: 12px; padding: 8px;">인증확인</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label>비밀번호</label>
+          <input type="password" id="signupPw" required>
+        </div>
+        <button type="submit" class="btn btn-login" style="width: 100%; padding: 12px;">가입 완료</button>
+      </form>
+    </div>
+  </div>
+  <div id="result" style="display:none"></div>
+
+<script>
+(function () {
+  // 계산 · 서식에 값 얹기 · 점검은 서버(Apps Script)에서 함. 이 화면은 입력값을 보내고 결과를 그리기만 함.
+  // 성명 · 주민등록번호 · 주소 · 전화번호는 서버로 보내지 않고, 돌려받은 서식의 빈 자리에 이 브라우저 안에서만 채움.
+  const FORM = 'land';
+  const PII = ['name', 'rrn', 'addr', 'tel'];
+  const SUM_KEYS = ['s2', 's3', 's4', 's5', 's6', 's7', 's10', 's11'];
+  const OWN_LABEL = '⑧', OWN_KEY = 's8';
+  const $ = (id) => document.getElementById(id);
+  const form = $('form');
+  const fieldsBox = $('buyerFields');
+  const won = (n) => (n ? Math.round(n).toLocaleString('ko-KR') : '0') + '원';
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const totalAmt = () => +String($('total').value).replace(/[^0-9]/g, '') || 0;
+
+  // ---------- 매수인별 입력값 (공동명의면 2명) ----------
+  const buyers = [{}, {}];
+  let cur = 0;
+  const buyerEls = () => fieldsBox.querySelectorAll('input[data-k], select[data-k], input[name="move"]');
+  function save() {
+    const o = {};
+    buyerEls().forEach((el) => {
+      if (el.type === 'radio') { if (el.checked) o.move = el.value; }
+      else o[el.dataset.k] = el.value;
+    });
+    buyers[cur] = o;
+  }
+  function load(i) {
+    const o = buyers[i] || {};
+    buyerEls().forEach((el) => {
+      if (el.type === 'radio') el.checked = o.move === el.value;
+      else el.value = o[el.dataset.k] || '';
+    });
+  }
+  const joint = () => $('joint').checked;
+  const count = () => joint() ? 2 : 1;
+  const S = (o, k) => String((o && o[k]) || '').trim();
+
+  // ---------- 서버 계산 ----------
+  let last = null, seq = 0, timer = null, pending = null, dirty = true;
+  function payload() {
+    return {
+      product: 'fundingform', form: FORM, total: $('total').value, writeDate: $('writeDate').value, cur,
+      buyers: buyers.slice(0, count()).map((o) => { const c = Object.assign({}, o); PII.forEach((k) => delete c[k]); return c; })
+    };
+  }
+  function schedule() { dirty = true; clearTimeout(timer); timer = setTimeout(fetchCalc, 350); }
+  function fetchCalc() {
+    clearTimeout(timer);
+    if (typeof api !== 'function' || typeof getToken !== 'function' || !getToken()) return Promise.resolve();
+    const my = ++seq;
+    dirty = false;
+    pending = api('/api/calculate', payload()).then((res) => {
+      if (my !== seq) return;
+      if (!res.ok) { showError(res.data.message || '계산하지 못했습니다.'); if (res.status === 401 && typeof refreshUser === 'function') refreshUser(); return; }
+      last = res.data.result;
+      paint();
+    }).catch(() => { if (my === seq) showError('서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.'); });
+    return pending;
+  }
+  function showError(msg) { const box = $('checkBox'); box.className = 'check-box warn'; box.textContent = msg; }
+  window.formRecalc = fetchCalc;
+  // 인쇄 전에 마지막 입력까지 계산이 끝났는지 확인
+  window.printForm = async function () {
+    if (dirty) await fetchCalc(); else if (pending) await pending;
+    window.print();
+  };
+
+  // 괄호 안 좁은 칸: 실제 글자 폭을 재서 칸(data-w pt)을 넘으면 글씨를 줄임
+  function fitAll(root) {
+    root.querySelectorAll('.ov.fit').forEach((el) => {
+      const maxPx = +el.dataset.w * 4 / 3, pt = +el.dataset.pt;
+      const paper = el.closest('.paper');
+      const w = el.getBoundingClientRect().width / (paper.getBoundingClientRect().width / (595 * 4 / 3));
+      if (w > maxPx) {
+        const size = Math.max(5, pt * maxPx / w);
+        el.style.fontSize = size.toFixed(2) + 'pt';
+        el.style.top = (+el.dataset.y + (pt - size) * 0.8).toFixed(1) + 'pt';
+      }
+    });
+  }
+
+  // ---------- 화면 그리기 (서버 결과 + 이 브라우저의 개인정보) ----------
+  function paint() {
+    const n = count();
+    const v = last ? last.sums : {};
+    const tag = (x) => x ? won(x) : '';
+    SUM_KEYS.forEach((k) => { $(k).textContent = tag(v[k]); });
+    $('sumOwn').textContent = v[OWN_KEY] ? `${OWN_LABEL} 소계 ${won(v[OWN_KEY])}` : '';
+    $('sumLoan').textContent = v.s12 ? `⑫ 소계 ${won(v.s12)}` : '';
+
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      if (n > 1) html += `<div class="buyer-cap">매수인 ${i + 1}${S(buyers[i], 'name') ? ' · ' + esc(S(buyers[i], 'name')) : ''}</div>`;
+      html += `<div class="paper front${i === n - 1 ? ' last' : ''}" data-i="${i}"><img src="form-p1.svg" alt="토지취득자금 조달계획서 앞쪽">${last && last.papers[i] || ''}</div>`;
+    }
+    html += '<div class="screen-cap">뒤쪽 (유의사항) — 화면 참고용, 인쇄되지 않습니다</div>' +
+      '<div class="paper back"><img src="form-p2.svg" alt="토지취득자금 조달계획서 뒤쪽"></div>';
+    $('papers').innerHTML = html;
+    $('papers').querySelectorAll('.paper[data-i]').forEach((p) => {
+      const o = buyers[+p.dataset.i] || {};
+      p.querySelectorAll('[data-pii]').forEach((el) => { el.textContent = S(o, el.dataset.pii); });
+    });
+    fitAll($('papers'));
+
+    const box = $('checkBox');
+    if (last) { box.className = 'check-box ' + (last.checkCls || ''); box.innerHTML = last.checkHtml; }
+  }
+
+  function render() {
+    save();
+    const n = count();
+    const total = totalAmt();
+    const o = buyers[cur];
+    $('tabs').classList.toggle('show', n > 1);
+    $('shareRow').classList.toggle('show', n > 1);
+    $('buyerNo').textContent = n > 1 ? ` ${cur + 1}` : '';
+    [0, 1].forEach((i) => { $('tabName' + i).textContent = S(buyers[i], 'name') || (i === 0 ? '대표 매수인' : '공동 매수인'); });
+    const share = parseFloat(S(o, 'share'));
+    $('shareAmt').value = n > 1 && total && share ? won(Math.round(total * share / 100)) : '';
+    paint();
+    schedule();
+  }
+
+  // ---------- 입력 도우미 ----------
+  form.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.hasAttribute('data-money')) { const x = +el.value.replace(/[^0-9]/g, '') || 0; el.value = x ? x.toLocaleString('ko-KR') : ''; }
+    if (el.hasAttribute('data-rrn')) { const d = el.value.replace(/[^0-9]/g, '').slice(0, 13); el.value = d.length > 6 ? d.slice(0, 6) + '-' + d.slice(6) : d; }
+    render();
+  });
+  form.addEventListener('change', render);
+  $('joint').addEventListener('change', () => {
+    if (!joint() && cur === 1) { save(); cur = 0; load(0); setTab(); }
+    if (joint()) {
+      // 처음 공동명의로 바꾸면 지분 50:50
+      if (!S(buyers[0], 'share')) { buyers[0].share = '50'; if (cur === 0) form.querySelector('[data-k="share"]').value = '50'; }
+      if (!S(buyers[1], 'share')) buyers[1].share = '50';
+    }
+    render();
+  });
+  function setTab() { document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', +b.dataset.tab === cur)); }
+  $('tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-tab]');
+    if (!b || +b.dataset.tab === cur) return;
+    save(); cur = +b.dataset.tab; load(cur); setTab(); render();
+    form.scrollTop = 0;
+  });
+
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm('입력한 내용을 모두 지울까요? (매수인 모두)')) return;
+    form.reset();
+    buyers[0] = {}; buyers[1] = {}; cur = 0; setTab();
+    $('writeDate').value = today();
+    $('importBar').classList.remove('show');
+    last = null;
+    $('checkBox').className = 'check-box'; $('checkBox').textContent = '금액을 넣으면 합계와 총 거래금액을 맞춰 봐 드려요.';
+    render();
+  });
+
+  FormTools.setupDates(form);
+  FormTools.enterToNext(form);
+  $('writeDate').value = today();
+  render();
+})();
+</script>
+
+  <!-- 다른 계산기와 같은 회원 로그인 (이용권 없이 로그인만 하면 사용) -->
+  <script src="../양도세계산기/js/login.js"></script>
+  <script>
+    updateUi = function (user) {
+      const loggedIn = !!user;
+      document.getElementById('lockChecking').style.display = 'none';
+      if (loggedIn) closeModal();
+      document.getElementById('loginBtn').style.display = loggedIn ? 'none' : 'inline-block';
+      document.getElementById('signupBtn').style.display = loggedIn ? 'none' : 'inline-block';
+      document.getElementById('logoutBtn').style.display = loggedIn ? 'inline-block' : 'none';
+      document.getElementById('lockReady').style.display = 'none';
+      document.getElementById('lockLogin').style.display = loggedIn ? 'none' : 'block';
+      document.getElementById('lockOverlay').style.display = loggedIn ? 'none' : 'flex';
+      document.getElementById('lockWrap').classList.toggle('locked', !loggedIn);
+      document.getElementById('planStatus').innerText = loggedIn && user.name ? `${user.name}님` : '';
+      if (loggedIn && window.formRecalc) window.formRecalc();
+    };
+  </script>
+</body>
+</html>
