@@ -74,8 +74,6 @@
     .wht { background: #fff; border: 1px solid #eadfc9; border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
     .wht-title { font-size: 12px; font-weight: 700; color: #5b4a2e; margin-bottom: 4px; }
     .wht .kv .net { color: #8a6d3b !important; font-size: 13px; }
-    .wht-foot { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; font-size: 12px; }
-    .wht-foot .apply { width: 100%; padding: 9px 12px; }
     .filing-note { max-width: 210mm; margin: 14px auto 0; background: #faf7f1; border: 1px solid #eadfc9; border-left: 3px solid #b08d57; border-radius: 8px; padding: 10px 14px; font-size: 13.5px; line-height: 1.7; color: #5b4a2e; text-align: center; }
     .filing-note b { color: #3f3320; }
     @media print { .filing-note { display: none !important; } }
@@ -586,7 +584,6 @@
   const WHT = 0.275;            // 비영업대금 이익 원천징수 25% + 지방소득세 2.5%
   // 신고·납부 의뢰 안내 문구 · 버튼 이름 (수수료)
   const escH = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const FILING_LABEL = '신고납부 의뢰하기 (매월 55,000원)';
   function filingNoteHtml() {
     const nm = field('dbName').replace(/\s+/g, '');
     return `${nm ? `채무자 <b>${escH(nm)}님</b>은` : '채무자님은'} 매월 이자를 지급할 때 <b>이자소득세(지방세 포함)를 신고납부</b>하여야 합니다.<br>신고의뢰를 희망하시면 아래의 버튼을 눌러주세요.`;
@@ -661,9 +658,7 @@
       const w = monthlyWht(actual);
       html += `<div class="wht"><div class="wht-title">매월 이자 지급 (원천징수 후)</div><div class="kv">` +
         `<span>월 이자</span><span>${won(w.monthly)}</span><span>이자소득세 25%</span><span>${won(w.incomeTax)}</span>` +
-        `<span>지방소득세 2.5%</span><span>${won(w.localTax)}</span><span>채권자에게 지급</span><span class="net">${won(w.net)}</span></div>` +
-        `<div class="wht-foot"><span>${filingNoteHtml()}</span>` +
-        `<button type="button" class="apply" id="filingBtn">${FILING_LABEL}</button></div></div>`;
+        `<span>지방소득세 2.5%</span><span>${won(w.localTax)}</span><span>채권자에게 지급</span><span class="net">${won(w.net)}</span></div></div>`;
     }
     html += '<ul>';
     if (gap >= GIFT_LIMIT) {
@@ -686,7 +681,6 @@
   }
 
   $('taxBox').addEventListener('click', (e) => {
-    if (e.target.closest('#filingBtn')) { openFiling(); return; }
     const b = e.target.closest('[data-apply]');
     if (!b) return;
     const ar = +b.dataset.apply;
