@@ -327,8 +327,8 @@
         </div>
 
         <div class="result-row">
-          <button type="button" class="btn btn-main" id="resultBtn">결과보기</button>
-          <div class="dirty-msg" id="dirtyMsg">입력을 바꿨어요. [결과보기]를 눌러야 차용증에 반영됩니다.</div>
+          <button type="button" class="btn btn-main" id="resultBtn">차용증에 입력하기</button>
+          <div class="dirty-msg" id="dirtyMsg">입력을 바꿨어요. [차용증에 입력하기]를 눌러야 차용증에 반영됩니다.</div>
         </div>
 
         <p class="notice">
@@ -616,6 +616,7 @@
     $('rateTable').innerHTML = L.tableHtml;
     $('taxBox').className = 'tax-box ' + (L.taxCls || '');
     $('taxBox').innerHTML = L.taxHtml;
+    $('taxBox').querySelectorAll('[data-apply]').forEach((b) => { b.textContent = +b.dataset.apply ? '이자율 결과보기' : '무이자 결과보기'; });
   }
 
   $('taxBox').addEventListener('click', (e) => {
@@ -643,12 +644,12 @@
   }
   const accelN = () => Math.min(12, Math.max(1, parseInt($('accelCount').value, 10) || 1));
 
-  // [결과보기]: 입력한 내용을 한 번에 서버 계산 · 차용증 미리보기에 반영
+  // [차용증에 입력하기]: 입력한 내용을 한 번에 서버 계산 · 차용증 미리보기에 반영
   let shown = false;
   async function showResult() {
     const btn = $('resultBtn');
     btn.disabled = true; btn.textContent = '계산 중...';
-    try { await ensureFresh(); } finally { btn.disabled = false; btn.textContent = '결과보기'; }
+    try { await ensureFresh(); } finally { btn.disabled = false; btn.textContent = '차용증에 입력하기'; }
     render();
     shown = true;
     $('dirtyMsg').classList.remove('show');
