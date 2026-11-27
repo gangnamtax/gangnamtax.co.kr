@@ -164,7 +164,8 @@
         .calc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
         .calc-grid.three { grid-template-columns: repeat(3, 1fr); }
         .calc-part + .calc-part, .calc-part + .calc-row { margin-top: 36px; }
-        .calc-row { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+        /* 왼쪽 2장 + 오른쪽 1장이 모두 같은 너비가 되도록 (카드 사이 간격 18px 두 번) */
+        .calc-row { display: grid; grid-template-columns: minmax(0, calc((100% - 36px) * 2 / 3 + 18px)) minmax(0, 1fr); gap: 18px; }
         .calc-row .calc-part + .calc-part { margin-top: 0; }
         .calc-grid.one { grid-template-columns: 1fr; }
         .calc-part-title { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
@@ -183,6 +184,10 @@
         .calc-card.multi:hover .calc-go { background: var(--navy); }
         .calc-go-group { margin-top: auto; display: grid; gap: 8px; }
         .calc-card.multi .calc-go:hover { background: #2e3470; }
+        /* 얇은 버튼 2개를 세로로: 설명 아래 여백을 줄여 버튼 한 개짜리 카드와 높이가 같게 */
+        .calc-card.multi.thin .calc-desc { margin-bottom: 6px; }
+        .calc-go-group.thin { gap: 5px; }
+        .calc-go-group.thin .calc-go { padding: 5px 8px; font-size: 14.5px; line-height: 21px; }
         /* 양도세·증여세 계산기: 작은 카드 5개 한 줄 (모바일은 옆으로 넘겨 보기) */
         .calc-grid.row5 { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
         .calc-grid.row5 .calc-card { padding: 18px 14px 14px; border-top-width: 3px; border-radius: 12px; }
@@ -457,11 +462,11 @@
                         <p class="calc-desc">가족에게 돈을 빌릴 때, 증여세가 나오지 않는 이자율로 차용증을 바로 만들어요.</p>
                         <span class="calc-go">작성하기 →</span>
                     </a>
-                    <div class="calc-card multi">
+                    <div class="calc-card multi thin">
                         <span class="calc-icon">📋</span>
                         <h3>자금조달계획서 작성하기</h3>
                         <p class="calc-desc">집이나 토지를 살 때 내는 자금조달계획서를 법정 서식 그대로 만들어요.</p>
-                        <div class="calc-go-group">
+                        <div class="calc-go-group thin">
                             <a href="토지자금조달계획서/main.html" class="calc-go">토지취득자금 작성하기 →</a>
                             <a href="자금조달계획서/main.html" class="calc-go">주택자금 작성하기 →</a>
                         </div>
