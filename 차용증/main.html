@@ -297,7 +297,7 @@
           <div class="live-msg" id="principalKo"></div>
           <label class="check-line inline"><input type="checkbox" id="noInterest"> 무이자</label>
         </div>
-        <div class="tax-box" id="taxBox">원금을 넣고 아래 [결과보기]를 누르면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.</div>
+        <div class="tax-box" id="taxBox">원금을 넣으면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.</div>
         <details class="rate-table" id="rateTableWrap">
           <summary>차용금액별 최소 이자율 표 보기</summary>
           <div class="rt-scroll"><table id="rateTable"></table></div>
@@ -603,7 +603,7 @@
         return;
       }
       L = Object.assign({ sig }, res.data.result);
-      render();
+      taxCheck();
     }).catch(() => { if (my === seq) { $('taxBox').className = 'tax-box warn'; $('taxBox').textContent = '서버와 통신하지 못했습니다. 잠시 후 다시 시도해 주세요.'; } });
     return pending;
   }
@@ -624,8 +624,8 @@
     const ar = +b.dataset.apply;
     $('noInterest').checked = ar === 0;
     $('rate').value = ar ? String(ar) : '';
-    syncInputs();
-    showResult();
+    markDirty();
+    fetchLoan();
   });
 
   // ---------- 미리보기 렌더 ----------
@@ -707,8 +707,13 @@
 
   // 입력 중에는 미리보기를 바꾸지 않고, 이미 결과를 본 뒤 바꾸면 안내만 띄움
   const markDirty = () => { syncInputs(); if (shown) $('dirtyMsg').classList.add('show'); };
-  form.addEventListener('input', markDirty);
-  form.addEventListener('change', markDirty);
+  const RATE_INPUTS = ['principal', 'rate', 'noInterest'];
+  const scheduleRate = (e) => {
+    if (!e || !RATE_INPUTS.includes(e.target.id) || fresh()) return;
+    clearTimeout(timer); timer = setTimeout(fetchLoan, 400);
+  };
+  form.addEventListener('input', (e) => { markDirty(); scheduleRate(e); });
+  form.addEventListener('change', (e) => { markDirty(); scheduleRate(e); });
   $('resultBtn').addEventListener('click', showResult);
   // 기한이익 상실 횟수 − / +
   const stepAccel = (d) => { $('accelCount').value = Math.min(12, Math.max(1, accelN() + d)); markDirty(); };
@@ -732,7 +737,7 @@
     $('dirtyMsg').classList.remove('show');
     $('rateTable').innerHTML = '';
     $('taxBox').className = 'tax-box';
-    $('taxBox').textContent = '원금을 넣고 아래 [결과보기]를 누르면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.';
+    $('taxBox').textContent = '원금을 넣으면 증여세 없이 빌릴 수 있는 최소 이자율을 계산해 드려요.';
     render();
   });
 
