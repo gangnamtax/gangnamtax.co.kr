@@ -71,6 +71,23 @@
     .tax-box .apply { background: #8a6d3b; color: #fff; border: none; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
     .tax-box .apply:hover { background: #74592e; }
     .tax-box .kv { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 1px 10px; font-size: 12px; white-space: nowrap; }
+    .wht { background: #fff; border: 1px solid #eadfc9; border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+    .wht-title { font-size: 12px; font-weight: 700; color: #5b4a2e; margin-bottom: 4px; }
+    .wht .kv .net { color: #8a6d3b !important; font-size: 13px; }
+    .wht-foot { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; font-size: 12px; }
+    .wht-foot .apply { width: 100%; padding: 9px 12px; }
+    .fmodal { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.5); z-index: 150; align-items: center; justify-content: center; padding: 16px; }
+    .fmodal.open { display: flex; }
+    .fbox { position: relative; background: #fff; width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 12px; border-top: 3px solid #b08d57; padding: 26px 24px 22px; box-shadow: 0 16px 40px rgba(15,23,42,.2); }
+    .fbox h3 { margin: 0 0 8px; font-size: 18px; color: #1e293b; }
+    .fdesc { font-size: 13.5px; color: #475569; line-height: 1.6; margin: 0 0 14px; }
+    .fclose { position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+    .fbox textarea { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: inherit; resize: vertical; outline: none; }
+    .fsum { background: #faf7f1; border: 1px solid #eadfc9; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: #5b4a2e; line-height: 1.6; margin-bottom: 12px; }
+    .fsum b { color: #3f3320; }
+    .fbtn { width: 100%; padding: 12px; background: #8a6d3b; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .fbtn:disabled { opacity: .6; cursor: wait; }
+    .hidden { display: none !important; }
     .tax-box .tips summary { cursor: pointer; font-size: 12px; font-weight: 600; margin-top: 4px; }
     .tax-box .tips ul { font-size: 12px; }
     .tax-box .kv span:nth-child(even) { text-align: right; font-weight: 600; color: #3f3320; }
@@ -371,6 +388,7 @@
         </div>
         <div class="actions bottom">
           <button type="button" class="btn btn-main" onclick="window.print()">인쇄 / PDF 저장</button>
+          <button type="button" class="btn btn-main" id="filingBtnBottom" onclick="openFiling()">이자소득세 신고·납부 의뢰</button>
           <button type="button" class="btn btn-outline" id="toFunding">자금조달계획서에 반영 →</button>
           <button type="button" class="btn btn-outline" id="resetBtn">입력 초기화</button>
         </div>
@@ -429,6 +447,29 @@
     </div>
   </div>
   <div id="result" style="display:none"></div>
+
+  <!-- 이자소득세 원천징수 신고·납부 의뢰 -->
+  <div id="filingModal" class="fmodal" onclick="if (event.target === this) closeFiling()">
+    <div class="fbox" role="dialog" aria-labelledby="filingTitle">
+      <button type="button" class="fclose" onclick="closeFiling()" aria-label="닫기">&times;</button>
+      <form id="filingForm" onsubmit="submitFiling(event)">
+        <h3 id="filingTitle">이자소득세 신고·납부 의뢰</h3>
+        <p class="fdesc">매월 이자를 줄 때 떼는 이자소득세·지방소득세를<br>세무회계강남이 대신 신고·납부해 드립니다.</p>
+        <div class="fsum" id="filingSum"></div>
+        <div class="form-group"><label for="filingName">성함</label><input type="text" id="filingName" maxlength="50" autocomplete="name" required></div>
+        <div class="form-group"><label for="filingPhone">연락받으실 연락처</label><input type="tel" id="filingPhone" maxlength="30" placeholder="010-0000-0000" autocomplete="tel" required></div>
+        <div class="form-group"><label for="filingMemo">요청사항 <span class="hint">(선택)</span></label><textarea id="filingMemo" rows="3" maxlength="600" placeholder="통화 가능한 시간, 이자 지급 시작월 등"></textarea></div>
+        <label class="check-line" style="margin: 2px 0 14px;"><input type="checkbox" id="filingAgree" required> 입력한 정보와 차용 내용(이름·원금·이자율)을 세무회계강남에 전달하는 데 동의합니다.</label>
+        <button type="submit" id="filingSubmit" class="fbtn">신고·납부 의뢰 보내기</button>
+      </form>
+      <div id="filingDone" class="hidden" style="text-align:center;padding:10px 0">
+        <h3>의뢰가 접수되었습니다</h3>
+        <p class="fdesc">세무사가 확인한 뒤<br>남겨 주신 연락처로 연락드리겠습니다.</p>
+        <p class="fdesc">급하신 경우 아래 번호로 전화 또는 문자 주세요!<br><a href="tel:010-4454-2429" style="color:#8a6d3b;font-weight:600;font-size:17px;display:inline-block;margin-top:6px">010-4454-2429</a></p>
+        <button type="button" class="btn btn-outline" onclick="closeFiling()">닫기</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 다른 계산기와 같은 회원 로그인 (이용권 없이 로그인만 하면 사용) -->
   <script src="../양도세계산기/js/login.js"></script>
@@ -503,6 +544,12 @@
       items.push('차용 당시 매수한 부동산을 양도하는 경우에는 **양도대금 수령일에 차용금 잔액 전액을 상환**한다.');
     }
     if (m) items.push(`채무자는 ${due ? '상환기한까지 ' : ''}수입에 따라 변동 가능하되, **매월 말일 ${toKorean(m)}원(₩${comma(m)}) 이상**씩 원금을 분할 상환한다.`);
+    const rate = parseFloat($('rate').value), p = num($('principal').value);
+    if (!$('noInterest').checked && rate > 0 && p) {
+      const w = monthlyWht(annualInterest(p, rate));
+      items.push(`채무자는 이자를 지급할 때 **이자소득세 및 지방소득세를 원천징수**하여 신고·납부하고, 그 나머지 금액` +
+        (w.net ? `(월 ${comma(w.net)}원)` : '') + `을 채권자에게 지급한다.`);
+    }
     const who = $('noInterest').checked ? '원금은' : '원금 및 이자는';
     const bank = field('bankSel') === '기타' ? field('bankEtc') : field('bankSel'), acc = field('account'), holder = field('holder');
     if (acc) {
@@ -533,6 +580,14 @@
   //   적정이자 자체가 1,000만원 미만이면 무이자 가능
   const TARGET_GAP = 9900000;
   const WHT = 0.275;            // 비영업대금 이익 원천징수 25% + 지방소득세 2.5%
+  // 매월 이자 지급 시 원천징수: 소득세 25%(10원 미만 절사, 1천원 미만 소액부징수) + 지방소득세(소득세의 10%)
+  function monthlyWht(yearly) {
+    const monthly = Math.round(yearly / 12);
+    let incomeTax = Math.floor(monthly * 0.25 / 10) * 10;
+    if (incomeTax < 1000) incomeTax = 0;
+    const localTax = Math.floor(incomeTax * 0.1 / 10) * 10;
+    return { monthly, incomeTax, localTax, tax: incomeTax + localTax, net: monthly - incomeTax - localTax };
+  }
   const COMP_LIMIT = 20000000;  // 금융소득 종합과세 기준
   function minInterest(p) {     // 증여 없이 낼 최소 연 이자 (만원 단위)
     if (!p) return 0;
@@ -541,14 +596,13 @@
     return Math.ceil((fair - TARGET_GAP) / 10000) * 10000;
   }
   // 이자율(%) — 소수 넷째 자리에서 올림해 실제 이자가 목표 이자보다 작아지지 않게
-  const rateOf = (intr, p) => intr ? Math.ceil(intr / p * 1e6) / 1e4 : 0;
-  // 약정 연 이자: 이자율을 소수 넷째 자리에서 올렸기 때문에 생기는 몇백 원 차이는 만원 단위로 맞춤
-  function annualInterest(p, r) {
-    const raw = p * r / 100;
-    const snap = Math.round(raw / 10000) * 10000;
-    return Math.abs(raw - snap) <= p * 1e-6 + 1 ? snap : Math.round(raw);
+  // 이자율: 소수 셋째 자리에서 올림해 둘째 자리까지 (올림이라 실제 이자가 목표보다 작아지지 않음 → 차액 990만원 이하)
+  function rateOf(intr, p) {
+    if (!intr) return 0;
+    return Math.ceil(intr / p * 1e4 - 1e-9) / 100;
   }
-  const pct = (r) => (+r.toFixed(4)).toString() + '%';
+  const annualInterest = (p, r) => Math.round(p * r / 100);
+  const pct = (r) => r.toFixed(2) + '%';
 
   function buildRateTable(p) {
     const rows = [100, 200, 217, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000];
@@ -558,7 +612,7 @@
     let h = '<tr><th>차용금액</th><th>적정이자<br>(4.6%)</th><th>증여 없이<br>낼 이자</th><th>최소<br>이자율</th><th>이자<br>소득세</th><th>구분</th></tr>';
     rows.forEach((r, i) => {
       const amt = r * 1e6;
-      const intr = minInterest(amt);
+      const intr = minInterest(amt) && annualInterest(amt, rateOf(minInterest(amt), amt));
       const cls = intr === 0 ? 'free' : intr > COMP_LIMIT ? 'comp' : 'sep';
       const label = intr === 0 ? '무이자 가능' : intr > COMP_LIMIT ? '종합과세 대상' : '원천징수 27.5%';
       h += `<tr class="${cls}${i === cur ? ' cur' : ''}"><td>${r.toLocaleString()}</td><td>${(amt * 0.046 / 1e6).toFixed(2)}</td>` +
@@ -579,7 +633,7 @@
 
     let html = '<div class="rate-big"><div><small>증여세 없는 최소 이자율 · 차액 990만원</small>';
     if (minI === 0) html += '<b>무이자 가능</b></div><button type="button" class="apply" data-apply="0">무이자로 입력하기</button></div>';
-    else html += `<b>연 ${pct(minR)}</b> <span style="font-size:12px">· 연 이자 ${won(minI)}</span></div><button type="button" class="apply" data-apply="${minR}">차용증에 입력하기</button></div>`;
+    else html += `<b>연 ${pct(minR)}</b> <span style="font-size:12px">· 연 이자 ${won(annualInterest(p, minR))}</span></div><button type="button" class="apply" data-apply="${minR}">차용증에 입력하기</button></div>`;
 
     html += `<div class="kv"><span>적정이자 (4.6%)</span><span>${won(fair)}</span>`;
     if (r === null) {
@@ -591,12 +645,16 @@
     const gap = fair - actual;
     html += `<span>약정 이자 (연 ${r}%)</span><span>${won(actual)}</span>`;
     html += `<span>차액 (증여 판단)</span><span>${won(Math.max(gap, 0))}</span>`;
+    html += '</div>';
     if (actual > 0) {
-      html += `<span>월 이자</span><span>${won(actual / 12)}</span>`;
-      html += `<span>이자소득세 27.5% (연)</span><span>${won(actual * WHT)}</span>`;
-      html += `<span>매월 원천징수</span><span>${won(actual / 12 * WHT)}</span>`;
+      const w = monthlyWht(actual);
+      html += `<div class="wht"><div class="wht-title">매월 이자 지급 (원천징수 후)</div><div class="kv">` +
+        `<span>월 이자</span><span>${won(w.monthly)}</span><span>이자소득세 25%</span><span>${won(w.incomeTax)}</span>` +
+        `<span>지방소득세 2.5%</span><span>${won(w.localTax)}</span><span>채권자에게 지급</span><span class="net">${won(w.net)}</span></div>` +
+        `<div class="wht-foot"><span>원천징수한 <b>${won(w.tax)}</b>은 채무자가 다음 달 10일까지 신고·납부해야 해요.</span>` +
+        `<button type="button" class="apply" id="filingBtn">이자소득세 신고·납부 의뢰</button></div></div>`;
     }
-    html += '</div><ul>';
+    html += '<ul>';
     if (gap >= GIFT_LIMIT) {
       box.className = 'tax-box warn';
       html += `<li>차액이 연 1,000만원 이상이어서 <b>차액 ${won(gap)} 전체가 매년 증여재산</b>이 됩니다 (상증법 제41조의4). 이자율을 <b>연 ${pct(minR)} 이상</b>으로 정하세요.</li>`;
@@ -607,7 +665,7 @@
     if (actual > COMP_LIMIT) html += '<li>연 이자가 2,000만원을 넘어 채권자는 <b>금융소득 종합과세</b> 대상입니다.</li>';
     html += '</ul><details class="tips"><summary>세무 유의사항 보기</summary><ul>';
     if (actual > 0) {
-      html += '<li>채무자는 이자를 줄 때 <b>27.5%를 원천징수</b>해 다음 달 10일까지 신고·납부하고, 나머지를 채권자에게 이체합니다.</li>';
+      html += '<li>채무자는 이자를 줄 때 <b>27.5%(소득세 25% + 지방소득세 2.5%)를 원천징수</b>해 다음 달 10일까지 원천징수이행상황신고서로 신고·납부하고, 나머지를 채권자에게 이체합니다. 다음 해 2월 말까지 이자소득 지급명세서도 제출합니다.</li>';
       if (actual > COMP_LIMIT) html += '<li>채권자는 다음 해 5월 종합소득세 신고 때 이자소득을 합산해 신고합니다.</li>';
       else html += '<li>채권자의 다른 이자·배당과 합쳐 연 2,000만원을 넘으면 금융소득 종합과세 대상이 됩니다.</li>';
     }
@@ -617,6 +675,7 @@
   }
 
   $('taxBox').addEventListener('click', (e) => {
+    if (e.target.closest('#filingBtn')) { openFiling(); return; }
     const b = e.target.closest('[data-apply]');
     if (!b) return;
     const ar = +b.dataset.apply;
@@ -666,6 +725,8 @@
     $('pvDate').textContent = fmtDate($('writeDate').value) || '년     월     일';
 
     taxCheck(p, rate, noInt);
+    // 이자가 있을 때만 차용증 아래 [신고·납부 의뢰] 버튼 표시
+    $('filingBtnBottom').style.display = !noInt && rate > 0 && p ? '' : 'none';
   }
 
   // ---------- 이벤트 ----------
@@ -708,6 +769,56 @@
     } catch (e) { /* 저장소를 못 쓰는 환경이면 금액 없이 이동 */ }
     location.href = '../자금조달계획서/main.html';
   });
+
+  // ---------- 이자소득세 신고·납부 의뢰 ----------
+  const escH = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function loanInfo() {
+    const p = num($('principal').value), rate = parseFloat($('rate').value) || 0;
+    const w = monthlyWht(annualInterest(p, rate));
+    return { p, rate, w, creditor: field('crName'), debtor: field('dbName'), payDay: $('payDay').value, writeDate: $('writeDate').value };
+  }
+  window.openFiling = function () {
+    const d = loanInfo();
+    if (!d.p || !d.rate || $('noInterest').checked) { alert('원금과 이자율을 먼저 입력해 주세요.'); return; }
+    $('filingSum').innerHTML = `채권자 <b>${escH(d.creditor || '-')}</b> · 채무자 <b>${escH(d.debtor || '-')}</b><br>` +
+      `원금 <b>${won(d.p)}</b> · 연 ${d.rate}% · 월 이자 ${won(d.w.monthly)}<br>` +
+      `매월 원천징수 <b>${won(d.w.tax)}</b> (소득세 ${won(d.w.incomeTax)} + 지방소득세 ${won(d.w.localTax)}) · 세후 지급 <b>${won(d.w.net)}</b>`;
+    if (!$('filingName').value) $('filingName').value = d.debtor;
+    $('filingForm').classList.remove('hidden');
+    $('filingDone').classList.add('hidden');
+    $('filingModal').classList.add('open');
+    setTimeout(() => $('filingName').focus(), 50);
+  };
+  window.closeFiling = function () { $('filingModal').classList.remove('open'); };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') window.closeFiling(); });
+  window.submitFiling = async function (event) {
+    event.preventDefault();
+    const d = loanInfo();
+    const btn = $('filingSubmit');
+    btn.disabled = true; btn.innerText = '보내는 중...';
+    // 요청사항 끝에 차용 내용 요약을 붙여 둠 (메일에서 바로 확인)
+    const summary = `[차용증] 채권자 ${d.creditor || '-'} / 채무자 ${d.debtor || '-'} / 원금 ${won(d.p)} / 연 ${d.rate}% / ` +
+      `월 이자 ${won(d.w.monthly)} / 원천징수 ${won(d.w.tax)} / 세후 지급 ${won(d.w.net)}` + (d.payDay ? ` / 매월 ${d.payDay}일 지급` : '');
+    const memo = [$('filingMemo').value.trim(), summary].filter(Boolean).join('\n\n');
+    try {
+      const res = await api('/api/request-filing', {
+        product: 'loan', name: $('filingName').value.trim(), phone: $('filingPhone').value.trim(), memo,
+        creditor: d.creditor, debtor: d.debtor, principal: d.p, rate: d.rate, payDay: d.payDay, writeDate: d.writeDate
+      });
+      if (!res.ok) {
+        alert(res.data.message || '의뢰를 보내지 못했습니다. 010-4454-2429로 연락 주세요.');
+        if (res.status === 401) refreshUser();
+        return;
+      }
+      $('filingForm').classList.add('hidden');
+      $('filingDone').classList.remove('hidden');
+    } catch (error) {
+      console.error('통신 에러:', error);
+      alert('서버와 통신하지 못했습니다. 010-4454-2429로 연락 주세요.');
+    } finally {
+      btn.disabled = false; btn.innerText = '신고·납부 의뢰 보내기';
+    }
+  };
 
   FormTools.setupDates(form);
   FormTools.enterToNext(form);
